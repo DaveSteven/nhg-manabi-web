@@ -1,4 +1,4 @@
-# Japanese Study Frontend
+# JLPT GO! Frontend
 
 JLPT study web app built with React, TypeScript, Vite, and React Router.
 

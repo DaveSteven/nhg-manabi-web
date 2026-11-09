@@ -102,8 +102,8 @@ export function LibraryView({
     <>
       <header className="topbar">
         <div>
-          <div className="eyebrow">日语学习</div>
-          <h1>JLPT 训练</h1>
+          <div className="eyebrow">备考、练习、不断进步</div>
+          <h1 className="brand-title">JLPT <span>GO!</span></h1>
         </div>
         <div className="top-actions">
           <form
@@ -1074,8 +1074,8 @@ export function LoginView({ onLogin }) {
     <section className="login-page">
       <div className="login-card">
         <div className="login-brand">
-          <div>日语学习</div>
-          <p>登录后继续学习</p>
+          <div className="brand-title">JLPT <span>GO!</span></div>
+          <p>登录后继续你的 JLPT 学习</p>
         </div>
 
         <form className="new-user-form" onSubmit={submit}>
