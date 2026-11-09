@@ -105,18 +105,29 @@ export function LibraryView({
           <h1>JLPT 训练</h1>
         </div>
         <div className="top-actions">
-          <div className="level-switch" role="tablist" aria-label="JLPT 等级">
-            {LEVELS.map((item) => (
-              <button
-                key={item}
-                className={level === item ? "active" : ""}
-                onClick={() => onLevel(item)}
-                type="button"
-              >
-                {item}
-              </button>
-            ))}
-          </div>
+          <form
+            className="home-search compact"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const query = searchQuery.trim();
+              if (query.length >= 2) onSearch(query);
+            }}
+          >
+            <Search size={19} aria-hidden="true" />
+            <input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="搜索题目"
+              aria-label="搜索题目"
+            />
+            <button type="submit" disabled={searchQuery.trim().length < 2}>搜索</button>
+          </form>
+          <label className="home-level-select">
+            <span>等级</span>
+            <select value={level} onChange={(event) => onLevel(event.target.value)} aria-label="JLPT 等级">
+              {LEVELS.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+          </label>
           <button
             className="wrong-icon-button"
             onClick={onOpenWrongBook}
@@ -138,24 +149,6 @@ export function LibraryView({
           </button>
         </div>
       </header>
-
-      <form
-        className="home-search"
-        onSubmit={(event) => {
-          event.preventDefault();
-          const query = searchQuery.trim();
-          if (query.length >= 2) onSearch(query);
-        }}
-      >
-        <Search size={22} aria-hidden="true" />
-        <input
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder="搜索题目、单词或文法，例如「わけにもいかない」"
-          aria-label="搜索题目"
-        />
-        <button type="submit" disabled={searchQuery.trim().length < 2}>搜索</button>
-      </form>
 
       <section className="home-section">
         <div className="home-section-heading">
@@ -269,8 +262,18 @@ const SEARCH_SOURCES = [
   { value: "exam", label: "历年试卷" },
 ];
 
+function cleanSearchText(text) {
+  return String(text || "")
+    .replace(/<MOJITest_URL>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>\s*<p[^>]*>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function HighlightedText({ text, query }) {
-  const value = String(text || "");
+  const value = cleanSearchText(text);
   const normalizedQuery = query.trim();
   if (!normalizedQuery) return value;
   const index = value.toLocaleLowerCase().indexOf(normalizedQuery.toLocaleLowerCase());
