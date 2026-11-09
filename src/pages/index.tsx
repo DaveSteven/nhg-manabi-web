@@ -102,7 +102,6 @@ export function LibraryView({
     <>
       <header className="topbar">
         <div>
-          <div className="eyebrow">备考、练习、不断进步</div>
           <h1 className="brand-title">JLPT <span>GO!</span></h1>
         </div>
         <div className="top-actions">
