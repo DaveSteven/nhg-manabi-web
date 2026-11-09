@@ -2117,6 +2117,41 @@ h1 {
   border: 2px solid var(--line);
 }
 
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 2px solid var(--line);
+  border-radius: 13px;
+  color: var(--blue-dark);
+  background: var(--surface);
+  box-shadow: 0 4px 0 var(--shadow);
+  font: inherit;
+  font-size: .9rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+.back-button:hover {
+  border-color: #b7ddf0;
+  background: var(--blue-soft);
+}
+
+.back-button:active {
+  box-shadow: 0 1px 0 var(--shadow);
+  transform: translateY(3px);
+}
+
+.back-button:focus-visible {
+  outline: 3px solid rgba(28, 176, 246, .3);
+  outline-offset: 3px;
+}
+
 .quiz-progress {
   display: grid;
   grid-template-columns: 1fr auto;
