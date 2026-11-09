@@ -3493,13 +3493,21 @@ h1 {
 .ui-select-field { display: inline-flex; align-items: center; gap: 9px; color: var(--muted); font-size: .88rem; font-weight: 700; }
 .ui-select-label { flex-shrink: 0; }
 .ui-select-control { position: relative; display: inline-flex; align-items: center; min-width: 148px; height: 46px; border: 2px solid var(--line); border-radius: 13px; background: var(--surface); box-shadow: 0 3px 0 var(--shadow); transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
-.ui-select-control select { width: 100%; height: 100%; padding: 0 42px 0 14px; appearance: none; -webkit-appearance: none; border: 0; border-radius: inherit; outline: 0; background: transparent; color: var(--ink); font: inherit; font-size: .95rem; cursor: pointer; }
-.ui-select-control > svg { position: absolute; right: 13px; pointer-events: none; color: var(--blue-dark); }
+.ui-select-trigger { display: flex; align-items: center; width: 100%; height: 100%; padding: 0 42px 0 14px; border: 0; border-radius: inherit; outline: 0; background: transparent; color: var(--ink); font: inherit; font-size: .95rem; text-align: left; white-space: nowrap; cursor: pointer; }
+.ui-select-control > svg { position: absolute; right: 13px; pointer-events: none; color: var(--blue-dark); transition: transform .18s ease; }
 .ui-select-field:focus-within .ui-select-control { border-color: var(--blue); box-shadow: 0 3px 0 #b9dff1, 0 0 0 3px var(--blue-soft); transform: translateY(-1px); }
+.ui-select-field.is-open .ui-select-control > svg { transform: rotate(180deg); }
+.ui-select-menu { position: absolute; z-index: 50; top: calc(100% + 9px); left: -2px; min-width: calc(100% + 4px); padding: 7px; border: 2px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: 0 8px 0 rgba(207,216,230,.7), 0 14px 30px rgba(36,48,67,.14); }
+.ui-select-menu button { display: flex; align-items: center; justify-content: space-between; gap: 14px; width: 100%; min-height: 40px; padding: 0 10px 0 12px; border: 0; border-radius: 9px; background: transparent; color: var(--ink); font: inherit; font-size: .92rem; text-align: left; white-space: nowrap; cursor: pointer; }
+.ui-select-menu button.active { background: var(--blue-soft); color: var(--blue-dark); }
+.ui-select-menu button.selected { color: var(--green-dark); font-weight: 800; }
+.ui-select-menu button.selected.active { background: var(--green-soft); }
+.ui-select-menu button > svg { flex-shrink: 0; color: var(--green-dark); }
 .ui-select-field.compact { height: 52px; padding: 0 8px 0 13px; border: 2px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: 0 4px 0 var(--shadow); font-size: .8rem; }
 .ui-select-field.compact .ui-select-control { min-width: 78px; height: 36px; border: 0; border-radius: 9px; background: var(--green-soft); box-shadow: none; }
-.ui-select-field.compact .ui-select-control select { padding: 0 32px 0 11px; color: var(--green-dark); }
+.ui-select-field.compact .ui-select-trigger { padding: 0 32px 0 11px; color: var(--green-dark); }
 .ui-select-field.compact .ui-select-control > svg { right: 9px; color: var(--green-dark); }
+.ui-select-field.compact .ui-select-menu { min-width: 100px; }
 .ui-select-field.compact:focus-within { border-color: var(--green); box-shadow: 0 4px 0 #c7dfb6, 0 0 0 3px var(--green-soft); }
 .ui-select-field.compact:focus-within .ui-select-control { box-shadow: none; transform: none; }
 .search-page { width: 100%; }
