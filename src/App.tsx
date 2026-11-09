@@ -105,6 +105,7 @@ async function preloadExamAssets(questions) {
 
 function App() {
   const navigate = useNavigate();
+  const isAdminHost = window.location.hostname.toLowerCase() === "admin.manabi.cc";
   const [books, setBooks] = useState([]);
   const [exams, setExams] = useState([]);
   const [examAttempts, setExamAttempts] = useState([]);
@@ -940,6 +941,14 @@ function App() {
     );
   }
 
+  if (isAdminHost && !currentUser.is_admin) {
+    return (
+      <Shell>
+        <div className="center-state error">该账号没有管理权限。<button className="secondary-button" type="button" onClick={logout}>退出登录</button></div>
+      </Shell>
+    );
+  }
+
   if (error) {
     return (
       <Shell>
@@ -955,7 +964,7 @@ function App() {
         <Route
           path="/"
           element={(
-            <LibraryView
+            isAdminHost ? <Navigate to="/admin/questions" replace /> : <LibraryView
               books={books}
               exams={exams}
               booksLoading={booksLoading}
