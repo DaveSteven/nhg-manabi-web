@@ -41,6 +41,7 @@ import {
 } from "./pages";
 
 import Listening from "./pages/Listening";
+import AdminQuestions from "./pages/AdminQuestions";
 
 const QUIZ_SESSION_KEY = "japanese-study-quiz-session";
 
@@ -1084,8 +1085,13 @@ function App() {
               onBack={resetToLibrary}
               onLogout={logout}
               onRegisterUser={registerUser}
+              onOpenAdmin={() => navigate("/admin/questions")}
             />
           )}
+        />
+        <Route
+          path="/admin/questions"
+          element={currentUser.is_admin ? <AdminQuestions token={authToken} onBack={() => navigate("/")} /> : <Navigate to="/" replace />}
         />
         <Route
           path="/exams"

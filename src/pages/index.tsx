@@ -1140,7 +1140,7 @@ export function LoginView({ onLogin }) {
   );
 }
 
-export function UserView({ currentUser, attempts, onBack, onLogout, onRegisterUser }) {
+export function UserView({ currentUser, attempts, onBack, onLogout, onRegisterUser, onOpenAdmin }) {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
@@ -1196,13 +1196,13 @@ export function UserView({ currentUser, attempts, onBack, onLogout, onRegisterUs
         </div>
       </section>
 
-      {currentUser?.username === "david" ? (
+      {currentUser?.is_admin ? (
         <section className="profile-admin-card">
           <div className="section-title">
             <UserRoundPlus size={22} />
             <div>
               <h2>注册用户</h2>
-              <p>仅 David 管理员可以创建新用户。</p>
+              <p>管理员可以创建学习账号并维护真题内容。</p>
             </div>
           </div>
           <form className="new-user-form" onSubmit={submitRegistration}>
@@ -1224,6 +1224,7 @@ export function UserView({ currentUser, attempts, onBack, onLogout, onRegisterUs
               {registering ? "正在创建…" : "创建用户"}
             </button>
           </form>
+          <button className="secondary-button admin-entry-button" type="button" onClick={onOpenAdmin}>进入真题管理 <ChevronRight size={18} /></button>
         </section>
       ) : null}
 
