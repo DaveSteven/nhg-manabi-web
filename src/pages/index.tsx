@@ -320,6 +320,26 @@ export function SearchView({ token, currentLevel, onBack }) {
   }, [submittedQuery, level, category, source, page, token]);
 
   const totalPages = Math.max(1, Math.ceil(result.total / result.page_size));
+  const groupedResults = useMemo(() => {
+    const groups = [];
+    const examGroups = new Map();
+    for (const item of result.items) {
+      if (item.source !== "exam") {
+        groups.push({ key: `${item.source}:${item.id}`, items: [item] });
+        continue;
+      }
+      const key = `${item.source_id}:${cleanSearchText(item.stem)}`;
+      const existing = examGroups.get(key);
+      if (existing) {
+        existing.items.push(item);
+      } else {
+        const group = { key: `exam:${key}`, items: [item] };
+        examGroups.set(key, group);
+        groups.push(group);
+      }
+    }
+    return groups;
+  }, [result.items]);
   const submit = (event) => {
     event.preventDefault();
     const next = query.trim();
@@ -352,13 +372,24 @@ export function SearchView({ token, currentLevel, onBack }) {
       {error ? <div className="center-state error">{error}</div> : null}
       {!loading && !error && !result.items.length ? <div className="search-empty"><Search size={32} /><strong>没有找到相关题目</strong><span>试试缩短关键词，或选择“全部等级”。</span></div> : null}
       <div className="search-results" aria-busy={loading}>
-        {result.items.map((item) => (
-          <article className="search-result-card" key={`${item.source}:${item.id}`}>
-            <div className="search-result-meta"><span>{item.level}</span><span>{item.category_label}</span><span>{item.source_label}</span><span>{item.source_title}</span></div>
-            <h2><HighlightedText text={item.stem} query={submittedQuery} /></h2>
-            {item.options?.length ? <ol className="search-result-options">{item.options.map((option) => <li key={option.id}><HighlightedText text={option.text} query={submittedQuery} /></li>)}</ol> : null}
-          </article>
-        ))}
+        {groupedResults.map((group) => {
+          const item = group.items[0];
+          const multiple = group.items.length > 1;
+          return (
+            <article className="search-result-card" key={group.key}>
+              <div className="search-result-meta"><span>{item.level}</span><span>{item.category_label}</span><span>{item.source_label}</span><span>{item.source_title}</span>{multiple ? <span>{group.items.length} 个小题</span> : null}</div>
+              <h2><HighlightedText text={item.stem} query={submittedQuery} /></h2>
+              <div className={multiple ? "search-result-subquestions" : ""}>
+                {group.items.map((question) => (
+                  <section className="search-result-subquestion" key={question.id}>
+                    {multiple ? <h3>第 {question.order_index || group.items.indexOf(question) + 1} 题</h3> : null}
+                    {question.options?.length ? <ol className="search-result-options">{question.options.map((option) => <li key={option.id}><HighlightedText text={option.text} query={submittedQuery} /></li>)}</ol> : null}
+                  </section>
+                ))}
+              </div>
+            </article>
+          );
+        })}
       </div>
       {result.total > result.page_size ? <nav className="search-pagination" aria-label="搜索结果分页"><button className="secondary-button" type="button" disabled={page <= 1 || loading} onClick={() => setPage((value) => value - 1)}><ArrowLeft size={18} />上一页</button><span>{page} / {totalPages}</span><button className="secondary-button" type="button" disabled={page >= totalPages || loading} onClick={() => setPage((value) => value + 1)}>下一页<ArrowRight size={18} /></button></nav> : null}
     </section>
