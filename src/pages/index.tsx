@@ -29,6 +29,7 @@ import {
   buildExamProblemSections,
   buildReviewProblemGroups,
   calculateExamScore,
+  countAnsweredQuestions,
   examPartLabel,
   examQuestionCategoryLabel,
   examPassMark,
@@ -39,6 +40,7 @@ import {
   groupReviewItemsByPassage,
   isListeningQuestion,
   isReadingQuestion,
+  latestExamAttemptByExam,
   pct,
   subjectLabel,
 } from "../lib/study";
@@ -54,6 +56,7 @@ export function Shell({ children }) {
 export function LibraryView({
   books,
   exams,
+  booksLoading,
   level,
   subject,
   attempts,
@@ -64,7 +67,6 @@ export function LibraryView({
   onLevel,
   onSubject,
   onStart,
-  onMixedTest,
   onOpenGrammarPractice,
   onOpenVocabularyPractice,
   onOpenReadingPractice,
@@ -134,19 +136,6 @@ export function LibraryView({
         </div>
       </header>
 
-      {questionPool ? (
-        <section className="home-continue-card">
-          <div>
-            <div className="eyebrow">今日推荐</div>
-            <h2>{level} {currentSubjectLabel} 随机练习</h2>
-            <p>从当前分类抽取 20 题，每次都会打乱题目和选项。</p>
-          </div>
-          <button className="primary-button" onClick={onMixedTest} type="button">
-            开始 20 题 <ArrowRight size={19} />
-          </button>
-        </section>
-      ) : null}
-
       <section className="home-section">
         <div className="home-section-heading">
           <div><h2>开始练习</h2><p>选择专项训练，或进行完整模拟考试</p></div>
@@ -178,19 +167,24 @@ export function LibraryView({
             const Icon = [BrainCircuit, BookOpen, Layers3][index];
             return (
               <button key={item.id} className={subject === item.id ? `active subject-${item.id}` : ""} onClick={() => onSubject(item.id)} type="button">
-                <Icon size={21} /><strong>{item.label}</strong>{subject === item.id ? <span>{questionPool}题</span> : null}
+                <Icon size={21} /><strong>{item.label}</strong>{subject === item.id && !booksLoading ? <span>{questionPool}题</span> : null}
               </button>
             );
           })}
         </div>
       </section>
 
-      <div className="home-library-heading">
-        <div><span className={`book-badge subject-${subject}`}>{level} {currentSubjectLabel}</span><h2>课程练习</h2></div>
-        <span>{books.length} 册 · {questionPool} 题</span>
-      </div>
-      <section className="book-grid home-book-grid">
-        {books.length ? (
+      <section className="book-grid home-book-grid" aria-busy={booksLoading}>
+        {booksLoading ? (
+          Array.from({ length: 3 }, (_, index) => (
+            <article className="book-card book-card-skeleton" key={index} aria-hidden="true">
+              <div className="skeleton-line skeleton-badge" />
+              <div className="skeleton-line skeleton-title" />
+              <div className="skeleton-line skeleton-meta" />
+              <div className="skeleton-line skeleton-progress" />
+            </article>
+          ))
+        ) : books.length ? (
           books.map((book) => {
             const stats = bookStats.get(book.id);
             return (
@@ -251,9 +245,7 @@ export function ExamListView({
   onAbandonExam,
   onReviewAttempt,
 }) {
-  const examStats = new Map<number, any>(
-    examAttempts.map((attempt) => [attempt.examId, attempt]),
-  );
+  const examStats = latestExamAttemptByExam(examAttempts);
   const activeRuns = new Map<number, any>(examRuns.map((run) => [run.exam_id, run]));
   const orderedExams = [...exams].sort(
     (left, right) => Number(activeRuns.has(right.id)) - Number(activeRuns.has(left.id)),
@@ -365,13 +357,13 @@ export function ExamIntroView({ exam, onBack, onStart, starting = false }) {
           <li>刷新或暂时离开页面不会暂停倒计时。</li>
           <li>科目之间不计时，确认后才开始下一科。</li>
         </ul>
-        <div className="result-actions"><button className="primary-button" onClick={onStart} disabled={starting} type="button">{starting ? "正在准备…" : "确认并开始第一科"}</button><button className="secondary-button" onClick={() => document.documentElement.requestFullscreen?.()} type="button">全屏考试</button><button className="secondary-button" onClick={onBack} type="button">返回试卷列表</button></div>
+        <div className="result-actions"><button className="primary-button" onClick={onStart} disabled={starting} type="button">{starting ? "正在加载试卷资源…" : "确认并开始第一科"}</button><button className="secondary-button" onClick={() => document.documentElement.requestFullscreen?.()} disabled={starting} type="button">全屏考试</button><button className="secondary-button" onClick={onBack} disabled={starting} type="button">返回试卷列表</button></div>
       </section>
     </section>
   );
 }
 
-export function ExamSectionBreakView({ session, onStartNext }) {
+export function ExamSectionBreakView({ session, onStartNext, starting = false }) {
   const section = session.run.sections[session.run.current_section];
   function testAudio() {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -382,7 +374,7 @@ export function ExamSectionBreakView({ session, onStartNext }) {
     oscillator.connect(gain); gain.connect(context.destination); gain.gain.value = 0.08; oscillator.frequency.value = 440;
     oscillator.start(); oscillator.stop(context.currentTime + 0.7); oscillator.onended = () => context.close();
   }
-  return <section className="exam-intro-view"><div className="exam-intro-card exam-break-card"><div className="book-badge subject-reading">上一科已提交</div><h1>准备开始：{section.label}</h1><p>本部分考试时间为 {section.duration_minutes} 分钟。点击后立即开始计时，之后不能返回上一科。</p>{section.key === "listening" ? <section className="listening-device-check"><Headphones size={28} /><div><strong>听力设备检查</strong><span>请佩戴耳机并确认能听到测试音。</span></div><button className="secondary-button" onClick={testAudio} type="button">播放测试音</button></section> : null}<div className="result-actions"><button className="primary-button" onClick={onStartNext} type="button">开始本部分</button><button className="secondary-button" onClick={() => document.documentElement.requestFullscreen?.()} type="button">进入全屏</button></div></div></section>;
+  return <section className="exam-intro-view"><div className="exam-intro-card exam-break-card"><div className="book-badge subject-reading">上一科已提交</div><h1>准备开始：{section.label}</h1><p>本部分考试时间为 {section.duration_minutes} 分钟。点击后立即开始计时，之后不能返回上一科。</p>{section.key === "listening" ? <section className="listening-device-check"><Headphones size={28} /><div><strong>听力设备检查</strong><span>请佩戴耳机并确认能听到测试音。</span></div><button className="secondary-button" onClick={testAudio} disabled={starting} type="button">播放测试音</button></section> : null}<div className="result-actions"><button className="primary-button" onClick={onStartNext} disabled={starting} type="button">{starting ? "正在开始…" : "开始本部分"}</button><button className="secondary-button" onClick={() => document.documentElement.requestFullscreen?.()} disabled={starting} type="button">进入全屏</button></div></div></section>;
 }
 
 export const PRACTICE_CATEGORIES = {
@@ -845,7 +837,11 @@ function WrongBookEntry({ items, onOpen }) {
   );
 }
 
-export function WrongBookView({ level, items, onBack, onReview }) {
+export function WrongBookView({ level, items, onBack, onReview, onReviewPractice }) {
+  const libraryItems = items.filter((item) => item.source === "library");
+  const practiceCategories = Object.keys(PRACTICE_CATEGORIES).filter((category) =>
+    items.some((item) => item.source === "practice" && item.subject === category),
+  );
   return (
     <section className="wrong-page">
       <header className="quiz-header">
@@ -874,9 +870,14 @@ export function WrongBookView({ level, items, onBack, onReview }) {
               从错题中随机抽取最多 20 题。答对后会自动移出错题本。
             </p>
           </div>
-          <button className="primary-button" onClick={onReview} type="button">
-            复习 20 题
-          </button>
+          <div className="wrong-review-actions">
+            {libraryItems.length ? <button className="primary-button" onClick={onReview} type="button">基础题库错题</button> : null}
+            {practiceCategories.map((category) => (
+              <button className="secondary-button" onClick={() => onReviewPractice(category)} type="button" key={category}>
+                {PRACTICE_CATEGORIES[category].label}错题
+              </button>
+            ))}
+          </div>
         </section>
       ) : null}
 
@@ -1226,14 +1227,20 @@ export function ExamSessionView({
   onChoose,
   onMove,
   onSubmit,
+  saveState = "idle",
+  onRetrySave = () => {},
+  submitting = false,
 }) {
   const [showAnswerSheet, setShowAnswerSheet] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [timerNotice, setTimerNotice] = useState("");
   const [listeningStarted, setListeningStarted] = useState(false);
+  const [audioError, setAudioError] = useState("");
   const expiredRef = useRef(false);
   const previousRemainingRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const submitRef = useRef(onSubmit);
+  useEffect(() => { submitRef.current = onSubmit; }, [onSubmit]);
   const expiresAt = session.run?.section_expires_at;
   useEffect(() => {
     if (!expiresAt) return undefined;
@@ -1249,13 +1256,13 @@ export function ExamSessionView({
       previousRemainingRef.current = remaining;
       if (remaining === 0 && !expiredRef.current) {
         expiredRef.current = true;
-        onSubmit(true);
+        submitRef.current(true);
       }
     };
     update();
     const timer = window.setInterval(update, 1000);
     return () => window.clearInterval(timer);
-  }, [expiresAt, onSubmit]);
+  }, [expiresAt]);
   useEffect(() => {
     if (!session.run || session.run.status !== "in_progress") return undefined;
     const warn = (event) => { event.preventDefault(); event.returnValue = ""; };
@@ -1263,7 +1270,7 @@ export function ExamSessionView({
     return () => window.removeEventListener("beforeunload", warn);
   }, [session.run?.id, session.run?.status]);
   const question = session.questions[session.index];
-  const answeredCount = Object.keys(session.answers).length;
+  const answeredCount = countAnsweredQuestions(session.questions, session.answers);
   const problemSections = buildExamProblemSections(
     session.exam,
     session.questions,
@@ -1332,12 +1339,12 @@ export function ExamSessionView({
   }
 
   useEffect(() => {
+    setAudioError("");
     if (!isTimedListening || !listeningStarted || !audioRef.current || !currentAudioUrl) return;
-    audioRef.current.play().catch(() => setListeningStarted(false));
-  }, [currentPageIndex, currentAudioUrl, isTimedListening, listeningStarted]);
-
-  useEffect(() => {
-    if (isTimedListening && listeningStarted && !currentAudioUrl) finishListeningAudio();
+    audioRef.current.play().catch(() => {
+      setListeningStarted(false);
+      setAudioError("音频无法播放，请检查网络后重试。");
+    });
   }, [currentPageIndex, currentAudioUrl, isTimedListening, listeningStarted]);
 
   function finishListeningAudio() {
@@ -1364,6 +1371,7 @@ export function ExamSessionView({
         </div>
         <div className="exam-header-actions">
           {session.run ? <div className={`exam-timer ${remainingSeconds <= 300 ? "urgent" : ""}`}><Clock3 size={18} /><strong>{String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:{String(remainingSeconds % 60).padStart(2, "0")}</strong></div> : null}
+          {session.run ? <button className={`exam-save-state ${saveState}`} onClick={saveState === "error" ? onRetrySave : undefined} disabled={saveState !== "error"} type="button">{saveState === "saving" ? "保存中…" : saveState === "error" ? "保存失败，点击重试" : "已保存"}</button> : null}
           {!isTimedListening ? <button
             className={`secondary-button answer-sheet-toggle ${showAnswerSheet ? "active" : ""}`}
             onClick={() => setShowAnswerSheet((value) => !value)}
@@ -1374,8 +1382,8 @@ export function ExamSessionView({
             <ClipboardList size={18} />
             {showAnswerSheet ? "收起答题卡" : "答题卡"}
           </button> : null}
-          <button className="primary-button" onClick={() => onSubmit(false)} type="button">
-            {session.run ? "提交本科" : "提交"}
+          <button className="primary-button" onClick={() => onSubmit(false)} disabled={submitting || saveState === "saving"} type="button">
+            {submitting ? "正在提交…" : session.run ? "提交本科" : "提交"}
           </button>
         </div>
       </header>
@@ -1470,7 +1478,7 @@ export function ExamSessionView({
 
           {currentProblem?.layer?.image_url ? <img className="exam-image exam-shared-image" src={assetSrc(currentProblem.layer.image_url)} alt="" /> : null}
 
-          {isTimedListening ? <section className="listening-exam-player"><Headphones size={28} /><div><strong>{listeningStarted ? "听力音频播放中" : "准备播放听力音频"}</strong><p>音频只能播放一次，结束后将自动进入下一组。</p></div>{!listeningStarted ? <button className="primary-button" type="button" onClick={() => setListeningStarted(true)}>开始播放</button> : <span>正在播放</span>}<audio ref={audioRef} src={assetSrc(currentAudioUrl)} preload="auto" onEnded={finishListeningAudio} controls={false} /></section> : null}
+          {isTimedListening ? <section className={`listening-exam-player ${audioError || !currentAudioUrl ? "error" : ""}`}><Headphones size={28} /><div><strong>{audioError || !currentAudioUrl ? "听力音频加载失败" : listeningStarted ? "听力音频播放中" : "准备播放听力音频"}</strong><p>{audioError || (!currentAudioUrl ? "当前题组缺少音频，请重试或稍后继续考试。" : "音频只能播放一次，结束后将自动进入下一组。")}</p></div>{!listeningStarted ? <button className="primary-button" type="button" disabled={!currentAudioUrl} onClick={() => { setAudioError(""); audioRef.current?.load(); setListeningStarted(true); }}>{audioError ? "重新加载" : "开始播放"}</button> : <span>正在播放</span>}<audio ref={audioRef} src={assetSrc(currentAudioUrl)} preload="auto" onEnded={finishListeningAudio} onError={() => { setListeningStarted(false); setAudioError("音频加载失败，请检查网络后重试。"); }} controls={false} /></section> : null}
 
           <section className="exam-problem-page">
                 <section
@@ -1526,6 +1534,7 @@ export function ExamSessionView({
                               key={`${item.id}-${option.id}`}
                               className={`option-button ${chosenOptionId === option.id ? "selected" : ""}`}
                               onClick={() => onChoose(item.id, option.id)}
+                              disabled={submitting}
                               type="button"
                             >
                               <span className="option-letter">{index + 1}</span>
@@ -1627,15 +1636,14 @@ export function ExamResultView({
             {estimatedScore.overallPassMark}
           </small>
         </div>
-        <div>
+        {estimatedScore.usesThreeSections ? <>
+          <div><span>语言知识</span><strong>{estimatedScore.languageKnowledgeScore} / 60</strong><small>{estimatedScore.languageKnowledgeCorrect}/{estimatedScore.languageKnowledgeTotal} · 参考线 {estimatedScore.languageKnowledgePassMark}</small></div>
+          <div><span>阅读</span><strong>{estimatedScore.readingScore} / 60</strong><small>{estimatedScore.readingCorrect}/{estimatedScore.readingTotal} · 参考线 {estimatedScore.readingPassMark}</small></div>
+        </> : <div>
           <span>语言知识与阅读</span>
           <strong>{estimatedScore.languageReadingScore} / 120</strong>
-          <small>
-            {estimatedScore.languageReadingCorrect}/
-            {estimatedScore.languageReadingTotal} · 参考线{" "}
-            {estimatedScore.languageReadingPassMark}
-          </small>
-        </div>
+          <small>{estimatedScore.languageReadingCorrect}/{estimatedScore.languageReadingTotal} · 参考线 {estimatedScore.languageReadingPassMark}</small>
+        </div>}
         <div>
           <span>听力</span>
           <strong>{estimatedScore.listeningScore} / 60</strong>

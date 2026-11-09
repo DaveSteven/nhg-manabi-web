@@ -4,11 +4,14 @@ import {
   DEFAULT_LEVEL,
   SESSION_TOKEN_KEY,
   api,
+  assetSrc,
   clearExamCache,
   mapAttempt,
   mapBook,
   mapExam,
   mapExamAttempt,
+  mapPracticeAttempt,
+  mapPracticeWrong,
   mapWrong,
   normalizeLevel,
   pct,
@@ -73,12 +76,38 @@ function questionsForRunSection(allQuestions, run) {
   });
 }
 
+async function preloadExamAssets(questions) {
+  const assets = new Map();
+  for (const question of questions) {
+    if (question.image_url) assets.set(assetSrc(question.image_url), "image");
+    if (question.media_url) assets.set(assetSrc(question.media_url), "audio");
+  }
+  await Promise.allSettled([...assets].map(([url, type]) => new Promise((resolve) => {
+    const timeout = window.setTimeout(resolve, 12000);
+    const finish = () => { window.clearTimeout(timeout); resolve(null); };
+    if (type === "image") {
+      const image = new Image();
+      image.onload = finish;
+      image.onerror = finish;
+      image.src = url;
+      return;
+    }
+    const audio = new Audio();
+    audio.preload = "metadata";
+    audio.onloadedmetadata = finish;
+    audio.onerror = finish;
+    audio.src = url;
+    audio.load();
+  })));
+}
+
 function App() {
   const navigate = useNavigate();
   const [books, setBooks] = useState([]);
   const [exams, setExams] = useState([]);
   const [examAttempts, setExamAttempts] = useState([]);
   const [examRuns, setExamRuns] = useState([]);
+  const [practiceAttempts, setPracticeAttempts] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [authToken, setAuthToken] = useState(() => localStorage.getItem(SESSION_TOKEN_KEY));
   const [level, setLevel] = useState(DEFAULT_LEVEL);
@@ -89,24 +118,38 @@ function App() {
   const [grammarPractice, setGrammarPractice] = useState(null);
   const [attempts, setAttempts] = useState([]);
   const [wrongItems, setWrongItems] = useState([]);
+  const [practiceWrongItems, setPracticeWrongItems] = useState([]);
   const [vocabulary, setVocabulary] = useState([]);
   const [vocabularyStats, setVocabularyStats] = useState({ total: 0, new: 0, learning: 0, mastered: 0 });
   const [loading, setLoading] = useState(true);
+  const [booksLoading, setBooksLoading] = useState(false);
+  const [examStarting, setExamStarting] = useState(false);
+  const [examSectionStarting, setExamSectionStarting] = useState(false);
+  const [examSubmitting, setExamSubmitting] = useState(false);
+  const [examSaveState, setExamSaveState] = useState("idle");
   const [error, setError] = useState("");
   const examSaveQueue = useRef(Promise.resolve());
+  const examSaveFailures = useRef(new Set());
+  const examSaveVersion = useRef(0);
+  const booksCache = useRef(new Map());
+  const levelDataCache = useRef(new Map());
 
   async function refreshStudyData(nextLevel = level, token = authToken) {
     if (!token) return;
-    const [attemptRows, wrongRows, examAttemptRows, examRunRows] = await Promise.all([
+    const [attemptRows, wrongRows, examAttemptRows, examRunRows, practiceAttemptRows, practiceWrongRows] = await Promise.all([
       api("/api/attempts?limit=50", {}, token),
       api(`/api/wrong-questions?level=${nextLevel}`, {}, token),
       api(`/api/exam-attempts?level=${nextLevel}&limit=50`, {}, token),
       api("/api/exam-runs", {}, token),
+      api(`/api/practice-attempts?level=${nextLevel}&limit=50`, {}, token),
+      api(`/api/practice-wrong-questions?level=${nextLevel}`, {}, token),
     ]);
     setAttempts(attemptRows.map(mapAttempt));
     setWrongItems(wrongRows.map(mapWrong));
     setExamAttempts(examAttemptRows.map(mapExamAttempt));
     setExamRuns(examRunRows);
+    setPracticeAttempts(practiceAttemptRows.map(mapPracticeAttempt));
+    setPracticeWrongItems(practiceWrongRows.map(mapPracticeWrong));
   }
 
   useEffect(() => {
@@ -140,29 +183,82 @@ function App() {
 
   useEffect(() => {
     let ignore = false;
-    async function load() {
+    async function loadBooks() {
       if (!authToken || !currentUser) return;
-      setLoading(true);
-      setError("");
+      const cacheKey = `${level}:${subject}`;
+      const cached = booksCache.current.get(cacheKey);
+      setBooks(cached || []);
+      setBooksLoading(!cached);
       try {
-        const [bookRows, examRows] = await Promise.all([
-          api(`/api/books?level=${level}&subject=${subject}`),
-          api(`/api/exams?level=${level}`),
-          refreshStudyData(level, authToken),
-        ]);
-        if (!ignore) setBooks(bookRows.map(mapBook));
-        if (!ignore) setExams(examRows.map(mapExam));
+        const bookRows = await api(`/api/books?level=${level}&subject=${subject}`);
+        const mappedBooks = bookRows.map(mapBook);
+        booksCache.current.set(cacheKey, mappedBooks);
+        if (!ignore) setBooks(mappedBooks);
       } catch (err) {
         if (!ignore) setError(`データを読み込めませんでした: ${err.message}`);
       } finally {
-        if (!ignore) setLoading(false);
+        if (!ignore) setBooksLoading(false);
       }
     }
-    load();
+    loadBooks();
     return () => {
       ignore = true;
     };
-  }, [level, subject, currentUser, authToken]);
+  }, [level, subject, currentUser?.id, authToken]);
+
+  useEffect(() => {
+    let ignore = false;
+    async function loadLevelData() {
+      if (!authToken || !currentUser) return;
+      const cacheKey = `${currentUser.id}:${level}`;
+      const cached = levelDataCache.current.get(cacheKey);
+      if (cached) {
+        setExams(cached.exams);
+        setAttempts(cached.attempts);
+        setWrongItems(cached.wrongItems);
+        setExamAttempts(cached.examAttempts);
+        setExamRuns(cached.examRuns);
+        setPracticeAttempts(cached.practiceAttempts);
+        setPracticeWrongItems(cached.practiceWrongItems);
+      }
+      try {
+        const [examRows, attemptRows, wrongRows, examAttemptRows, examRunRows, practiceAttemptRows, practiceWrongRows] = await Promise.all([
+          api(`/api/exams?level=${level}`),
+          api("/api/attempts?limit=50", {}, authToken),
+          api(`/api/wrong-questions?level=${level}`, {}, authToken),
+          api(`/api/exam-attempts?level=${level}&limit=50`, {}, authToken),
+          api("/api/exam-runs", {}, authToken),
+          api(`/api/practice-attempts?level=${level}&limit=50`, {}, authToken),
+          api(`/api/practice-wrong-questions?level=${level}`, {}, authToken),
+        ]);
+        const nextData = {
+          exams: examRows.map(mapExam),
+          attempts: attemptRows.map(mapAttempt),
+          wrongItems: wrongRows.map(mapWrong),
+          examAttempts: examAttemptRows.map(mapExamAttempt),
+          examRuns: examRunRows,
+          practiceAttempts: practiceAttemptRows.map(mapPracticeAttempt),
+          practiceWrongItems: practiceWrongRows.map(mapPracticeWrong),
+        };
+        levelDataCache.current.set(cacheKey, nextData);
+        if (!ignore) {
+          setExams(nextData.exams);
+          setAttempts(nextData.attempts);
+          setWrongItems(nextData.wrongItems);
+          setExamAttempts(nextData.examAttempts);
+          setExamRuns(nextData.examRuns);
+          setPracticeAttempts(nextData.practiceAttempts);
+          setPracticeWrongItems(nextData.practiceWrongItems);
+        }
+      } catch (err) {
+        if (!ignore) setError(`データを読み込めませんでした: ${err.message}`);
+      }
+    }
+    loadLevelData();
+    return () => {
+      ignore = true;
+    };
+  }, [level, currentUser?.id, authToken]);
 
   useEffect(() => {
     let ignore = false;
@@ -220,6 +316,17 @@ function App() {
     }
     return stats;
   }, [attempts]);
+
+  const allWrongItems = useMemo(
+    () => [...wrongItems, ...practiceWrongItems]
+      .sort((left, right) => new Date(right.lastWrongAt).getTime() - new Date(left.lastWrongAt).getTime()),
+    [wrongItems, practiceWrongItems],
+  );
+  const learningAttempts = useMemo(
+    () => [...attempts, ...practiceAttempts]
+      .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()),
+    [attempts, practiceAttempts],
+  );
 
   async function startBook(book) {
     setError("");
@@ -325,36 +432,58 @@ function App() {
   }
 
   async function submitGrammarPractice() {
-    const groups = new Map();
-    for (const question of grammarPractice.questions) {
-      if (!groups.has(question.source_exam_id)) groups.set(question.source_exam_id, []);
-      groups.get(question.source_exam_id).push(question);
-    }
-    const savedAttempts = await Promise.all([...groups.entries()].map(([examId, questions]) =>
-      api("/api/exam-attempts", {
-        method: "POST",
-        body: JSON.stringify({
-          exam_id: examId,
-          answers: questions.map((question) => ({
-            question_id: question.id,
-            chosen_option_id: grammarPractice.answers[question.id] || null,
-          })),
-        }),
-      }, authToken).then(mapExamAttempt),
-    ));
-    const answers = savedAttempts.flatMap((attempt) => attempt.answers);
+    const category = grammarPractice.config.category;
+    const categoryLabel = (PRACTICE_CATEGORIES[category] || PRACTICE_CATEGORIES.grammar).label;
+    const savedAttempt = mapPracticeAttempt(await api("/api/practice-attempts", {
+      method: "POST",
+      body: JSON.stringify({
+        level,
+        category,
+        mode: grammarPractice.config.wrongReview ? "wrong_review" : "practice",
+        title: `${level} ${categoryLabel}${grammarPractice.config.wrongReview ? "错题复习" : "专项练习"}`,
+        answers: grammarPractice.questions.map((question) => ({
+          question_id: question.id,
+          chosen_option_id: grammarPractice.answers[question.id] || null,
+        })),
+      }),
+    }, authToken));
     setGrammarPractice((current) => ({
       ...current,
-      finishedAttempt: {
-        id: `grammar-${Date.now()}`,
-        level,
-        title: `${level} ${(PRACTICE_CATEGORIES[grammarPractice.config.category] || PRACTICE_CATEGORIES.grammar).label}专项练习`,
-        correct: answers.filter((answer) => answer.isCorrect).length,
-        total: answers.length,
-        answers,
-      },
+      finishedAttempt: savedAttempt,
     }));
     await refreshStudyData(level, authToken);
+  }
+
+  async function startPracticeWrongReview(category) {
+    setError("");
+    const rows = await api(`/api/practice-wrong-questions/quiz?level=${level}&category=${category}&limit=20`, {}, authToken);
+    const questions = rows.map((question) => ({
+      ...question,
+      source_exam_id: question.exam_id,
+      source_exam_title: question.exam_title,
+      layer_id: `practice-wrong-${question.id}`,
+      order_index: question.practice_order,
+    }));
+    const categoryLabel = (PRACTICE_CATEGORIES[category] || PRACTICE_CATEGORIES.grammar).label;
+    setGrammarPractice({
+      config: { mode: "random", category, count: questions.length, wrongReview: true },
+      exam: {
+        id: 0,
+        level,
+        title: `${level} ${categoryLabel}错题复习`,
+        layers: questions.map((question) => ({
+          id: question.layer_id,
+          order_index: question.order_index,
+          title: `${categoryLabel}错题 · 第${question.order_index}题`,
+          question_type: question.question_type,
+        })),
+      },
+      questions,
+      index: 0,
+      answers: {},
+      finishedAttempt: null,
+    });
+    navigate(`/${category}-practice`);
   }
 
   async function startWrongReview() {
@@ -430,21 +559,30 @@ function App() {
   }
 
   async function beginExam() {
+    if (examStarting) return;
+    setExamStarting(true);
     const exam = examSession.exam;
-    const [detail, allQuestions, run] = await Promise.all([
-      api(`/api/exams/${exam.id}`, {}, authToken),
-      api(`/api/exams/${exam.id}/questions`, {}, authToken),
-      api(`/api/exam-runs?exam_id=${exam.id}`, { method: "POST" }, authToken),
-    ]);
-    const cached = readExamCache(currentUser.id, exam.id);
-    const next = {
-      exam: { ...exam, layers: detail.layers || [] }, run, allQuestions,
-      questions: questionsForRunSection(allQuestions, run),
-      index: 0, answers: { ...(cached.answers || {}), ...(run.answers || {}) }, finishedAttempt: null,
-    };
-    writeExamCache(currentUser.id, exam.id, { runId: run.id, index: 0, answers: next.answers, updatedAt: new Date().toISOString() });
-    setExamSession(next);
-    navigate(`/exams/${exam.id}`);
+    try {
+      const [detail, allQuestions] = await Promise.all([
+        api(`/api/exams/${exam.id}`, {}, authToken),
+        api(`/api/exams/${exam.id}/questions`, {}, authToken),
+      ]);
+      await preloadExamAssets(allQuestions);
+      const run = await api(`/api/exam-runs?exam_id=${exam.id}`, { method: "POST" }, authToken);
+      const cached = readExamCache(currentUser.id, exam.id);
+      const next = {
+        exam: { ...exam, layers: detail.layers || [] }, run, allQuestions,
+        questions: questionsForRunSection(allQuestions, run),
+        index: 0, answers: { ...(cached.answers || {}), ...(run.answers || {}) }, finishedAttempt: null,
+      };
+      writeExamCache(currentUser.id, exam.id, { runId: run.id, index: 0, answers: next.answers, updatedAt: new Date().toISOString() });
+      setExamSaveState("saved");
+      examSaveFailures.current.clear();
+      setExamSession(next);
+      navigate(`/exams/${exam.id}`);
+    } finally {
+      setExamStarting(false);
+    }
   }
 
   async function reviewExamAttempt(attempt) {
@@ -614,7 +752,7 @@ function App() {
     navigate("/");
   }
 
-  async function chooseExamOption(questionId, optionId) {
+  function chooseExamOption(questionId, optionId) {
     setExamSession((current) => {
       const next = {
         ...current,
@@ -629,12 +767,45 @@ function App() {
       return next;
     });
     if (examSession?.run) {
-      examSaveQueue.current = examSaveQueue.current.catch(() => null).then(() => api(`/api/exam-runs/${examSession.run.id}/answers/${questionId}`, {
+      const version = ++examSaveVersion.current;
+      setExamSaveState("saving");
+      examSaveQueue.current = examSaveQueue.current.then(async () => {
+        try {
+          const run = await api(`/api/exam-runs/${examSession.run.id}/answers/${questionId}`, {
+            method: "PUT",
+            body: JSON.stringify({ chosen_option_id: optionId }),
+          }, authToken);
+          examSaveFailures.current.delete(questionId);
+          setExamSession((current) => current ? ({ ...current, run }) : current);
+          if (version === examSaveVersion.current && !examSaveFailures.current.size) setExamSaveState("saved");
+        } catch (error) {
+          examSaveFailures.current.add(questionId);
+          setExamSaveState("error");
+        }
+      });
+    }
+  }
+
+  async function retryExamSave() {
+    if (!examSession?.run) return true;
+    setExamSaveState("saving");
+    try {
+      let latestRun = examSession.run;
+      for (const question of examSession.questions) {
+        const optionId = examSession.answers[question.id];
+        if (!optionId) continue;
+        latestRun = await api(`/api/exam-runs/${examSession.run.id}/answers/${question.id}`, {
           method: "PUT",
           body: JSON.stringify({ chosen_option_id: optionId }),
-        }, authToken));
-      const run = await examSaveQueue.current;
-      setExamSession((current) => current ? ({ ...current, run }) : current);
+        }, authToken);
+      }
+      examSaveFailures.current.clear();
+      setExamSaveState("saved");
+      setExamSession((current) => current ? ({ ...current, run: latestRun }) : current);
+      return true;
+    } catch (error) {
+      setExamSaveState("error");
+      return false;
     }
   }
 
@@ -674,26 +845,52 @@ function App() {
   }
 
   async function submitExam(timedOut = false) {
+    if (examSubmitting) return;
     if (!examSession?.run) return saveCompletedExam(examSession);
     const unanswered = examSession.questions.filter((question) => !examSession.answers[question.id]).length;
-    if (!timedOut && !window.confirm(`本科还有 ${unanswered} 题未作答。提交后将锁定答案，不能返回修改。确定提交吗？`)) return;
+    const confirmMessage = unanswered
+      ? `本科还有 ${unanswered} 题未作答。提交后将锁定答案，不能返回修改。确定提交吗？`
+      : "本科题目已全部作答。提交后将锁定答案，不能返回修改。确定提交吗？";
+    if (!timedOut && !window.confirm(confirmMessage)) return;
+    setExamSubmitting(true);
     await examSaveQueue.current;
-    const run = await api(`/api/exam-runs/${examSession.run.id}/section/complete`, { method: "POST" }, authToken);
-    if (run.status === "completed") {
-      clearExamCache(currentUser.id, examSession.exam.id);
-      await refreshStudyData(level, authToken);
-      await loadExamReview(examSession.exam.id, run.attempt_id);
-      navigate(`/exams/${examSession.exam.id}/review/${run.attempt_id}`);
-      return;
+    try {
+      if (examSaveFailures.current.size && !(await retryExamSave())) return;
+      const run = await api(`/api/exam-runs/${examSession.run.id}/section/complete`, { method: "POST" }, authToken);
+      if (run.status === "completed") {
+        clearExamCache(currentUser.id, examSession.exam.id);
+        await refreshStudyData(level, authToken);
+        await loadExamReview(examSession.exam.id, run.attempt_id);
+        navigate(`/exams/${examSession.exam.id}/review/${run.attempt_id}`);
+        return;
+      }
+      const next = { ...examSession, run, questions: questionsForRunSection(examSession.allQuestions, run), index: 0 };
+      writeExamCache(currentUser.id, next.exam.id, { runId: run.id, index: 0, answers: next.answers, updatedAt: new Date().toISOString() });
+      setExamSession(next);
+    } finally {
+      setExamSubmitting(false);
     }
-    const next = { ...examSession, run, questions: questionsForRunSection(examSession.allQuestions, run), index: 0 };
-    writeExamCache(currentUser.id, next.exam.id, { runId: run.id, index: 0, answers: next.answers, updatedAt: new Date().toISOString() });
-    setExamSession(next);
   }
 
   async function startNextExamSection() {
-    const run = await api(`/api/exam-runs/${examSession.run.id}/section/start`, { method: "POST" }, authToken);
-    setExamSession((current) => ({ ...current, run, index: 0 }));
+    if (examSectionStarting) return;
+    setExamSectionStarting(true);
+    try {
+      await preloadExamAssets(examSession.questions);
+      const run = await api(`/api/exam-runs/${examSession.run.id}/section/start`, { method: "POST" }, authToken);
+      setExamSaveState("saved");
+      setExamSession((current) => ({ ...current, run, index: 0 }));
+    } finally {
+      setExamSectionStarting(false);
+    }
+  }
+
+  function leaveActiveExam() {
+    if (examSession?.run?.status === "in_progress") {
+      const confirmed = window.confirm("离开后考试不会暂停，倒计时仍会继续。确定返回试卷列表吗？");
+      if (!confirmed) return;
+    }
+    resetToExamList();
   }
 
   function nextQuestion() {
@@ -759,17 +956,17 @@ function App() {
             <LibraryView
               books={books}
               exams={exams}
+              booksLoading={booksLoading}
               level={level}
               subject={subject}
               attempts={attempts}
               examAttempts={examAttempts}
-              wrongItems={wrongItems}
+              wrongItems={allWrongItems}
               bookStats={bookStats}
               currentUser={currentUser}
               onLevel={chooseLevel}
               onSubject={setSubject}
               onStart={startBook}
-              onMixedTest={startMixedTest}
               onOpenGrammarPractice={() => { setGrammarPractice(null); navigate("/grammar-practice"); }}
               onOpenVocabularyPractice={() => { setGrammarPractice(null); navigate("/vocabulary-practice"); }}
               onOpenReadingPractice={() => { setGrammarPractice(null); navigate("/reading-practice"); }}
@@ -868,9 +1065,10 @@ function App() {
           element={(
             <WrongBookView
               level={level}
-              items={wrongItems}
+              items={allWrongItems}
               onBack={resetToLibrary}
               onReview={startWrongReview}
+              onReviewPractice={startPracticeWrongReview}
             />
           )}
         />
@@ -879,7 +1077,7 @@ function App() {
           element={(
             <UserView
               currentUser={currentUser}
-              attempts={attempts}
+              attempts={learningAttempts}
               onBack={resetToLibrary}
               onLogout={logout}
               onRegisterUser={registerUser}
@@ -910,6 +1108,7 @@ function App() {
               onLoadIntro={loadExamIntro}
               onBack={resetToExamList}
               onStart={beginExam}
+              starting={examStarting}
             />
           )}
         />
@@ -919,12 +1118,16 @@ function App() {
             <ExamRoute
               examSession={examSession}
               onLoadExam={loadExam}
-              onBack={resetToExamList}
+              onBack={leaveActiveExam}
               onChoose={chooseExamOption}
               onMove={moveExamQuestion}
               onSubmit={submitExam}
               onStartNext={startNextExamSection}
               onRepeat={startExam}
+              saveState={examSaveState}
+              onRetrySave={retryExamSave}
+              submitting={examSubmitting}
+              sectionStarting={examSectionStarting}
             />
           )}
         />
@@ -955,6 +1158,10 @@ function ExamRoute({
   onSubmit,
   onStartNext,
   onRepeat,
+  saveState,
+  onRetrySave,
+  submitting,
+  sectionStarting,
 }) {
   const { examId } = useParams();
   const numericExamId = Number(examId);
@@ -974,7 +1181,7 @@ function ExamRoute({
   }
 
   if (examSession.run?.status === "awaiting_section") {
-    return <ExamSectionBreakView session={examSession} onStartNext={onStartNext} />;
+    return <ExamSectionBreakView session={examSession} onStartNext={onStartNext} starting={sectionStarting} />;
   }
 
   if (!examSession.questions?.length) {
@@ -988,11 +1195,14 @@ function ExamRoute({
       onChoose={onChoose}
       onMove={onMove}
       onSubmit={onSubmit}
+      saveState={saveState}
+      onRetrySave={onRetrySave}
+      submitting={submitting}
     />
   );
 }
 
-function ExamIntroRoute({ examSession, onLoadIntro, onBack, onStart }) {
+function ExamIntroRoute({ examSession, onLoadIntro, onBack, onStart, starting }) {
   const { examId } = useParams();
   const numericExamId = Number(examId);
   useEffect(() => {
@@ -1002,7 +1212,7 @@ function ExamIntroRoute({ examSession, onLoadIntro, onBack, onStart }) {
   }, [numericExamId, examSession?.exam?.id]);
   if (!Number.isFinite(numericExamId)) return <Navigate to="/exams" replace />;
   if (!examSession || examSession.exam.id !== numericExamId || examSession.phase !== "intro") return <div className="center-state">正在加载考试说明…</div>;
-  return <ExamIntroView exam={examSession.exam} onBack={onBack} onStart={onStart} />;
+  return <ExamIntroView exam={examSession.exam} onBack={onBack} onStart={onStart} starting={starting} />;
 }
 
 function ExamReviewRoute({

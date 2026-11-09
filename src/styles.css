@@ -528,6 +528,10 @@ h1 {
   gap: 11px;
 }
 
+.home-book-grid {
+  margin-top: 20px;
+}
+
 .subject-library-tabs button {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -1071,6 +1075,36 @@ h1 {
   box-shadow: 0 5px 0 var(--shadow);
 }
 
+.book-card-skeleton {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+  pointer-events: none;
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #edf1f5 25%, #f8fafc 50%, #edf1f5 75%);
+  background-size: 200% 100%;
+  animation: home-skeleton-pulse 1.2s ease-in-out infinite;
+}
+
+.skeleton-badge { width: 34%; }
+.skeleton-title { width: 52%; height: 24px; }
+.skeleton-meta { width: 68%; }
+.skeleton-progress { width: 100%; height: 8px; }
+
+@keyframes home-skeleton-pulse {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line { animation: none; }
+}
+
 .book-card-main {
   display: flex;
   flex-direction: column;
@@ -1141,6 +1175,9 @@ h1 {
 .exam-break-card p { max-width: 560px; margin: 0 auto 28px; color: var(--muted); line-height: 1.7; }
 .exam-timer { display: flex; align-items: center; gap: 7px; min-width: 92px; justify-content: center; padding: 10px 12px; border-radius: 12px; background: var(--surface); font-variant-numeric: tabular-nums; }
 .exam-timer.urgent { color: #b42318; background: #fee4e2; }
+.exam-save-state { padding: 7px 10px; border: 0; border-radius: 999px; color: var(--muted); background: var(--surface); font: inherit; font-size: .78rem; font-weight: 700; }
+.exam-save-state.saving { color: var(--blue-dark); }
+.exam-save-state.error { color: #b42318; background: #fee4e2; cursor: pointer; }
 .exam-run-status {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -1169,6 +1206,8 @@ h1 {
 .listening-exam-player > div { display: grid; flex: 1; gap: 4px; }
 .listening-exam-player p { margin: 0; color: var(--muted); font-size: .9rem; }
 .listening-exam-player > span { color: var(--blue-dark); font-weight: 750; }
+.listening-exam-player.error { border-color: #f1b8b3; background: #fff1f0; }
+.listening-exam-player.error > svg { color: #b42318; }
 @media (max-width: 640px) { .exam-intro-card { padding: 22px 18px; } .exam-section-schedule > div > div { display: grid; } .exam-timer { order: -1; width: 100%; } }
 
 .exam-entry-card {
@@ -1514,6 +1553,13 @@ h1 {
   display: grid;
   gap: 8px;
   flex: 1;
+}
+
+.wrong-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .wrong-page-title p {

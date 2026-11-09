@@ -45,6 +45,18 @@ export function pct(value, total) {
   return Math.round((value / total) * 100);
 }
 
+export function latestExamAttemptByExam(attempts) {
+  const latest = new Map();
+  for (const attempt of attempts) {
+    if (!latest.has(attempt.examId)) latest.set(attempt.examId, attempt);
+  }
+  return latest;
+}
+
+export function countAnsweredQuestions(questions, answers) {
+  return questions.filter((question) => answers[question.id]).length;
+}
+
 export function formatDate(value) {
   return new Intl.DateTimeFormat("ja-JP", {
     month: "2-digit",
@@ -127,7 +139,8 @@ export function mapAttempt(attempt) {
 
 export function mapWrong(item) {
   return {
-    key: `${item.level}:${item.subject}:${item.question_id}`,
+    key: `library:${item.level}:${item.subject}:${item.question_id}`,
+    source: "library",
     questionId: item.question_id,
     stem: item.stem,
     level: item.level,
@@ -136,6 +149,25 @@ export function mapWrong(item) {
     categoryLabel: `${item.level} ${item.subject_label}`,
     bookId: item.book_id,
     bookName: normalizeJapaneseUiText(item.book_name),
+    answerText: item.answer_text,
+    wrongCount: item.wrong_count,
+    lastChosenText: item.last_chosen_text,
+    lastWrongAt: item.last_wrong_at,
+  };
+}
+
+export function mapPracticeWrong(item) {
+  return {
+    key: `practice:${item.level}:${item.category}:${item.question_id}`,
+    source: "practice",
+    questionId: item.question_id,
+    stem: item.title,
+    level: item.level,
+    subject: item.category,
+    subjectLabel: item.category_label,
+    categoryLabel: `${item.level} ${item.category_label}`,
+    bookId: item.exam_id,
+    bookName: item.exam_title,
     answerText: item.answer_text,
     wrongCount: item.wrong_count,
     lastChosenText: item.last_chosen_text,
@@ -179,6 +211,19 @@ export function mapExamAttempt(attempt) {
       analysis: answer.analysis,
       isCorrect: answer.is_correct,
     })),
+  };
+}
+
+export function mapPracticeAttempt(attempt) {
+  const categoryLabels = { vocabulary: "文字词汇", grammar: "文法", reading: "读解" };
+  const categoryLabel = categoryLabels[attempt.category] || attempt.category;
+  return {
+    ...mapExamAttempt(attempt),
+    mode: attempt.mode,
+    subject: attempt.category,
+    subjectLabel: categoryLabel,
+    categoryLabel: `${attempt.level} ${categoryLabel}`,
+    bookName: attempt.title,
   };
 }
 
@@ -319,16 +364,30 @@ export function examPassMark(level) {
 
 export function calculateExamScore(attempt, questions) {
   const answerByQuestion = new Map<number, any>(attempt.answers.map((answer) => [answer.questionId, answer]));
-  const languageReadingQuestions = questions.filter((question) => (question.question_type || 0) < 41);
+  const languageKnowledgeQuestions = questions.filter((question) => (question.question_type || 0) < 31);
+  const readingQuestions = questions.filter((question) => {
+    const type = question.question_type || 0;
+    return type >= 31 && type < 41;
+  });
   const listeningQuestions = questions.filter((question) => (question.question_type || 0) >= 41);
   const countCorrect = (items) => items.reduce((sum, question) => (
     sum + (answerByQuestion.get(question.id)?.isCorrect ? 1 : 0)
   ), 0);
-  const languageReadingCorrect = countCorrect(languageReadingQuestions);
+  const languageKnowledgeCorrect = countCorrect(languageKnowledgeQuestions);
+  const readingCorrect = countCorrect(readingQuestions);
   const listeningCorrect = countCorrect(listeningQuestions);
-  const languageReadingScore = languageReadingQuestions.length
-    ? Math.round((languageReadingCorrect / languageReadingQuestions.length) * 120)
+  const usesThreeSections = ["N1", "N2", "N3"].includes(attempt.level);
+  const languageReadingQuestions = [...languageKnowledgeQuestions, ...readingQuestions];
+  const languageReadingCorrect = languageKnowledgeCorrect + readingCorrect;
+  const languageKnowledgeScore = usesThreeSections && languageKnowledgeQuestions.length
+    ? Math.round((languageKnowledgeCorrect / languageKnowledgeQuestions.length) * 60)
     : 0;
+  const readingScore = usesThreeSections && readingQuestions.length
+    ? Math.round((readingCorrect / readingQuestions.length) * 60)
+    : 0;
+  const languageReadingScore = !usesThreeSections && languageReadingQuestions.length
+    ? Math.round((languageReadingCorrect / languageReadingQuestions.length) * 120)
+    : languageKnowledgeScore + readingScore;
   const listeningScore = listeningQuestions.length
     ? Math.round((listeningCorrect / listeningQuestions.length) * 60)
     : 0;
@@ -336,7 +395,19 @@ export function calculateExamScore(attempt, questions) {
   const overallPassMark = examPassMark(attempt.level);
   const languageReadingPassMark = 38;
   const listeningPassMark = 19;
+  const sectionPassed = usesThreeSections
+    ? languageKnowledgeScore >= 19 && readingScore >= 19 && listeningScore >= listeningPassMark
+    : languageReadingScore >= languageReadingPassMark && listeningScore >= listeningPassMark;
   return {
+    usesThreeSections,
+    languageKnowledgeCorrect,
+    languageKnowledgeTotal: languageKnowledgeQuestions.length,
+    languageKnowledgeScore,
+    languageKnowledgePassMark: 19,
+    readingCorrect,
+    readingTotal: readingQuestions.length,
+    readingScore,
+    readingPassMark: 19,
     languageReadingCorrect,
     languageReadingTotal: languageReadingQuestions.length,
     languageReadingScore,
@@ -347,9 +418,7 @@ export function calculateExamScore(attempt, questions) {
     listeningPassMark,
     totalScore,
     overallPassMark,
-    passed: totalScore >= overallPassMark
-      && languageReadingScore >= languageReadingPassMark
-      && listeningScore >= listeningPassMark,
+    passed: totalScore >= overallPassMark && sectionPassed,
   };
 }
 
