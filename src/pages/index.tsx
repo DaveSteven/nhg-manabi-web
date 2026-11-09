@@ -582,7 +582,15 @@ export function GrammarPracticeSetupView({ exams, level, category = "grammar", o
             <label className={mode === "random" ? "selected" : ""}><input type="radio" name="source" checked={mode === "random"} onChange={() => setMode("random")} /><Target size={23} /><span><strong>全部试卷随机</strong><small>从 {level} 历年试卷中打乱抽取</small></span></label>
             <label className={mode === "exam" ? "selected" : ""}><input type="radio" name="source" checked={mode === "exam"} onChange={() => setMode("exam")} /><ClipboardList size={23} /><span><strong>指定试卷</strong><small>只练习一张试卷中的{practiceCategory.label}题</small></span></label>
           </div>
-          {mode === "exam" ? <select className="practice-exam-select" value={examId} onChange={(event) => setExamId(event.target.value)}>{exams.map((exam) => <option key={exam.id} value={exam.id}>{exam.title}</option>)}</select> : null}
+          {mode === "exam" ? (
+            <UiSelect
+              className="practice-exam-select"
+              ariaLabel="选择试卷"
+              value={examId}
+              options={exams.map((exam) => ({ value: String(exam.id), label: exam.title }))}
+              onChange={setExamId}
+            />
+          ) : null}
         </section>
 
         <section className="practice-config-section">
