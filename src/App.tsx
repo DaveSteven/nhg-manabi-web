@@ -27,6 +27,7 @@ import {
   ExamSectionBreakView,
   ExamSessionView,
   RandomPracticeSessionView,
+  SearchView,
   GrammarPracticeSetupView,
   LibraryView,
   LoginView,
@@ -975,9 +976,11 @@ function App() {
               onOpenVocabulary={() => navigate("/vocabulary")}
               onOpenWrongBook={() => navigate("/wrong")}
               onOpenUser={() => navigate("/user")}
+              onSearch={(query) => navigate(`/search?q=${encodeURIComponent(query)}`)}
             />
           )}
         />
+        <Route path="/search" element={<SearchView token={authToken} currentLevel={level} onBack={() => navigate("/")} />} />
         {Object.keys(PRACTICE_CATEGORIES).map((category) => (
           <Route
             key={category}

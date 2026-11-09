@@ -25,6 +25,7 @@ import {
 import {
   LEVELS,
   SUBJECTS,
+  api,
   assetSrc,
   buildExamProblemSections,
   buildReviewProblemGroups,
@@ -75,7 +76,9 @@ export function LibraryView({
   onOpenVocabulary,
   onOpenWrongBook,
   onOpenUser,
+  onSearch,
 }) {
+  const [searchQuery, setSearchQuery] = useState("");
   const currentAttempts = attempts.filter(
     (item) => item.level === level && item.subject === subject,
   );
@@ -135,6 +138,24 @@ export function LibraryView({
           </button>
         </div>
       </header>
+
+      <form
+        className="home-search"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const query = searchQuery.trim();
+          if (query.length >= 2) onSearch(query);
+        }}
+      >
+        <Search size={22} aria-hidden="true" />
+        <input
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          placeholder="搜索题目、单词或文法，例如「わけにもいかない」"
+          aria-label="搜索题目"
+        />
+        <button type="submit" disabled={searchQuery.trim().length < 2}>搜索</button>
+      </form>
 
       <section className="home-section">
         <div className="home-section-heading">
@@ -231,6 +252,104 @@ export function LibraryView({
         <button onClick={onOpenUser} type="button"><History size={22} /><span><strong>学习记录</strong><small>查看成绩与练习历史</small></span><ChevronRight size={20} /></button>
       </section>
     </>
+  );
+}
+
+const SEARCH_CATEGORIES = [
+  { value: "", label: "全部分类" },
+  { value: "vocabulary", label: "文字词汇" },
+  { value: "grammar", label: "文法" },
+  { value: "reading", label: "读解" },
+  { value: "listening", label: "听力" },
+];
+
+const SEARCH_SOURCES = [
+  { value: "", label: "全部来源" },
+  { value: "library", label: "基础题库" },
+  { value: "exam", label: "历年试卷" },
+];
+
+function HighlightedText({ text, query }) {
+  const value = String(text || "");
+  const normalizedQuery = query.trim();
+  if (!normalizedQuery) return value;
+  const index = value.toLocaleLowerCase().indexOf(normalizedQuery.toLocaleLowerCase());
+  if (index < 0) return value;
+  return <>{value.slice(0, index)}<mark>{value.slice(index, index + normalizedQuery.length)}</mark>{value.slice(index + normalizedQuery.length)}</>;
+}
+
+export function SearchView({ token, currentLevel, onBack }) {
+  const initialQuery = new URLSearchParams(window.location.search).get("q") || "";
+  const [query, setQuery] = useState(initialQuery);
+  const [submittedQuery, setSubmittedQuery] = useState(initialQuery);
+  const [level, setLevel] = useState(currentLevel);
+  const [category, setCategory] = useState("");
+  const [source, setSource] = useState("");
+  const [page, setPage] = useState(1);
+  const [result, setResult] = useState({ items: [], total: 0, page: 1, page_size: 20 });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (submittedQuery.trim().length < 2) return;
+    let ignore = false;
+    const params = new URLSearchParams({ q: submittedQuery.trim(), page: String(page), page_size: "20" });
+    if (level) params.set("level", level);
+    if (category) params.set("category", category);
+    if (source) params.set("source", source);
+    window.history.replaceState(null, "", `/search?${params.toString()}`);
+    setLoading(true);
+    setError("");
+    api(`/api/search/questions?${params.toString()}`, {}, token)
+      .then((data) => { if (!ignore) setResult(data); })
+      .catch((err) => { if (!ignore) setError(err.message || "搜索失败"); })
+      .finally(() => { if (!ignore) setLoading(false); });
+    return () => { ignore = true; };
+  }, [submittedQuery, level, category, source, page, token]);
+
+  const totalPages = Math.max(1, Math.ceil(result.total / result.page_size));
+  const submit = (event) => {
+    event.preventDefault();
+    const next = query.trim();
+    if (next.length < 2) return;
+    setPage(1);
+    setSubmittedQuery(next);
+  };
+
+  return (
+    <section className="search-page">
+      <header className="quiz-header search-header">
+        <button className="back-button" onClick={onBack} type="button"><ArrowLeft size={20} />返回首页</button>
+        <div><div className="eyebrow">全题库检索</div><h1>搜索题目</h1></div>
+      </header>
+
+      <form className="search-panel" onSubmit={submit}>
+        <div className="search-input-row">
+          <Search size={22} aria-hidden="true" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="输入至少 2 个字符" autoFocus aria-label="搜索关键词" />
+          <button className="primary-button" type="submit" disabled={query.trim().length < 2}>搜索</button>
+        </div>
+        <div className="search-filters">
+          <label>等级<select value={level} onChange={(event) => { setLevel(event.target.value); setPage(1); }}><option value="">全部等级</option>{LEVELS.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+          <label>分类<select value={category} onChange={(event) => { setCategory(event.target.value); setPage(1); }}>{SEARCH_CATEGORIES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
+          <label>来源<select value={source} onChange={(event) => { setSource(event.target.value); setPage(1); }}>{SEARCH_SOURCES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
+        </div>
+      </form>
+
+      <div className="search-summary">{loading ? "正在搜索…" : error ? "搜索遇到问题" : `找到 ${result.total} 道题`}</div>
+      {error ? <div className="center-state error">{error}</div> : null}
+      {!loading && !error && !result.items.length ? <div className="search-empty"><Search size={32} /><strong>没有找到相关题目</strong><span>试试缩短关键词，或选择“全部等级”。</span></div> : null}
+      <div className="search-results" aria-busy={loading}>
+        {result.items.map((item) => (
+          <article className="search-result-card" key={`${item.source}:${item.id}`}>
+            <div className="search-result-meta"><span>{item.level}</span><span>{item.category_label}</span><span>{item.source_label}</span><span>{item.source_title}</span></div>
+            <h2><HighlightedText text={item.stem} query={submittedQuery} /></h2>
+            {item.options?.length ? <ol className="search-result-options">{item.options.map((option) => <li key={option.id}><HighlightedText text={option.text} query={submittedQuery} /></li>)}</ol> : null}
+          </article>
+        ))}
+      </div>
+      {result.total > result.page_size ? <nav className="search-pagination" aria-label="搜索结果分页"><button className="secondary-button" type="button" disabled={page <= 1 || loading} onClick={() => setPage((value) => value - 1)}><ArrowLeft size={18} />上一页</button><span>{page} / {totalPages}</span><button className="secondary-button" type="button" disabled={page >= totalPages || loading} onClick={() => setPage((value) => value + 1)}>下一页<ArrowRight size={18} /></button></nav> : null}
+    </section>
   );
 }
 
