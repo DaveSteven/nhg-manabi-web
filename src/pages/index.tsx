@@ -45,6 +45,7 @@ import {
   pct,
   subjectLabel,
 } from "../lib/study";
+import UiSelect from "../components/UiSelect";
 
 export function Shell({ children }) {
   return (
@@ -122,12 +123,15 @@ export function LibraryView({
             />
             <button type="submit" disabled={searchQuery.trim().length < 2}>搜索</button>
           </form>
-          <label className="home-level-select">
-            <span>等级</span>
-            <select value={level} onChange={(event) => onLevel(event.target.value)} aria-label="JLPT 等级">
-              {LEVELS.map((item) => <option key={item} value={item}>{item}</option>)}
-            </select>
-          </label>
+          <UiSelect
+            className="home-level-select"
+            label="等级"
+            ariaLabel="JLPT 等级"
+            compact
+            value={level}
+            options={LEVELS.map((item) => ({ value: item, label: item }))}
+            onChange={onLevel}
+          />
           <button
             className="wrong-icon-button"
             onClick={onOpenWrongBook}
@@ -333,9 +337,9 @@ export function SearchView({ token, currentLevel, onBack }) {
           <button className="primary-button" type="submit" disabled={query.trim().length < 2}>搜索</button>
         </div>
         <div className="search-filters">
-          <label>等级<select value={level} onChange={(event) => { setLevel(event.target.value); setPage(1); }}><option value="">全部等级</option>{LEVELS.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
-          <label>分类<select value={category} onChange={(event) => { setCategory(event.target.value); setPage(1); }}>{SEARCH_CATEGORIES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
-          <label>来源<select value={source} onChange={(event) => { setSource(event.target.value); setPage(1); }}>{SEARCH_SOURCES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
+          <UiSelect label="等级" value={level} options={[{ value: "", label: "全部等级" }, ...LEVELS.map((item) => ({ value: item, label: item }))]} onChange={(value) => { setLevel(value); setPage(1); }} />
+          <UiSelect label="分类" value={category} options={SEARCH_CATEGORIES} onChange={(value) => { setCategory(value); setPage(1); }} />
+          <UiSelect label="来源" value={source} options={SEARCH_SOURCES} onChange={(value) => { setSource(value); setPage(1); }} />
         </div>
       </form>
 
