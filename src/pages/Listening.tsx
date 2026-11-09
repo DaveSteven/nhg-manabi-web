@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Play, Pause, Volume2, VolumeX, Eye, EyeOff, CheckCircle2, CircleAlert, RotateCcw, ClipboardList } from "lucide-react";
 import { api, assetSrc } from "../lib/study";
+import UiSelect from "../components/UiSelect";
 
 function plain(html = "") { return new DOMParser().parseFromString(html, "text/html").body.textContent?.replace(/<MOJiTest_URL>/g, "").trim() || ""; }
 function analysisParagraphs(html: string) {
@@ -90,7 +91,7 @@ export default function Listening({ userId, token, globalLevel }) {
           <label className={practiceMode === 'random' ? 'selected' : ''}><input type="radio" name="listening-source" checked={practiceMode === 'random'} onChange={() => setPracticeMode('random')} /><Play size={23} /><span><strong>全部试卷随机</strong><small>从 {level} 历年试卷中随机抽取</small></span></label>
           <label className={practiceMode === 'exam' ? 'selected' : ''}><input type="radio" name="listening-source" checked={practiceMode === 'exam'} onChange={() => setPracticeMode('exam')} /><ClipboardList size={23} /><span><strong>指定试卷</strong><small>练习一张试卷中的所选听力题型</small></span></label>
         </div>
-        {practiceMode === 'exam' ? <select className="practice-exam-select" value={practiceExamId} onChange={event => setPracticeExamId(event.target.value)}>{exams.map(exam => <option value={exam.id} key={exam.id}>{exam.title}</option>)}</select> : null}
+        {practiceMode === 'exam' ? <UiSelect className="practice-exam-select" ariaLabel="选择听力试卷" value={practiceExamId} onChange={setPracticeExamId} options={exams.map(exam => ({ value: String(exam.id), label: exam.title }))} /> : null}
       </section>
       <section className="practice-config-section">
         <div className="practice-config-heading"><span>2</span><div><h2>选择听力题型</h2><p>可同时选择多种题型</p></div></div>
@@ -219,7 +220,7 @@ function Trainer({ question: q, examId, token, saved, onSave, onNext }) {
         <input type="range" aria-label="音频播放进度" min={0} max={duration || 1} step={0.1} value={Math.min(position, duration || 1)} disabled={!duration} onChange={e => seek(+e.target.value)} style={{ '--played': `${duration ? position / duration * 100 : 0}%` } as React.CSSProperties} />
       </div>
       <div className="listening-player-settings">
-        <label>语速 <select value={rate} onChange={e => { const v = +e.target.value; setRate(v); if (audio.current) audio.current.playbackRate = v; }}>{[.6,.8,1,1.2,1.5].map(v => <option key={v} value={v}>{v}×</option>)}</select></label>
+        <UiSelect className="listening-rate-select" label="语速" compact value={String(rate)} onChange={value => { const nextRate = Number(value); setRate(nextRate); if (audio.current) audio.current.playbackRate = nextRate; }} options={[.6,.8,1,1.2,1.5].map(value => ({ value: String(value), label: `${value}×` }))} />
         <button className="secondary-button listening-mute" aria-label={muted ? '取消静音' : '静音'} aria-pressed={muted} onClick={() => { if (audio.current) audio.current.muted = !muted; setMuted(!muted); }}>{muted ? <VolumeX size={20} /> : <Volume2 size={20} />}</button>
       </div>
     </div>

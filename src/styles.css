@@ -3451,6 +3451,8 @@ h1 {
 .listening-progress input:disabled { opacity: .5; cursor: not-allowed; }
 .listening-player-settings { display: flex; align-items: center; gap: 12px; }
 .listening-player-settings label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .9rem; }
+.listening-player-settings .listening-rate-select { height: 44px; box-shadow: none; }
+.listening-player-settings .listening-rate-select .ui-select-control { min-width: 86px; }
 .listening .listening-mute { padding: 0; width: 46px; min-height: 44px; }
 @media(max-width:600px) { .listening-player { padding: 16px; gap: 16px; } .listening-progress { flex-basis: calc(100% - 130px); } .listening-progress-label span { display: none; } .listening-player-settings { width: 100%; justify-content: space-between; } }
 
