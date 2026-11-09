@@ -1242,9 +1242,11 @@ export function UserView({ currentUser, attempts, onBack, onLogout, onRegisterUs
 }
 
 function Progress({ value }) {
+  const displayValue = value > 0 ? Math.max(4, value) : 0;
+
   return (
     <div className="progress">
-      <span style={{ width: `${Math.max(4, value)}%` }} />
+      <span style={{ width: `${displayValue}%` }} />
     </div>
   );
 }
