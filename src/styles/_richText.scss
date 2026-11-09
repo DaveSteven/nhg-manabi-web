@@ -1,0 +1,48 @@
+// Display Quill content without loading an editor in the student app.
+.rich-text {
+  overflow-wrap: anywhere;
+
+  p, blockquote, ol, ul, pre { margin: 0 0 0.6em; }
+  > :last-child { margin-bottom: 0; }
+  h1, h2, h3 { margin: 0.9em 0 0.45em; font-weight: 700; line-height: 1.4; }
+  h1 { font-size: 1.6em; }
+  h2 { font-size: 1.35em; }
+  h3 { font-size: 1.15em; }
+  > :first-child { margin-top: 0; }
+  strong, b { font-weight: 700; }
+  em, i { font-style: italic; }
+  s { text-decoration: line-through; }
+  a { color: var(--primary, #2563eb); text-decoration: underline; text-underline-offset: 3px; }
+  blockquote { margin-left: 0; padding: 0.3em 1em; border-left: 3px solid #cbd5e1; color: #526175; }
+  ol, ul { padding-left: 1.75em; }
+  ol { list-style: decimal; }
+  ul { list-style: disc; }
+  li { padding-left: 0.2em; margin-bottom: 0.25em; }
+  // Quill 2 stores both ordered and bullet items inside an ol.
+  li[data-list="bullet"] { list-style-type: disc; }
+  li[data-list="ordered"] { list-style-type: none; counter-increment: rich-item; }
+  ol { counter-reset: rich-item; }
+  li[data-list="ordered"]::before { content: counter(rich-item) ". "; display: inline-block; width: 1.75em; margin-left: -1.75em; }
+  .ql-ui { display: none; }
+  .ql-align-center { text-align: center; }
+  .ql-align-right { text-align: right; }
+  .ql-align-justify { text-align: justify; }
+  .ql-direction-rtl { direction: rtl; }
+  @for $level from 1 through 8 {
+    .ql-indent-#{$level} { padding-left: $level * 3em; }
+  }
+  .ql-size-small { font-size: 0.75em; }
+  .ql-size-large { font-size: 1.5em; }
+  .ql-size-huge { font-size: 2.5em; }
+  .ql-font-serif { font-family: Georgia, "Noto Serif JP", serif; }
+  .ql-font-monospace, code, pre { font-family: monospace; }
+  pre, .ql-code-block-container { white-space: pre-wrap; background: #f1f5f9; padding: 0.75em; border-radius: 6px; }
+  img { max-width: 100%; height: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  td, th { border: 1px solid #cbd5e1; padding: 0.4em 0.6em; }
+}
+
+.rich-text-inline {
+  p { display: inline; margin: 0; }
+  p + p::before { content: " "; }
+}

@@ -1,7 +1,12 @@
 import React, { useState } from "react";
+import DOMPurify from "dompurify";
 
 export function cleanHtml(html) {
-  return html ? String(html).replace(/<\/?MOJiTest_URL>/g, "") : "";
+  if (!html) return "";
+  const value = String(html).replace(/<\/?MOJiTest_URL>/gi, "");
+  const safe = DOMPurify.sanitize(value, { USE_PROFILES: { html: true } });
+  // Legacy plain text stores line breaks without paragraph tags.
+  return /<[a-z][\s\S]*>/i.test(value) ? safe : safe.replace(/\r?\n/g, "<br>");
 }
 
 function cleanInlineHtml(html) {
@@ -26,7 +31,7 @@ export function HtmlContent({ html, inline = false }: { html: any; inline?: bool
   if (!html) return null;
   return (
     <div
-      className="html-content"
+      className="html-content rich-text"
       dangerouslySetInnerHTML={{ __html: inline ? cleanInlineHtml(html) : cleanHtml(html) }}
     />
   );
@@ -34,7 +39,7 @@ export function HtmlContent({ html, inline = false }: { html: any; inline?: bool
 
 export function HtmlInline({ html }) {
   if (!html) return null;
-  return <span dangerouslySetInnerHTML={{ __html: cleanHtml(html) }} />;
+  return <span className="rich-text rich-text-inline" dangerouslySetInnerHTML={{ __html: cleanHtml(html) }} />;
 }
 
 function htmlParagraphs(html) {
@@ -42,8 +47,11 @@ function htmlParagraphs(html) {
   if (!cleaned) return [];
   if (typeof DOMParser === "undefined") return [cleaned];
   const doc = new DOMParser().parseFromString(`<section>${cleaned}</section>`, "text/html");
-  const paragraphs = Array.from(doc.body.querySelectorAll("p"))
-    .map((node) => cleanHtml(node.innerHTML).trim())
+  // Keep top-level blocks intact: extracting p.innerHTML loses alignment,
+  // indentation, headings, and lists surrounding paragraphs.
+  const section = doc.body.querySelector("section");
+  const paragraphs = Array.from(section?.childNodes || [])
+    .map((node) => node instanceof Element ? node.outerHTML : cleanHtml(node.textContent).trim())
     .filter(Boolean);
   return paragraphs.length ? paragraphs : [cleaned];
 }
