@@ -45,6 +45,16 @@ export function pct(value, total) {
   return Math.round((value / total) * 100);
 }
 
+/** Seconds left until a server timestamp (UTC if no zone given). */
+export function secondsUntil(value, now = Date.now()) {
+  const normalized = /(?:Z|[+-]\d\d:\d\d)$/.test(value) ? value : `${value}Z`;
+  return Math.max(0, Math.ceil((new Date(normalized).getTime() - now) / 1000));
+}
+
+export function formatClock(seconds) {
+  return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
 export function latestExamAttemptByExam(attempts) {
   const latest = new Map();
   for (const attempt of attempts) {
