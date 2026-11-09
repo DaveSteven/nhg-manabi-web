@@ -266,12 +266,18 @@ const SEARCH_SOURCES = [
   { value: "exam", label: "历年试卷" },
 ];
 
-function cleanSearchText(text) {
-  return String(text || "")
+export function cleanSearchText(text) {
+  const withoutMarkup = String(text || "")
     .replace(/<MOJITest_URL>/gi, "")
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/p>\s*<p[^>]*>/gi, "\n")
-    .replace(/<[^>]+>/g, "")
+    .replace(/<[^>]+>/g, "");
+  const decoder = document.createElement("textarea");
+  decoder.innerHTML = withoutMarkup;
+  return decoder.value
+    .replace(/\u00a0/g, " ")
+    .replace(/_{2,}/g, "＿＿")
+    .replace(/[ \t]{2,}/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
