@@ -1,0 +1,332 @@
+@use "variables" as *;
+
+/* 专项练习结果页：与练习页同宽，成绩卡 → 题目解析两段式。 */
+.practice-result {
+  display: grid;
+  gap: var(--sp-6);
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.practice-result .quiz-header { margin-bottom: 0; }
+
+.practice-result-heading { display: grid; gap: 2px; }
+.practice-result-heading small { color: var(--muted); font-size: var(--fs-sm); }
+.practice-result-heading strong { font-size: var(--fs-xl); }
+
+/* ---- 成绩卡 ---- */
+.practice-result-summary {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 32px;
+  align-items: center;
+  padding: 28px 32px;
+  border: 2px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--card);
+  box-shadow: var(--shadow-soft);
+}
+
+.practice-result-score {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding-right: 32px;
+  border-right: 1px solid var(--line);
+}
+
+.practice-result-score strong {
+  font-size: 4rem;
+  line-height: 1;
+  font-weight: var(--fw-bold);
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.practice-result-score strong span { font-size: 0.45em; margin-left: 2px; }
+.practice-result-score small { color: var(--muted); font-size: var(--fs-sm); }
+.tone-good .practice-result-score strong { color: var(--ink); }
+.tone-low .practice-result-score strong { color: var(--muted); }
+
+.practice-result-body { display: grid; gap: 20px; min-width: 0; }
+
+.practice-result-tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.practice-result-tally li { display: inline-flex; align-items: baseline; gap: 8px; color: var(--muted); font-size: var(--fs-md); }
+.practice-result-tally li::before { content: ""; align-self: center; width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+.practice-result-tally strong { color: var(--ink); font-size: var(--fs-xl); font-variant-numeric: tabular-nums; }
+.practice-result-tally .correct::before { background: var(--correct); }
+.practice-result-tally .wrong::before { background: var(--error); }
+.practice-result-tally .skipped::before { background: var(--muted); }
+.practice-result-tally .total { margin-left: auto; gap: 4px; }
+.practice-result-tally .total::before { display: none; }
+
+.practice-result-types {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+}
+
+.practice-result-types li {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) 56px;
+  align-items: center;
+  gap: 14px;
+  font-size: var(--fs-md);
+}
+
+.practice-result-types small { color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.practice-result-bar { height: 8px; overflow: hidden; border-radius: 999px; background: var(--progress-track); }
+.practice-result-bar i { display: block; height: 100%; border-radius: inherit; background: var(--progress-fill); }
+
+.practice-result-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.practice-result-note { margin: -8px 0 0; color: var(--muted); font-size: var(--fs-sm); }
+
+/* ---- 题目解析 ---- */
+.practice-result-review { display: grid; gap: 16px; }
+
+.practice-result-review-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.practice-result-review-heading h2 { margin: 0; font-size: var(--fs-xl); }
+
+.practice-result-filter {
+  display: inline-flex;
+  padding: 4px;
+  border: 2px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--card);
+}
+
+.practice-result-filter button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--r-sm);
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+}
+
+.practice-result-filter button[aria-pressed="true"] { color: var(--primary); background: var(--primary-soft); }
+.practice-result-filter button:disabled { cursor: not-allowed; opacity: 0.5; }
+
+.practice-result-review-layout {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.practice-result-nav {
+  position: sticky;
+  top: 18px;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 2px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--card);
+}
+
+.practice-result-nav-group { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.practice-result-nav-group.shared { padding: 6px; border-radius: var(--r-sm); background: var(--surface); }
+
+.practice-result-nav a {
+  display: grid;
+  place-items: center;
+  height: 32px;
+  border: 2px solid var(--line);
+  border-radius: var(--r-xs);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.practice-result-nav a.correct { border-color: var(--correct); color: var(--correct); }
+.practice-result-nav a.wrong { border-color: var(--error); color: var(--on-accent); background: var(--error); }
+.practice-result-nav a.skipped { border-style: dashed; color: var(--muted); }
+.practice-result-nav a.dimmed { opacity: 0.3; pointer-events: none; }
+
+.practice-result-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--muted); font-size: var(--fs-xs); }
+.practice-result-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.practice-result-legend span::before { content: ""; width: 10px; height: 10px; border: 2px solid var(--line); border-radius: 3px; }
+.practice-result-legend .correct::before { border-color: var(--correct); }
+.practice-result-legend .wrong::before { border-color: var(--error); background: var(--error); }
+.practice-result-legend .skipped::before { border-style: dashed; }
+
+.practice-result-groups { display: grid; gap: 18px; min-width: 0; }
+
+.practice-result-group {
+  display: grid;
+  gap: 0;
+  overflow: hidden;
+  border: 2px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--card);
+}
+
+.practice-result-group-heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 16px 24px 0;
+}
+
+.practice-result-group-heading span { color: var(--muted); font-size: var(--fs-md); }
+.practice-result-group-heading small { margin-left: auto; color: var(--muted); font-size: var(--fs-sm); }
+
+.practice-result-passage { margin: 12px 24px 4px; padding: 14px 18px; border-radius: var(--r-md); background: var(--surface); }
+.practice-result-passage.reading { padding: 0; background: transparent; }
+.practice-result-passage.reading summary { padding: 0 2px; }
+.practice-result-passage img { max-width: 100%; height: auto; }
+.practice-result-passage summary { cursor: pointer; color: var(--muted); font-size: var(--fs-sm); font-weight: var(--fw-medium); }
+.practice-result-passage[open] summary { margin-bottom: 10px; }
+.practice-result-passage p { line-height: 1.9; }
+
+.practice-result-group-note { margin: 0; padding: 12px 24px 16px; color: var(--muted); font-size: var(--fs-sm); }
+
+.practice-result-question {
+  display: grid;
+  gap: 14px;
+  padding: 20px 24px;
+  scroll-margin-top: 18px;
+}
+
+.practice-result-question + .practice-result-question,
+.practice-result-passage + .practice-result-question { border-top: 1px solid var(--line); }
+.practice-result-passage + .practice-result-question { margin-top: 16px; }
+
+.practice-result-question header { display: flex; align-items: center; gap: 10px; }
+.practice-result-question header small { margin-left: auto; color: var(--muted); font-size: var(--fs-sm); }
+
+.practice-result-number {
+  display: grid;
+  place-items: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border-radius: var(--r-xs);
+  background: var(--line);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+}
+
+.practice-result-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.practice-result-status.correct { color: var(--correct); background: var(--correct-soft); }
+.practice-result-status.wrong { color: var(--error); background: var(--error-soft); }
+.practice-result-status.skipped { color: var(--muted); background: var(--surface); border: 1px dashed var(--line); }
+
+.practice-result-stem { font-size: var(--fs-lg); line-height: 1.8; }
+.practice-result-stem p { margin: 0; }
+
+.practice-result-options { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+
+.practice-result-options li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+  padding: 8px 14px 8px 8px;
+  border: 2px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.practice-result-option-index {
+  display: grid;
+  flex: 0 0 30px;
+  place-items: center;
+  height: 30px;
+  border-radius: var(--r-xs);
+  color: var(--muted);
+  background: var(--line);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.practice-result-option-text { flex: 1; min-width: 0; }
+.practice-result-options em { flex: 0 0 auto; font-size: var(--fs-sm); font-style: normal; font-weight: var(--fw-medium); }
+
+.practice-result-options li.correct { border-color: var(--correct); background: var(--correct-soft); }
+.practice-result-options li.correct .practice-result-option-index { color: var(--on-accent); background: var(--correct); }
+.practice-result-options li.correct em { color: var(--correct); }
+.practice-result-options li.wrong { border-color: var(--error); background: var(--error-soft); }
+.practice-result-options li.wrong .practice-result-option-index { color: var(--on-accent); background: var(--error); }
+.practice-result-options li.wrong em { color: var(--error); }
+
+.practice-result-analysis {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  line-height: 1.85;
+  white-space: pre-wrap;
+}
+
+.practice-result-analysis strong { color: var(--muted); font-size: var(--fs-sm); white-space: normal; }
+
+@media (max-width: $bpLg) {
+  .practice-result-summary { grid-template-columns: 1fr; gap: 20px; padding: 22px; }
+  .practice-result-score { padding: 0 0 18px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .practice-result-review-layout { grid-template-columns: 1fr; }
+  .practice-result-nav { position: static; }
+  .practice-result-nav-group { grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); }
+}
+
+@media (max-width: $bpSm) {
+  .practice-result-review-heading { align-items: stretch; flex-direction: column; }
+  .practice-result-types li { grid-template-columns: 80px minmax(0, 1fr) 44px; gap: 10px; }
+  .practice-result-actions, .practice-result-actions button { width: 100%; }
+  .practice-result-question, .practice-result-group-heading { padding-left: 16px; padding-right: 16px; }
+  .practice-result-passage { margin-left: 16px; margin-right: 16px; }
+}
+
+/* 共用部件的补充：成绩卡标语、无选项数据时的答案对照。 */
+.practice-result-headline { margin: 0; font-size: var(--fs-lg); font-weight: var(--fw-medium); }
+
+.practice-result-answer-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 0; }
+.practice-result-answer-pair > div { padding: 12px 14px; border: 2px solid var(--line); border-radius: var(--r-md); }
+.practice-result-answer-pair > div.correct { border-color: var(--correct); background: var(--correct-soft); }
+.practice-result-answer-pair > div.wrong { border-color: var(--error); background: var(--error-soft); }
+.practice-result-answer-pair dt { margin-bottom: 4px; color: var(--muted); font-size: var(--fs-sm); }
+.practice-result-answer-pair dd { margin: 0; font-weight: var(--fw-medium); }
+
+/* 听力结果页里的原文折叠块 */
+.practice-result-transcript { padding: 12px 16px; border-radius: var(--r-md); background: var(--surface); }
+.practice-result-transcript summary { cursor: pointer; color: var(--muted); font-size: var(--fs-sm); font-weight: var(--fw-medium); }
+.practice-result-transcript p { margin: 10px 0 0; line-height: 1.9; white-space: pre-wrap; }
+.practice-result-transcript p + p { color: var(--muted); }
+
+/* 听力结果页：外层页头与结果内容同宽对齐。 */
+.listening.listening-result { max-width: 1180px; margin-left: auto; margin-right: auto; }
+.listening.listening-result .practice-result { max-width: none; }

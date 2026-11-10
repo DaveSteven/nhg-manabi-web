@@ -23,8 +23,9 @@ import { LEVELS, SUBJECTS, api, formatDate, pct, subjectLabel } from "../lib/stu
 import UiSelect from "../components/UiSelect";
 import { Tooltip } from "../components/Tooltip";
 import { HtmlInline } from "../components/Html";
-import { DailyRing, EmptyState, FieldInput, KeyboardToast, ModalOverlay, OptionButton, PageHeader, PetalFall, Progress, ResultScore, ReviewMark, ReviewOptions, BrandMark, ShortcutHelp, ThemeToggle, TitleBlock } from "../components/CommonUi";
+import { DailyRing, EmptyState, FieldInput, KeyboardToast, ModalOverlay, OptionButton, PageHeader, Progress, BrandMark, ShortcutHelp, ThemeToggle, TitleBlock } from "../components/CommonUi";
 import { markKeyboardHintSeen, useKeyboardAnswer } from "../hooks/useKeyboardAnswer";
+import { ResultFilter, ResultGroupCard, ResultPage, ResultQuestion, ResultReview, ResultSummary, answerStatus, countStatuses, scoreTone, singleNavChunk } from "../components/ResultParts";
 
 export * from "./ExamPages";
 export * from "./PracticePages";
@@ -740,60 +741,62 @@ export function QuizView({ session, onBack, onDiscard, onChoose, onCheck, onNext
   );
 }
 
-export function ResultView({ attempt, todayCount = 0, dailyGoal = 0, onRepeat, onLibrary, onReviewWrong }) {
-  const [onlyWrong, setOnlyWrong] = useState(false);
-  const wrongAnswers = attempt.answers.filter((answer) => !answer.isCorrect);
-  const skipped = attempt.answers.filter((answer) => !answer.chosenOptionId).length;
-  const wrongCount = wrongAnswers.length - skipped;
+export function ResultView({ attempt, questions = [], todayCount = 0, dailyGoal = 0, onRepeat, onLibrary, onReviewWrong }) {
+  // 练习时选项是打乱过的，复盘按练习时看到的顺序排，题号才对得上。
+  const shownOrder = new Map<any, any[]>(questions.map((question) => [question.id, (question.options || []).map((option) => option.id)]));
+  const orderedOptions = (answer) => {
+    const order = shownOrder.get(answer.questionId);
+    const options = answer.options || [];
+    if (!order?.length) return options;
+    return [...options].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+  };
+  const [filter, setFilter] = useState<ResultFilter>("all");
+  const statuses = attempt.answers.map(answerStatus);
+  const counts = countStatuses(statuses);
+  const missed = counts.wrong + counts.skipped;
+  const total = attempt.total || attempt.answers.length;
+  const score = pct(attempt.correct, total);
   const wrongReview = attempt.mode === "wrong_review";
-  const clearedAll = wrongReview && wrongCount === 0;
-  const reviewWrongFirst = !wrongReview && wrongCount > 0;
+  const clearedAll = wrongReview && missed === 0;
+  const reviewFirst = !wrongReview && missed > 0;
   // B5 reward: full sakura burst when the wrong book clears or the daily goal is crossed by this attempt.
   const dailyCrossed = dailyGoal > 0 && todayCount >= dailyGoal && todayCount - (attempt.total || 0) < dailyGoal;
-  const celebrate = clearedAll || dailyCrossed;
+  const petals = clearedAll || dailyCrossed ? "full" : scoreTone(score) === "great" ? "light" : null;
+  const entries = attempt.answers.map((answer, index) => ({ id: `${answer.questionId}-${index}`, number: index + 1, status: statuses[index] }));
   return (
-    <section className="result-view">
-      <PetalFall variant={celebrate ? "full" : "light"} />
-      <ResultScore score={pct(attempt.correct, attempt.total)}>
-        {clearedAll ? <>全部清完 🌸 · 答对 {attempt.correct} / {attempt.total}</> : <>答对 {attempt.correct} / {attempt.total}</>}
-      </ResultScore>
-      <section className="practice-result-counts"><div><span>本次题量</span><strong>{attempt.total}</strong></div><div><span>已答</span><strong>{attempt.total - skipped}</strong></div><div><span>答对</span><strong>{attempt.correct}</strong></div><div><span>答错</span><strong>{wrongCount}</strong></div><div><span>跳过</span><strong>{skipped}</strong></div></section>
-      <p className="practice-score-note">正确率 {pct(attempt.correct, attempt.total)}%（答对题数 ÷ 本次全部题目，跳过计入总题量）</p>
-      <div className="result-actions">
-        {reviewWrongFirst ? (
-          <button className="primary-button" onClick={onReviewWrong} type="button"><RotateCcw size={20} />复习本次错题（{wrongCount} 题）</button>
-        ) : null}
-        <button className={reviewWrongFirst ? "secondary-button" : "primary-button"} onClick={onRepeat} type="button">
-          <RotateCcw size={20} />{wrongReview ? "再来一轮错题" : "再来一组"}
-        </button>
-        <button className="secondary-button" onClick={onLibrary} type="button">返回书目</button>
-        <button className="secondary-button" aria-pressed={onlyWrong} onClick={() => setOnlyWrong((value) => !value)} type="button">{onlyWrong ? "查看全部解析" : "只看错题"}</button>
-      </div>
-
-      <section className="review-list">
-        {attempt.answers.filter((answer) => !onlyWrong || !answer.isCorrect).map((answer, index) => (
-          <article className="review-item" key={`${answer.questionId}-${index}`}>
-            <ReviewMark ok={answer.isCorrect} />
-            <div>
-              <h3>{answer.stem}</h3>
-              {answer.options?.length ? (
-                <ReviewOptions
-                  options={answer.options}
-                  questionId={answer.questionId}
-                  chosenOptionId={answer.chosenOptionId}
-                  correctOptionId={answer.correctOptionId}
-                  label={`${index + 1}番の選択肢`}
-                />
-              ) : (
-                <p>
-                  你的答案： {answer.chosenText ? <HtmlInline html={answer.chosenText} /> : "-"} / 正确答案：<HtmlInline html={answer.answerText} />
-                </p>
-              )}
-            </div>
-          </article>
-        ))}
-      </section>
-    </section>
+    <ResultPage eyebrow={attempt.categoryLabel || "练习结果"} title={attempt.bookName || "练习结果"} onBack={onLibrary} backLabel="返回书目" petals={petals}>
+      <ResultSummary
+        score={score}
+        counts={counts}
+        total={total}
+        headline={clearedAll ? "全部清完 🌸" : dailyCrossed ? "今日目标已达成 🌸" : null}
+        note={counts.skipped ? "未作答的题计入总题数。" : null}
+        actions={(
+          <>
+            {reviewFirst ? <button className="primary-button" onClick={onReviewWrong} type="button">复习本次错题（{missed} 题）</button> : null}
+            <button className={reviewFirst ? "secondary-button" : "primary-button"} onClick={onRepeat} type="button"><RotateCcw size={18} />{wrongReview ? "再来一轮错题" : "再来一组"}</button>
+            <button className="secondary-button" onClick={onLibrary} type="button">返回书目</button>
+          </>
+        )}
+      />
+      <ResultReview chunks={singleNavChunk(entries)} total={entries.length} missed={missed} filter={filter} onFilter={setFilter}>
+        {attempt.answers.map((answer, index) => (filter === "missed" && statuses[index] === "correct" ? null : (
+          <ResultGroupCard key={entries[index].id}>
+            <ResultQuestion
+              id={entries[index].id}
+              number={index + 1}
+              status={statuses[index]}
+              stem={<p>{answer.stem}</p>}
+              options={orderedOptions(answer)}
+              chosenId={answer.chosenOptionId}
+              correctId={answer.correctOptionId}
+              chosenText={answer.chosenText}
+              answerText={answer.answerText}
+            />
+          </ResultGroupCard>
+        )))}
+      </ResultReview>
+    </ResultPage>
   );
 }
 

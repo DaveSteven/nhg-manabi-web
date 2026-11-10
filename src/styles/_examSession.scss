@@ -224,10 +224,6 @@
   padding: 4px 0;
 }
 
-.practice-result-counts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
-.practice-result-counts div { display: grid; gap: 4px; padding: 14px; border: 2px solid var(--line); border-radius: var(--r-md); background: var(--card); text-align: center; }
-.practice-result-counts span, .practice-score-note { color: var(--muted); }
-.practice-result-counts strong { font-size: var(--fs-xl); }
 .practice-basic-actions { display: flex; gap: 10px; }
 
 .quiz-progress {

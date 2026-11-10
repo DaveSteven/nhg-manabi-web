@@ -32,7 +32,6 @@ import {
 } from "../components/CommonUi";
 import { markKeyboardHintSeen, useKeyboardAnswer } from "../hooks/useKeyboardAnswer";
 import { AnswerSheet, ExamReview, ListeningExamPlayer } from "../components/ExamParts";
-import { PRACTICE_CATEGORIES } from "./PracticePages";
 
 const pad2 = (n) => String(n).padStart(2, "0");
 
@@ -688,8 +687,7 @@ function EstimatedScore({ est }) {
   );
 }
 
-export function ExamResultView({ exam, attempt, questions, onRepeat, onLibrary, onReviewWrong = null, practice = false, practiceCategory = "grammar" }) {
-  const [onlyWrong, setOnlyWrong] = useState(false);
+export function ExamResultView({ exam, attempt, questions, onRepeat, onLibrary }) {
   const answerByQuestion = new Map<number, any>(attempt.answers.map((answer) => [answer.questionId, answer]));
   const answerForQuestion = (question) =>
     answerByQuestion.get(question.id) || {
@@ -703,44 +701,16 @@ export function ExamResultView({ exam, attempt, questions, onRepeat, onLibrary, 
       isCorrect: false,
       unanswered: true,
     };
-  const practiceTypes = (PRACTICE_CATEGORIES[practiceCategory] || PRACTICE_CATEGORIES.grammar).types;
-  const typeStats = practiceTypes
-    .map((type) => {
-      const typeQuestions = questions.filter((q) => q.question_type === type.id);
-      const correct = typeQuestions.filter((q) => answerByQuestion.get(q.id)?.isCorrect).length;
-      return { ...type, correct, total: typeQuestions.length };
-    })
-    .filter((type) => type.total);
-  const skipped = attempt.answers.filter((answer) => !answer.chosenOptionId).length;
-  const wrong = attempt.total - attempt.correct - skipped;
-  const visibleAnswerByQuestion = onlyWrong
-    ? new Map([...answerByQuestion].filter(([, answer]) => !answer.isCorrect))
-    : answerByQuestion;
-  const visibleQuestions = onlyWrong ? questions.filter((question) => !answerByQuestion.get(question.id)?.isCorrect) : questions;
-
+  // 专项练习有独立结果页（pages/PracticeResult.tsx），这里只服务模拟考试。
   return (
     <section className="result-view exam-result-view">
-      {/* B5 reward rhythm: a full paper earns the sakura burst, practice runs get the subtle drift. */}
-      <PetalFall variant={practice ? "light" : "full"} />
+      <PetalFall variant="full" />
       <ResultScore score={pct(attempt.correct, attempt.total)}>答对 {attempt.correct} / {attempt.total} · {attempt.title}</ResultScore>
-
-      {practice ? (
-        <>
-          <section className="practice-result-counts">
-            <div><span>本次题量</span><strong>{attempt.total}</strong></div><div><span>已答</span><strong>{attempt.total - skipped}</strong></div><div><span>答对</span><strong>{attempt.correct}</strong></div><div><span>答错</span><strong>{wrong}</strong></div><div><span>跳过</span><strong>{skipped}</strong></div>
-          </section>
-          <p className="practice-score-note">正确率 {pct(attempt.correct, attempt.total)}%（答对题数 ÷ 本次全部题目，跳过计入总题量）</p>
-          <section className="grammar-type-summary">
-            {typeStats.map((type) => <div key={type.id}><span>{type.label}</span><strong>{pct(type.correct, type.total)}%</strong><small>{type.correct} / {type.total} 正确</small></div>)}
-          </section>
-        </>
-      ) : <EstimatedScore est={calculateExamScore(attempt, questions)} />}
-
-      {practice ? <div className="result-actions">{wrong > 0 && onReviewWrong ? <button className="primary-button" onClick={onReviewWrong} type="button">重练错题</button> : null}<button className={wrong > 0 ? "secondary-button" : "primary-button"} onClick={onRepeat} type="button">再练一组</button><button className="secondary-button" onClick={onLibrary} type="button">返回首页</button><button className="secondary-button" aria-pressed={onlyWrong} onClick={() => setOnlyWrong((value) => !value)} type="button">{onlyWrong ? "查看全部解析" : "只看错题"}</button></div> : <ResultActions onRepeat={onRepeat} repeatLabel="再做一次" onLibrary={onLibrary} libraryLabel="试卷列表" />}
-
+      <EstimatedScore est={calculateExamScore(attempt, questions)} />
+      <ResultActions onRepeat={onRepeat} repeatLabel="再做一次" onLibrary={onLibrary} libraryLabel="试卷列表" />
       <ExamReview
-        reviewProblemGroups={buildReviewProblemGroups(exam, visibleQuestions)}
-        answerByQuestion={visibleAnswerByQuestion}
+        reviewProblemGroups={buildReviewProblemGroups(exam, questions)}
+        answerByQuestion={answerByQuestion}
         answerForQuestion={answerForQuestion}
       />
     </section>

@@ -93,37 +93,10 @@
   font-size: var(--fs-sm);
 }
 
-.listening-practice-result {
-  display: grid;
-  place-items: center;
-  gap: 12px;
-  width: min(680px, 100%);
-  margin: 40px auto;
-  padding: 42px 24px;
-  border: 2px solid var(--line);
-  border-radius: var(--r-xl);
-  background: var(--card);
-  text-align: center;
-}
 
-.listening-practice-result > svg,
-.listening-practice-result > strong {
-  color: var(--correct-dark);
-}
 
-.listening-practice-result > strong {
-  font-size: var(--fs-2xl);
-}
 
-.listening-practice-result > p {
-  color: var(--muted);
-}
 
-.listening-practice-result > div {
-  display: flex;
-  gap: 12px;
-  margin-top: 10px;
-}
 
 .book-card {
   display: grid;

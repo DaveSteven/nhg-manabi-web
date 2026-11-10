@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CheckCircle2, ClipboardList, Play, RotateCcw } from "lucide-react";
-import { api, mapPracticeAttempt, pct } from "../lib/study";
+import { api, assetSrc, mapPracticeAttempt, pct } from "../lib/study";
 import { LISTENING_TYPES, listeningGroupLabel, plain, readProgress, segments } from "../lib/listening";
 import UiSelect from "../components/UiSelect";
 import ListeningTrainer from "../components/ListeningTrainer";
-import { ModalOverlay, PageHeader, ReviewMark, ReviewOptions, TitleBlock } from "../components/CommonUi";
-import { HtmlContent } from "../components/Html";
+import { ModalOverlay, PageHeader, TitleBlock } from "../components/CommonUi";
+import { ResultFilter, ResultGroupCard, ResultPage, ResultQuestion, ResultReview, ResultSummary, answerStatus, countStatuses, scoreTone, singleNavChunk } from "../components/ResultParts";
+import { HtmlContent, hasVisibleHtml } from "../components/Html";
 import { ChoiceCard, ConfigSection } from "./PracticePages";
 import { readPracticeMode, writePracticeMode } from "../lib/appHelpers";
 
@@ -63,30 +64,70 @@ function PracticeSetup({ level, exams, mode, setMode, examId, setExamId, types, 
 }
 
 function PracticeResult({ attempt, questions, onReviewWrong, onReset, onHome }) {
-  const [onlyWrong, setOnlyWrong] = useState(false);
-  const skipped = attempt.answers.filter((answer) => !answer.chosenOptionId).length;
-  const wrong = attempt.total - attempt.correct - skipped;
-  const questionById = new Map(questions.map((question) => [question.id, question]));
+  const [filter, setFilter] = useState<ResultFilter>("all");
+  const questionById = new Map<any, any>(questions.map((question) => [question.id, question]));
+  const statuses = attempt.answers.map(answerStatus);
+  const counts = countStatuses(statuses);
+  const missed = counts.wrong + counts.skipped;
+  const total = attempt.total || attempt.answers.length;
+  const score = pct(attempt.correct, total);
+  const types = LISTENING_TYPES
+    .map((type) => {
+      const indexes = attempt.answers.map((answer, index) => ({ answer, index })).filter(({ answer }) => questionById.get(answer.questionId)?.question_type === type.id);
+      return { id: type.id, label: type.label, total: indexes.length, correct: indexes.filter(({ index }) => statuses[index] === "correct").length };
+    })
+    .filter((type) => type.total);
+  const entries = attempt.answers.map((answer, index) => ({ id: answer.questionId, number: index + 1, status: statuses[index] }));
+  // 页头（听力专项 + 返回设置）由外层 Listening 页提供，这里不再重复。
   return (
-    <section className="listening-practice-result">
-      <CheckCircle2 size={58} />
-      <h2>听力专项完成</h2>
-      <strong>{pct(attempt.correct, attempt.total)}%</strong>
-      <section className="practice-result-counts"><div><span>本次题量</span><strong>{attempt.total}</strong></div><div><span>已答</span><strong>{attempt.total - skipped}</strong></div><div><span>答对</span><strong>{attempt.correct}</strong></div><div><span>答错</span><strong>{wrong}</strong></div><div><span>跳过</span><strong>{skipped}</strong></div></section>
-      <p>正确率按“答对题数 ÷ 本次全部题目”计算，跳过计入总题量。</p>
-      <div>
-        {wrong ? <button className="primary-button" onClick={onReviewWrong} type="button">重练错题</button> : null}
-        <button className="secondary-button" onClick={onReset} type="button"><RotateCcw size={19} />再练一组</button>
-        <button className="secondary-button" onClick={onHome} type="button">返回首页</button>
-        <button className="secondary-button" onClick={() => setOnlyWrong((value) => !value)} type="button">{onlyWrong ? "查看全部解析" : "只看错题"}</button>
-      </div>
-      <section className="review-list listening-result-review">
-        {attempt.answers.filter((answer) => !onlyWrong || !answer.isCorrect).map((answer, index) => {
+    <ResultPage petals={scoreTone(score) === "great" ? "light" : null}>
+      <ResultSummary
+        score={score}
+        counts={counts}
+        total={total}
+        types={types}
+        note={counts.skipped ? "未作答的题计入总题数。" : null}
+        actions={(
+          <>
+            {missed ? <button className="primary-button" onClick={onReviewWrong} type="button">重练错题（{missed} 题）</button> : null}
+            <button className={missed ? "secondary-button" : "primary-button"} onClick={onReset} type="button"><RotateCcw size={18} />再练一组</button>
+            <button className="secondary-button" onClick={onHome} type="button">返回首页</button>
+          </>
+        )}
+      />
+      <ResultReview chunks={singleNavChunk(entries)} total={entries.length} missed={missed} filter={filter} onFilter={setFilter}>
+        {attempt.answers.map((answer, index) => {
+          if (filter === "missed" && statuses[index] === "correct") return null;
           const question: any = questionById.get(answer.questionId);
-          return <article className="review-item" key={answer.questionId}><ReviewMark ok={answer.isCorrect} /><div><h3>{index + 1}. <HtmlContent inline html={answer.title} /></h3><ReviewOptions options={question?.options || []} questionId={answer.questionId} chosenOptionId={answer.chosenOptionId} correctOptionId={answer.correctOptionId} label={`第${index + 1}题选项`} />{answer.analysis ? <section className="analysis-text"><HtmlContent inline html={answer.analysis} /></section> : null}{question?.subtitle ? <details><summary>听力原文</summary><p>{plain(question.subtitle)}</p>{question.translation ? <p>{plain(question.translation)}</p> : null}</details> : null}</div></article>;
+          return (
+            <ResultGroupCard key={answer.questionId}>
+              <ResultQuestion
+                id={answer.questionId}
+                number={index + 1}
+                status={statuses[index]}
+                meta={question?.sourceExamTitle || null}
+                stem={hasVisibleHtml(answer.title || question?.title) ? <HtmlContent inline html={answer.title || question?.title} /> : null}
+                media={question?.image_url ? <img className="exam-image" src={assetSrc(question.image_url)} alt="" /> : null}
+                options={question?.options || []}
+                chosenId={answer.chosenOptionId}
+                correctId={answer.correctOptionId}
+                chosenText={answer.chosenText}
+                answerText={answer.answerText}
+                analysis={answer.analysis}
+              >
+                {question?.subtitle ? (
+                  <details className="practice-result-transcript">
+                    <summary>听力原文{question.translation ? " / 译文" : ""}</summary>
+                    <p lang="ja">{plain(question.subtitle)}</p>
+                    {question.translation ? <p>{plain(question.translation)}</p> : null}
+                  </details>
+                ) : null}
+              </ResultQuestion>
+            </ResultGroupCard>
+          );
         })}
-      </section>
-    </section>
+      </ResultReview>
+    </ResultPage>
   );
 }
 
@@ -244,10 +285,15 @@ export default function Listening({ userId, token, globalLevel: level }) {
     else navigate(`/listening/${examId}`);
   };
 
-  const subtitle = practiceQuestion
+  const subtitle = practiceSession?.finishedAttempt
+    ? `${level} · 练习结果`
+    : practiceQuestion
     ? `${practiceQuestion.sourceLevel} · ${practiceQuestion.sourceExamTitle} · ${practiceSession.index + 1}/${practiceSession.questions.length}`
     : detail ? `${detail.level} · ${detail.title}` : null;
-  const backProps = practiceSession
+  // 结果已保存，返回时不再弹「退出后作答不保存」的确认。
+  const backProps = practiceSession?.finishedAttempt
+    ? { onBack: () => setPracticeSession(null), label: "返回设置" }
+    : practiceSession
     ? { onBack: () => setShowExit(true), label: "返回设置" }
     : { to: questionId ? `/listening/${examId}` : examId ? "/listening" : "/" };
 
@@ -272,7 +318,7 @@ export default function Listening({ userId, token, globalLevel: level }) {
   }
 
   return (
-    <div className={examId || practiceSession ? "listening" : "grammar-practice-setup listening-setup"}>
+    <div className={practiceSession?.finishedAttempt ? "listening listening-result" : examId || practiceSession ? "listening" : "grammar-practice-setup listening-setup"}>
       <PageHeader {...backProps}>
         <TitleBlock className={!examId && !practiceSession ? "grammar-practice-title" : ""} eyebrow="听力练习" title="听力专项" subtitle={subtitle} />
       </PageHeader>

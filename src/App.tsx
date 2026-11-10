@@ -31,7 +31,6 @@ import { useExamFlow } from "./hooks/useExamFlow";
 import { ExamIntroRoute, ExamReviewRoute, ExamRoute } from "./routes/ExamRoutes";
 import {
   ExamListView,
-  ExamResultView,
   ExamSessionView,
   RandomPracticeSessionView,
   UnifiedPracticeSessionView,
@@ -50,6 +49,7 @@ import {
 
 import Listening from "./pages/Listening";
 import { StatsView } from "./pages/StatsPages";
+import { PracticeResultView } from "./pages/PracticeResult";
 
 function App() {
   const navigate = useNavigate();
@@ -667,18 +667,17 @@ function App() {
           )}
         />
         <Route path="/search" element={<SearchView token={authToken} currentLevel={level} onBack={() => navigate("/")} />} />
-        <Route path="/practice-setup" element={pendingPractice ? <BasicPracticeSetupView source={pendingPractice.source} questionCount={pendingPractice.quiz.questions.length} initialMode={readPracticeMode()} onBack={() => { setPendingPractice(null); navigate(-1); }} onStart={startPreparedPractice} /> : <Navigate to="/" replace />} />
+        {/* 开始练习时 pendingPractice 先被清空、路由跳转在 transition 里稍后生效；这里已有会话就直接进 /quiz，别被弹回首页。 */}
+        <Route path="/practice-setup" element={pendingPractice ? <BasicPracticeSetupView source={pendingPractice.source} questionCount={pendingPractice.quiz.questions.length} initialMode={readPracticeMode()} onBack={() => { setPendingPractice(null); navigate(-1); }} onStart={startPreparedPractice} /> : <Navigate to={session ? "/quiz" : "/"} replace />} />
         {Object.keys(PRACTICE_CATEGORIES).map((category) => (
           <Route
             key={category}
             path={`/${category}-practice`}
             element={grammarPractice?.finishedAttempt ? (
-              <ExamResultView
-                exam={grammarPractice.exam}
+              <PracticeResultView
                 attempt={grammarPractice.finishedAttempt}
                 questions={grammarPractice.questions}
-                practice
-                practiceCategory={grammarPractice.config.category}
+                category={grammarPractice.config.category}
                 onRepeat={() => setGrammarPractice(null)}
                 onReviewWrong={() => startPracticeWrongReview(grammarPractice.config.category)}
                 onLibrary={resetToLibrary}
@@ -710,6 +709,7 @@ function App() {
             session?.finishedAttempt ? (
               <ResultView
                 attempt={session.finishedAttempt}
+                questions={session.questions}
                 todayCount={todayCount}
                 dailyGoal={dailyGoal}
                 onRepeat={() => (
