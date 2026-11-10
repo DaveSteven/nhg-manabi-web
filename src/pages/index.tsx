@@ -408,10 +408,9 @@ export function SearchView({ token, currentLevel, onBack }) {
 
   return (
     <section className="search-page">
-      <header className="quiz-header search-header">
-        <button className="back-button" onClick={onBack} type="button"><ArrowLeft size={20} />返回首页</button>
+      <PageHeader className="search-header" onBack={onBack} text="返回首页">
         <TitleBlock eyebrow="全题库检索" title="搜索题目" />
-      </header>
+      </PageHeader>
 
       <form className="search-panel" onSubmit={submit}>
         <div className="search-input-row">

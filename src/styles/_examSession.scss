@@ -97,52 +97,6 @@
   margin: 0 auto;
 }
 
-.icon-button {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  color: var(--muted);
-  background: var(--surface);
-  border: 2px solid var(--line);
-}
-
-.back-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 16px;
-  border: 2px solid var(--line);
-  border-radius: var(--r-md);
-  color: var(--primary-dark);
-  background: var(--surface);
-  box-shadow: var(--shadow-rest);
-  font: inherit;
-  font-size: var(--fs-md);
-  font-weight: var(--fw-bold);
-  white-space: nowrap;
-  cursor: pointer;
-  transition: border-color .15s ease, background .15s ease, box-shadow .15s ease, transform .15s ease;
-}
-
-.back-button:hover {
-  border-color: var(--primary-soft);
-  background: var(--primary-soft);
-}
-
-.back-button:active {
-  box-shadow: 0 1px 0 var(--shadow);
-  transform: translateY(3px);
-}
-
-.back-button:focus-visible {
-  outline: 3px solid var(--primary-soft);
-  outline-offset: 3px;
-}
-
 .quiz-progress {
   display: grid;
   grid-template-columns: 1fr auto;

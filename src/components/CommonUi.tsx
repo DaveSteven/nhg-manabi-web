@@ -16,14 +16,21 @@ export function Progress({ value }) {
   );
 }
 
-/** `.quiz-header` with the standard back button (or link, via `to`); children render after it. */
-export function PageHeader({ onBack, to, label = "返回", className = "", children }: { onBack?: () => void; to?: string; label?: string; className?: string; children?: React.ReactNode }) {
-  const icon = <ArrowLeft size={22} />;
+/**
+ * `.quiz-header` with the standard back control (or link, via `to`); children render after it.
+ * Two forms (方案一 U2.5b): icon-only (default, 44px round + ArrowLeft 22) and labeled
+ * (`text` prop: 44px pill with ArrowLeft 18 + fs-md label).
+ */
+export function PageHeader({ onBack, to, label = "返回", text, className = "", children }: { onBack?: () => void; to?: string; label?: string; text?: string; className?: string; children?: React.ReactNode }) {
+  const inner = text
+    ? <><ArrowLeft size={18} /><span className="back-label">{text}</span></>
+    : <ArrowLeft size={22} />;
+  const controlClass = text ? "icon-button back-text-button" : "icon-button";
   return (
     <header className={`quiz-header ${className}`.trim()}>
       {to !== undefined
-        ? <Link className="icon-button" aria-label={label} to={to}>{icon}</Link>
-        : <button className="icon-button" onClick={onBack} type="button" aria-label={label}>{icon}</button>}
+        ? <Link className={controlClass} aria-label={text || label} to={to}>{inner}</Link>
+        : <button className={controlClass} onClick={onBack} type="button" aria-label={text || label}>{inner}</button>}
       {children}
     </header>
   );

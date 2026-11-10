@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2, ChevronRight, History, Save, Search } from "lucide-react";
+import { CheckCircle2, ChevronRight, History, Save, Search } from "lucide-react";
 import UiSelect from "../components/UiSelect";
+import { PageHeader } from "../components/CommonUi";
 import { LEVELS, api, examQuestionCategoryLabel } from "../lib/study";
 
 const ANSWER_STATUSES = [
@@ -103,10 +104,9 @@ export default function AdminQuestions({ token, onBack }) {
 
   return (
     <section className="admin-questions-page">
-      <header className="admin-page-header">
-        <button className="back-button" onClick={onBack} type="button"><ArrowLeft size={19} />返回</button>
+      <PageHeader className="admin-page-header" onBack={onBack} text="返回">
         <div><div className="eyebrow">JLPT GO! ADMIN</div><h1>真题校正</h1><p>校正答案，整理解析并保留修改历史</p></div>
-      </header>
+      </PageHeader>
 
       <form className="admin-question-filters" onSubmit={(event) => { event.preventDefault(); setPage(1); setSubmittedFilters(filters); }}>
         <label className="admin-keyword"><Search size={18} /><input value={filters.q} onChange={(event) => setFilters({ ...filters, q: event.target.value })} placeholder="搜索题干或选项" /></label>

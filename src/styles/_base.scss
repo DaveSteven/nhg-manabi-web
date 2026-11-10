@@ -171,6 +171,48 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* U2.5b: canonical back controls. Icon-only = 44px round; labeled variant = 44px pill. */
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--muted);
+  background: var(--surface);
+  border: 2px solid var(--line);
+}
+
+.icon-button:focus-visible,
+.back-text-button:focus-visible {
+  outline: 3px solid var(--primary-soft);
+  outline-offset: 3px;
+}
+
+.back-text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: var(--r-md);
+  color: var(--ink);
+  background: var(--card);
+}
+
+.back-text-button:hover {
+  border-color: var(--primary-soft);
+  background: var(--primary-soft);
+  color: var(--ink);
+}
+
+.back-text-button .back-label {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+}
+
 /* U2.5 §3.1: canonical button variants — page overrides may only adjust width/margin. */
 .primary-button,
 .secondary-button,
