@@ -65,7 +65,7 @@
   color: var(--primary-dark);
   background: var(--card);
   cursor: pointer;
-  font-size: 0.78rem;
+  font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
 }
 
@@ -82,7 +82,7 @@
 
 .bilingual-line > .html-content {
   color: var(--ink);
-  font-size: 1.03rem;
+  font-size: var(--fs-base);
   font-weight: var(--fw-normal);
   line-height: 1.72;
 }
@@ -95,7 +95,7 @@
 
 .translation-line .html-content {
   color: var(--muted);
-  font-size: 0.96rem;
+  font-size: var(--fs-base);
   font-weight: var(--fw-normal);
   line-height: 1.66;
 }
@@ -103,7 +103,7 @@
 .listening-translation .html-content,
 .translation-block .html-content {
   color: var(--muted);
-  font-size: 1.02rem;
+  font-size: var(--fs-base);
   font-weight: var(--fw-normal);
   line-height: 1.7;
 }
@@ -151,13 +151,13 @@
   border-radius: var(--r-xs);
   color: var(--muted);
   background: var(--line);
-  font-size: 0.82rem;
+  font-size: var(--fs-sm);
   font-variant-numeric: tabular-nums;
   font-weight: var(--fw-medium);
 }
 
 .review-option-text {
-  font-size: 1rem;
+  font-size: var(--fs-base);
   font-weight: var(--fw-normal);
   line-height: 1.55;
 }
@@ -201,7 +201,7 @@
   box-shadow: var(--shadow-rest);
   cursor: pointer;
   text-align: left;
-  font-size: 1.16rem;
+  font-size: var(--fs-lg);
   font-weight: var(--fw-medium);
 }
 
@@ -213,7 +213,7 @@
   border-radius: var(--r-md);
   color: var(--primary-dark);
   background: var(--primary-soft);
-  font-size: 0.92rem;
+  font-size: var(--fs-md);
   font-weight: var(--fw-medium);
 }
 
@@ -269,7 +269,7 @@
 }
 
 .feedback strong {
-  font-size: 1.1rem;
+  font-size: var(--fs-lg);
 }
 
 .primary-button,
@@ -336,7 +336,7 @@
 
 .result-score p {
   color: var(--muted);
-  font-size: 1.1rem;
+  font-size: var(--fs-lg);
   font-weight: var(--fw-medium);
 }
 
@@ -367,7 +367,7 @@
   border-radius: var(--r-md);
   color: var(--ink);
   background: rgba(255, 255, 255, 0.94);
-  font-size: 0.96rem;
+  font-size: var(--fs-base);
   font-weight: var(--fw-medium);
 }
 
@@ -377,7 +377,7 @@
   border-radius: 999px;
   color: var(--primary-dark);
   background: var(--primary-soft);
-  font-size: 0.84rem;
+  font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
 }
 
@@ -411,5 +411,5 @@
 
 .review-item h3 {
   margin-bottom: 6px;
-  font-size: 1rem;
+  font-size: var(--fs-base);
 }

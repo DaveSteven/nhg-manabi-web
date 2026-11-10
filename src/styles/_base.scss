@@ -70,10 +70,22 @@
   --fw-medium: 600;
   --fw-bold: 700;
 
-  font-family:
-    Inter, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic",
-    "YuGothic", "Noto Sans JP", "Noto Sans CJK JP", "Segoe UI",
-    system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  /* 字体双轨制（方案一 U2）：衬线内容、无衬线界面。 */
+  --font-ui: Inter, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic",
+    "Noto Sans JP", "Noto Sans CJK JP", "Segoe UI", system-ui, sans-serif;
+  --font-serif: "Noto Serif JP", "Noto Serif SC", "Hiragino Mincho ProN",
+    "Yu Mincho", "Noto Serif CJK JP", serif;
+
+  // 字号 7 档（归并原 30+ 种散值）
+  --fs-xs: 0.75rem;    // 12px 角标、计数徽章
+  --fs-sm: 0.8125rem;  // 13px 辅助注释、meta
+  --fs-md: 0.875rem;   // 14px 次要正文、按钮小字
+  --fs-base: 1rem;     // 16px 正文、答题选项
+  --fs-lg: 1.125rem;   // 18px 卡片标题、强调句
+  --fs-xl: 1.375rem;   // 22px 区块标题
+  --fs-2xl: clamp(1.75rem, 4vw, 2.5rem); // 页面主标题
+
+  font-family: var(--font-ui);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -126,7 +138,7 @@ button:disabled {
 
 .eyebrow {
   color: var(--primary);
-  font-size: 0.84rem;
+  font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
   text-transform: uppercase;
 }
@@ -192,7 +204,7 @@ h1 {
   background: var(--primary);
   box-shadow: 0 3px 0 var(--primary-dark);
   font-weight: var(--fw-medium);
-  font-size: 1.25rem;
+  font-size: var(--fs-lg);
 }
 
 .wrong-icon-button {
@@ -223,7 +235,7 @@ h1 {
   border-radius: 999px;
   color: #ffffff;
   background: var(--error);
-  font-size: 0.78rem;
+  font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
 }
 
@@ -323,7 +335,7 @@ h1 {
 }
 
 .metric strong {
-  font-size: 1.35rem;
+  font-size: var(--fs-xl);
 }
 
 .metric small,

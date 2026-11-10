@@ -46,3 +46,25 @@
   p { display: inline; margin: 0; }
   p + p::before { content: " "; }
 }
+
+/* U2 双轨制：题干、文章、解析、译文用衬线体，营造"教材/读物"感；界面保持无衬线。 */
+.question-area h2,
+.random-practice-title,
+.exam-passage,
+.exam-sub-question-title,
+.analysis-text,
+.translation-block,
+.rich-text {
+  font-family: var(--font-serif);
+  letter-spacing: 0.02em;
+}
+
+.question-area h2 {
+  font-size: var(--fs-lg);
+  line-height: 1.8;
+}
+
+.exam-passage,
+.rich-text {
+  line-height: 1.8;
+}

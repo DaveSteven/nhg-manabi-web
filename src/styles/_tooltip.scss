@@ -18,7 +18,7 @@
   color: var(--ink);
   background: var(--surface);
   box-shadow: var(--shadow-float);
-  font-size: 0.82rem;
+  font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
   white-space: nowrap;
   opacity: 0;

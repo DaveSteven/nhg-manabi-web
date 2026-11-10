@@ -21,7 +21,7 @@ kbd,
   color: var(--muted);
   background: var(--surface);
   font-family: inherit;
-  font-size: 0.74rem;
+  font-size: var(--fs-xs);
   font-weight: var(--fw-bold);
   line-height: 1.4;
   vertical-align: middle;
@@ -77,12 +77,12 @@ kbd,
 }
 
 .modal-card h2 {
-  font-size: 1.2rem;
+  font-size: var(--fs-lg);
 }
 
 .modal-footnote {
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: var(--fs-md);
   line-height: 1.5;
 }
 
@@ -100,7 +100,7 @@ kbd,
 
 .shortcut-rows span {
   color: var(--ink);
-  font-size: 0.95rem;
+  font-size: var(--fs-base);
 }
 
 .modal-actions {
@@ -139,7 +139,7 @@ kbd,
   color: var(--ink);
   background: var(--surface);
   box-shadow: var(--shadow-float);
-  font-size: 0.9rem;
+  font-size: var(--fs-md);
   transform: translateX(-50%);
   max-width: calc(100vw - 48px);
 }
