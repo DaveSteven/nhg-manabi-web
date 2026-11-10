@@ -236,6 +236,24 @@ function App() {
     books,
   }), [session, currentUser?.id, allWrongItems, wrongItems, attempts, books]);
 
+  // B9: weakest practice category by correct rate → dynamic recommendation on the home card.
+  const weakPracticeCategory = useMemo(() => {
+    const sums = new Map();
+    for (const attempt of practiceAttempts) {
+      const entry = sums.get(attempt.subject) || { correct: 0, total: 0 };
+      entry.correct += attempt.correct;
+      entry.total += attempt.total;
+      sums.set(attempt.subject, entry);
+    }
+    let weakest = null;
+    for (const [category, entry] of sums) {
+      if (entry.total < 5) continue;
+      const rate = pct(entry.correct, entry.total);
+      if (!weakest || rate < weakest.rate) weakest = { category, rate };
+    }
+    return weakest;
+  }, [practiceAttempts]);
+
   // B1: rebuild an in-place session from exactly the wrong answers of the finished attempt
   // (falls back to the server wrong-question quiz when option data is incomplete).
   function reviewAttemptWrong() {
@@ -574,6 +592,7 @@ function App() {
               bookStats={bookStats}
               currentUser={currentUser}
               continueSuggestions={continueSuggestions}
+              weakPracticeCategory={weakPracticeCategory}
               onResume={() => navigate("/quiz")}
               onReviewWrong={() => (wrongItems.length ? startWrongReview() : navigate("/wrong"))}
               onLevel={chooseLevel}

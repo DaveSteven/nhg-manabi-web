@@ -367,7 +367,7 @@
 
 .home-review-grid {
   display: grid;
-  grid-template-columns: 0.8fr 1fr 1fr;
+  grid-template-columns: 0.8fr 1.2fr;
   gap: 13px;
   margin-top: 26px;
 }
@@ -413,8 +413,10 @@
   color: var(--coral-dark);
 }
 
-.home-review-grid button:last-child > svg:first-child {
-  color: var(--blue-dark);
+// B9: collapsed book grid — centered "show all" toggle under the grid.
+.show-all-books {
+  display: block;
+  margin: 14px auto 0;
 }
 
 .home-review-grid button span {

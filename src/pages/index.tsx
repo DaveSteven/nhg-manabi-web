@@ -9,7 +9,6 @@ import {
   ChevronRight,
   ClipboardList,
   Headphones,
-  History,
   Keyboard,
   Languages,
   Layers3,
@@ -50,6 +49,7 @@ export function LibraryView({
   bookStats,
   currentUser,
   continueSuggestions = [],
+  weakPracticeCategory = null,
   onResume,
   onReviewWrong,
   onLevel,
@@ -66,6 +66,7 @@ export function LibraryView({
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestionIndex, setSuggestionIndex] = useState(0);
+  const [showAllBooks, setShowAllBooks] = useState(false);
   const safeIndex = Math.min(suggestionIndex, Math.max(0, continueSuggestions.length - 1));
   const suggestion = continueSuggestions[safeIndex];
   const startSuggestion = (item) => {
@@ -90,6 +91,17 @@ export function LibraryView({
     0,
   );
   const latestExamAttempt = examAttempts[0];
+
+  // B9: books the user has fully cleared sink below the rest (stable sort keeps lesson order).
+  const BOOK_PREVIEW_COUNT = 6;
+  const sortedBooks = useMemo(() => {
+    const isCleared = (book) => {
+      const stats = bookStats.get(book.id);
+      return stats ? pct(stats.correct, stats.total) >= 100 : false;
+    };
+    return [...books].sort((left, right) => Number(isCleared(left)) - Number(isCleared(right)));
+  }, [books, bookStats]);
+  const visibleBooks = showAllBooks ? sortedBooks : sortedBooks.slice(0, BOOK_PREVIEW_COUNT);
 
   return (
     <>
@@ -176,11 +188,11 @@ export function LibraryView({
         </div>
         <div className="home-module-grid">
           <article className="home-training-module featured">
-            <div className="home-module-heading"><div><Target size={25} /><span><strong>专项练习</strong><small>针对不同能力单独强化</small></span></div><em>推荐</em></div>
+            <div className="home-module-heading"><div><Target size={25} /><span><strong>专项练习</strong><small>针对不同能力单独强化</small></span></div><em>{weakPracticeCategory ? `${PRACTICE_CATEGORIES[weakPracticeCategory.category].label}正确率最低` : "推荐"}</em></div>
             <div className="home-module-actions">
-              <button onClick={onOpenVocabularyPractice} disabled={!exams.length} type="button"><Languages size={22} /><span><strong>文字词汇专项</strong><small>读音、词义和用法强化</small></span><ChevronRight size={19} /></button>
-              <button onClick={onOpenGrammarPractice} disabled={!exams.length} type="button"><BrainCircuit size={22} /><span><strong>文法专项</strong><small>按题型、试卷和题量组题</small></span><ChevronRight size={19} /></button>
-              <button onClick={onOpenReadingPractice} disabled={!exams.length} type="button"><BookOpen size={22} /><span><strong>读解专项</strong><small>短篇、长篇和信息检索</small></span><ChevronRight size={19} /></button>
+              <button onClick={onOpenVocabularyPractice} disabled={!exams.length} title={exams.length ? undefined : "需先有该级别真题题库"} type="button"><Languages size={22} /><span><strong>文字词汇专项</strong><small>{exams.length ? "读音、词义和用法强化" : "需先有该级别真题题库"}</small></span><ChevronRight size={19} /></button>
+              <button onClick={onOpenGrammarPractice} disabled={!exams.length} title={exams.length ? undefined : "需先有该级别真题题库"} type="button"><BrainCircuit size={22} /><span><strong>文法专项</strong><small>{exams.length ? "按题型、试卷和题量组题" : "需先有该级别真题题库"}</small></span><ChevronRight size={19} /></button>
+              <button onClick={onOpenReadingPractice} disabled={!exams.length} title={exams.length ? undefined : "需先有该级别真题题库"} type="button"><BookOpen size={22} /><span><strong>读解专项</strong><small>{exams.length ? "短篇、长篇和信息检索" : "需先有该级别真题题库"}</small></span><ChevronRight size={19} /></button>
               <button onClick={onOpenListening} type="button"><Headphones size={22} /><span><strong>听力专项</strong><small>按试卷逐题精听与循环</small></span><ChevronRight size={19} /></button>
             </div>
           </article>
@@ -219,7 +231,7 @@ export function LibraryView({
             </article>
           ))
         ) : books.length ? (
-          books.map((book) => {
+          visibleBooks.map((book) => {
             const stats = bookStats.get(book.id);
             return (
               <article className="book-card" key={book.id}>
@@ -252,12 +264,17 @@ export function LibraryView({
         )}
       </section>
 
+      {sortedBooks.length > BOOK_PREVIEW_COUNT ? (
+        <button className="secondary-button show-all-books" onClick={() => setShowAllBooks((value) => !value)} type="button">
+          {showAllBooks ? "收起书目" : `显示全部（${sortedBooks.length} 本）`}
+        </button>
+      ) : null}
+
       <section className="home-review-grid">
         <div className="home-study-summary">
           <small>当前分类</small><strong>{pct(totalCorrect, totalQuestions)}%</strong><span>{currentAttempts.length} 次练习</span>
         </div>
         <button onClick={onOpenWrongBook} type="button"><RotateCcw size={22} /><span><strong>错题复习</strong><small>{wrongItems.length ? `${wrongItems.length} 题待复习` : "暂无错题"}</small></span><ChevronRight size={20} /></button>
-        <button onClick={onOpenUser} type="button"><History size={22} /><span><strong>学习记录</strong><small>查看成绩与练习历史</small></span><ChevronRight size={20} /></button>
       </section>
     </>
   );
