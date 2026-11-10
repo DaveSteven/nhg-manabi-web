@@ -660,7 +660,7 @@ export function QuizView({ session, onBack, onDiscard, onChoose, onCheck, onNext
       <PageHeader onBack={() => setShowExitConfirm(true)}>
         <div className="quiz-progress">
           <Progress value={pct(session.index + (checked ? 1 : 0), session.questions.length)} />
-          <span>当前位置 {session.index + 1}/{session.questions.length} · 已答 {answered} · 未答 {unanswered}</span>
+          <span>{session.index + 1}/{session.questions.length}</span>
         </div>
         <button
           className="shortcut-toggle"

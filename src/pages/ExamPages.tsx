@@ -124,7 +124,7 @@ export function UnifiedPracticeSessionView({ session, onBack, onChoose, onMove, 
       <PageHeader onBack={() => setShowExit(true)}>
         <div className="practice-progress-summary">
           <Progress value={pct(answered, session.questions.length)} />
-          <span>当前位置 {groupIndex + 1}/{groups.length}</span><span>已答 {answered}</span><span>未答 {unanswered}</span>
+          <span>{groupIndex + 1}/{groups.length}</span>
         </div>
         <button className="secondary-button practice-nav-toggle" onClick={() => setShowQuestionNav((value) => !value)} type="button" aria-expanded={showQuestionNav} aria-controls="practice-question-navigation">
           {showQuestionNav ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
