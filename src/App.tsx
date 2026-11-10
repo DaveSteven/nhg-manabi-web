@@ -320,9 +320,15 @@ function App() {
       return { exam, detail, questions };
     }));
     const allowedTypes = new Set(config.types.map(Number));
+    const layerImageByExam = new Map(loaded.map(({ detail }) => [detail.id, new Map((detail.layers || []).map((layer) => [layer.id, layer.image_url || ""]))]));
     const questions = loaded.flatMap(({ exam, questions }) => questions
       .filter((question) => allowedTypes.has(question.question_type))
-      .map((question) => ({ ...question, source_exam_id: exam.id, source_exam_title: exam.title })));
+      .map((question) => ({
+        ...question,
+        source_exam_id: exam.id,
+        source_exam_title: exam.title,
+        layer_image_url: layerImageByExam.get(exam.id)?.get(question.layer_id) || "",
+      })));
     if (!questions.length) throw new Error("所选条件下没有可用的专项题目");
     const layerIds = new Set(questions.map((question) => question.layer_id));
     const layers = loaded.flatMap(({ detail }) => detail.layers || [])

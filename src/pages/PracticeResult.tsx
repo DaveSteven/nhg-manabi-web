@@ -108,6 +108,7 @@ function ReviewGroup({ group, visible, numberById, answerById, statusOf }) {
             <span>第 {range} 题 · 答对 {correct} / {group.questions.length}</span>
             {group.sourceExamTitle ? <small>{group.sourceExamTitle}</small> : null}
           </header>
+          {group.groupImage ? <img className="exam-image exam-shared-image" src={assetSrc(group.groupImage)} alt="" /> : null}
           {hasPassage ? (
             <details className={`practice-result-passage ${reading ? "reading" : ""}`.trim()} open>
               <summary>文章</summary>

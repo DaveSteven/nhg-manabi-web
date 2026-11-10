@@ -181,7 +181,14 @@ export function practiceQuestionGroups(questions) {
     const key = shared ? `${question.source_exam_id || "exam"}:${question.source_layer_id || question.layer_id || question.passage || index}` : `question:${question.id}`;
     let group = byKey.get(key);
     if (!group) {
-      group = { key, questions: [], passage: question.passage || "", sourceExamTitle: question.source_exam_title || "" };
+      group = {
+        key,
+        questions: [],
+        passage: question.passage || "",
+        // 题组级材料图（信息检索页面图等），来自 API 的 layer_image_url。
+        groupImage: question.layer_image_url || "",
+        sourceExamTitle: question.source_exam_title || "",
+      };
       byKey.set(key, group);
       groups.push(group);
     }
