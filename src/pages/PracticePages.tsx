@@ -133,7 +133,7 @@ export function GrammarPracticeSetupView({ exams, level, category = "grammar", o
         <ConfigSection step={mode === "random" ? 4 : 3} title="选择练习模式" hint="开始后不可切换模式">
           <div className="practice-source-grid practice-feedback-modes">
             <ChoiceCard name="feedback-mode" type="radio" checked={feedbackMode === "instant"} onChange={() => setFeedbackMode("instant")} icon={<Eye size={23} />} title="即时反馈" description="检查当前题（阅读按篇检查），查看解析后继续" />
-            <ChoiceCard name="feedback-mode" type="radio" checked={feedbackMode === "immersive"} onChange={() => setFeedbackMode("immersive")} icon={<Focus size={23} />} title="沉浸练习" description="自由跳题和修改，完成整次练习后统一看解析" />
+            <ChoiceCard name="feedback-mode" type="radio" checked={feedbackMode === "immersive"} onChange={() => setFeedbackMode("immersive")} icon={<Focus size={23} />} title="沉浸练习" description="完成整次练习后统一看解析" />
           </div>
         </ConfigSection>
 
@@ -163,7 +163,7 @@ export function BasicPracticeSetupView({ source, questionCount, initialMode, onB
       <ConfigSection step={1} title="选择练习模式" hint="开始后不可切换模式">
         <div className="practice-source-grid practice-feedback-modes">
           <ChoiceCard name="basic-feedback-mode" type="radio" checked={feedbackMode === "instant"} onChange={() => setFeedbackMode("instant")} icon={<Eye size={23} />} title="即时反馈" description="逐题检查，查看答案和解析后继续" />
-          <ChoiceCard name="basic-feedback-mode" type="radio" checked={feedbackMode === "immersive"} onChange={() => setFeedbackMode("immersive")} icon={<Focus size={23} />} title="沉浸练习" description="自由跳题和修改，完成后统一查看结果" />
+          <ChoiceCard name="basic-feedback-mode" type="radio" checked={feedbackMode === "immersive"} onChange={() => setFeedbackMode("immersive")} icon={<Focus size={23} />} title="沉浸练习" description="完成后统一查看结果" />
         </div>
       </ConfigSection>
       <div className="practice-start-bar">
