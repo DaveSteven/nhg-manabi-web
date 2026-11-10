@@ -253,10 +253,11 @@
   font-weight: var(--fw-medium);
 }
 
+/* U7.4: 已作答 ≠ 答对 */
 .answer-dot.answered {
-  color: var(--correct-dark);
-  background: var(--correct-soft);
-  border-color: var(--correct);
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  border-color: var(--primary);
 }
 
 .answer-dot.active {

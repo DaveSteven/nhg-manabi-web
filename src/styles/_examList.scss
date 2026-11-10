@@ -287,14 +287,14 @@
 .exam-save-state.error { color: var(--error-dark); background: var(--error-soft); cursor: pointer; }
 .exam-time-notice { grid-column: 1 / -1; display: flex; align-items: center; gap: 9px; padding: 12px 16px; border-radius: var(--r-md); color: var(--warn-dark); background: var(--warn-soft); font-weight: var(--fw-bold); }
 .exam-time-notice button { display: grid; place-items: center; margin-left: auto; border: 0; color: inherit; background: transparent; cursor: pointer; }
-.listening-device-check { display: flex; align-items: center; gap: 14px; max-width: 600px; margin: 24px auto; padding: 18px; border: 1px solid var(--primary-soft); border-radius: var(--r-lg); background: var(--primary-soft); text-align: left; }
+.listening-device-check { display: flex; align-items: center; gap: 14px; max-width: 600px; margin: 24px auto; padding: 18px; border-left: 3px solid var(--primary); border-radius: 0 var(--r-md) var(--r-md) 0; background: var(--primary-soft); text-align: left; }
 .listening-device-check > div { display: grid; flex: 1; gap: 4px; }
 .listening-device-check span { color: var(--muted); font-size: var(--fs-md); }
-.listening-exam-player { display: flex; align-items: center; gap: 16px; margin: 18px 0; padding: 18px; border: 1px solid var(--primary-soft); border-radius: var(--r-lg); background: var(--primary-soft); }
+.listening-exam-player { display: flex; align-items: center; gap: 16px; margin: 18px 0; padding: 18px; border-left: 3px solid var(--primary); border-radius: 0 var(--r-md) var(--r-md) 0; background: var(--primary-soft); }
 .listening-exam-player > div { display: grid; flex: 1; gap: 4px; }
 .listening-exam-player p { margin: 0; color: var(--muted); font-size: var(--fs-md); }
 .listening-exam-player > span { color: var(--primary-dark); font-weight: var(--fw-bold); }
-.listening-exam-player.error { border-color: var(--error); background: var(--error-soft); }
+.listening-exam-player.error { border-left-color: var(--error); background: var(--error-soft); }
 .listening-exam-player.error > svg { color: var(--error-dark); }
 @media (max-width: $bpMd2) { .exam-intro-card { padding: 22px 18px; } .exam-section-schedule > div > div { display: grid; } .exam-timer { order: -1; width: 100%; } }
 
@@ -519,6 +519,7 @@
   background: var(--primary);
 }
 
+/* U7.4: 主行动按钮归位主色 */
 .start-button {
   align-self: center;
   justify-self: end;
@@ -528,8 +529,8 @@
   height: 50px;
   border-radius: 50%;
   color: var(--on-accent);
-  background: var(--correct);
-  box-shadow: 0 3px 0 var(--correct-dark);
+  background: var(--primary);
+  box-shadow: 0 3px 0 var(--primary-dark);
 }
 
 .history-panel {

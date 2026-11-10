@@ -5,7 +5,7 @@
 .home-search.compact { width: clamp(210px, 22vw, 310px); }
 .home-search > svg { flex-shrink: 0; color: var(--muted); }
 .home-search input, .search-input-row input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; font-size: var(--fs-base); }
-.home-search button { min-height: 38px; padding: 0 15px; border: 0; border-radius: var(--r-sm); background: var(--correct); box-shadow: inset 0 -3px 0 rgba(0,0,0,.12); color: white; font: inherit; font-size: var(--fs-md); font-weight: var(--fw-bold); white-space: nowrap; cursor: pointer; }
+.home-search button { min-height: 38px; padding: 0 15px; border: 0; border-radius: var(--r-sm); background: var(--primary); box-shadow: inset 0 -3px 0 rgba(0,0,0,.12); color: white; font: inherit; font-size: var(--fs-md); font-weight: var(--fw-bold); white-space: nowrap; cursor: pointer; }
 .home-search button:disabled { opacity: .45; cursor: not-allowed; }
 .ui-select-field { display: inline-flex; align-items: center; gap: 9px; color: var(--muted); font-size: var(--fs-md); font-weight: var(--fw-bold); }
 .ui-select-label { flex-shrink: 0; }
@@ -17,15 +17,15 @@
 .ui-select-menu { position: absolute; z-index: 50; top: calc(100% + 9px); left: -2px; min-width: calc(100% + 4px); max-height: 320px; overflow-y: auto; padding: 7px; border: 2px solid var(--line); border-radius: var(--r-md); background: var(--surface); box-shadow: var(--shadow-float); }
 .ui-select-menu button { display: flex; align-items: center; justify-content: space-between; gap: 14px; width: 100%; min-height: 40px; padding: 0 10px 0 12px; border: 0; border-radius: var(--r-xs); background: transparent; color: var(--ink); font: inherit; font-size: var(--fs-md); text-align: left; white-space: nowrap; cursor: pointer; }
 .ui-select-menu button.active { background: var(--primary-soft); color: var(--primary-dark); }
-.ui-select-menu button.selected { color: var(--correct-dark); font-weight: var(--fw-bold); }
-.ui-select-menu button.selected.active { background: var(--correct-soft); }
-.ui-select-menu button > svg { flex-shrink: 0; color: var(--correct-dark); }
+/* U7.4: 选中 ≠ 正确 —— 选中项只用主色加粗与 ✓ 图标 */
+.ui-select-menu button.selected { color: var(--primary-dark); font-weight: var(--fw-bold); }
+.ui-select-menu button > svg { flex-shrink: 0; color: var(--primary-dark); }
 .ui-select-field.compact { height: 52px; padding: 0 8px 0 13px; border: 2px solid var(--line); border-radius: var(--r-md); background: var(--surface); box-shadow: var(--shadow-rest); font-size: var(--fs-sm); }
-.ui-select-field.compact .ui-select-control { min-width: 78px; height: 36px; border: 0; border-radius: var(--r-xs); background: var(--correct-soft); box-shadow: none; }
-.ui-select-field.compact .ui-select-trigger { padding: 0 32px 0 11px; color: var(--correct-dark); }
-.ui-select-field.compact .ui-select-control > svg { right: 9px; color: var(--correct-dark); }
+.ui-select-field.compact .ui-select-control { min-width: 78px; height: 36px; border: 0; border-radius: var(--r-xs); background: var(--primary-soft); box-shadow: none; }
+.ui-select-field.compact .ui-select-trigger { padding: 0 32px 0 11px; color: var(--primary-dark); }
+.ui-select-field.compact .ui-select-control > svg { right: 9px; color: var(--primary-dark); }
 .ui-select-field.compact .ui-select-menu { min-width: 100px; }
-.ui-select-field.compact:focus-within { border-color: var(--correct); box-shadow: 0 3px 0 var(--correct-dark), 0 0 0 3px var(--correct-soft); }
+.ui-select-field.compact:focus-within { border-color: var(--primary); box-shadow: 0 3px 0 var(--primary-dark), 0 0 0 3px var(--primary-soft); }
 .ui-select-field.compact:focus-within .ui-select-control { box-shadow: none; transform: none; }
 .search-page { width: 100%; }
 .search-header { justify-content: flex-start; }

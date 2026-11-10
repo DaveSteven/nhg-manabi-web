@@ -253,7 +253,7 @@
 }
 
 .home-module-actions button:hover {
-  border-color: var(--correct);
+  border-color: var(--primary);
   transform: translateY(-1px);
 }
 
@@ -323,27 +323,12 @@
   font-size: var(--fs-sm);
 }
 
+/* U7.2: 选中态统一主色；分类辨识度交给图标 */
 .subject-library-tabs button.active {
   color: var(--on-accent);
-}
-
-.subject-library-tabs button.subject-grammar {
   border-color: var(--primary);
   background: var(--primary);
   box-shadow: 0 3px 0 var(--primary-dark);
-}
-
-.subject-library-tabs button.subject-meaning {
-  color: var(--on-accent);
-  border-color: var(--warn);
-  background: var(--warn);
-  box-shadow: 0 3px 0 var(--warn-dark);
-}
-
-.subject-library-tabs button.subject-kanji {
-  border-color: var(--error);
-  background: var(--error);
-  box-shadow: 0 3px 0 var(--error-dark);
 }
 
 .home-library-heading {
@@ -520,11 +505,12 @@
   cursor: pointer;
 }
 
+/* U7.4: 选中 ≠ 正确 */
 .practice-count-options > button.selected {
   color: var(--on-accent);
-  border-color: var(--correct);
-  background: var(--correct);
-  box-shadow: 0 3px 0 var(--correct-dark);
+  border-color: var(--primary);
+  background: var(--primary);
+  box-shadow: 0 3px 0 var(--primary-dark);
 }
 
 .practice-count-options > label {

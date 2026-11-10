@@ -62,7 +62,7 @@ kbd,
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(20, 30, 45, 0.45);
+  background: var(--overlay);
 }
 
 .modal-card {

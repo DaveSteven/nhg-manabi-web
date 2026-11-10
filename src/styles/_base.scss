@@ -67,6 +67,7 @@
   --shadow-rest: 0 3px 0 var(--shadow);                  // 静置的可交互元素
   --shadow-press: 0 1px 0 var(--shadow);                 // active 按压态（配 translateY(2px)）
   --shadow-float: 0 14px 30px rgba(43, 43, 51, 0.12);    // 浮层/下拉/modal
+  --overlay: rgba(20, 30, 45, 0.45);                     // 遮罩（U7.1：日/夜各一值）
   // 字重 3 档
   --fw-normal: 400;
   --fw-medium: 600;
@@ -127,6 +128,7 @@ html[data-theme="dark"] {
   --chart-listening: #ecc56a;
 
   --shadow-float: 0 14px 30px rgba(0, 0, 0, 0.45);
+  --overlay: rgba(0, 0, 0, 0.6);
 }
 
 /* U5: seasonal accent — spring sakura is the default; only点缀色 shifts. */
@@ -386,6 +388,7 @@ h1 {
   font-size: var(--fs-lg);
 }
 
+/* U7.3: 错题入口回归樱系；--error 只留给错误数据本身 */
 .wrong-icon-button {
   position: relative;
   display: grid;
@@ -396,9 +399,9 @@ h1 {
   height: 54px;
   min-height: 54px;
   border-radius: 50%;
-  color: var(--error-dark);
-  background: var(--error-soft);
-  box-shadow: 0 3px 0 var(--error-soft);
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  box-shadow: 0 3px 0 var(--primary-soft);
 }
 
 .wrong-badge {
@@ -413,7 +416,7 @@ h1 {
   border: 2px solid var(--card);
   border-radius: 999px;
   color: var(--on-accent);
-  background: var(--error);
+  background: var(--primary);
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
 }
@@ -426,9 +429,10 @@ h1 {
   font-weight: var(--fw-medium);
 }
 
+/* U7.4: 选中态归位主色 */
 .level-switch .active {
   color: var(--on-accent);
-  background: var(--correct);
+  background: var(--primary);
   box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.12);
 }
 
@@ -449,25 +453,12 @@ h1 {
   font-weight: var(--fw-medium);
 }
 
-.subject-tabs button:nth-child(1).active {
+/* U7.2: 选中态统一主色；分类辨识度交给图标 */
+.subject-tabs button.active {
   color: var(--on-accent);
   border-color: var(--primary);
   background: var(--primary);
   box-shadow: 0 3px 0 var(--primary-dark);
-}
-
-.subject-tabs button:nth-child(2).active {
-  color: var(--on-accent);
-  border-color: var(--warn);
-  background: var(--warn);
-  box-shadow: 0 3px 0 var(--warn-dark);
-}
-
-.subject-tabs button:nth-child(3).active {
-  color: var(--on-accent);
-  border-color: var(--error);
-  background: var(--error);
-  box-shadow: 0 3px 0 var(--error-dark);
 }
 
 .stats-strip {

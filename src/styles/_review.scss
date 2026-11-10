@@ -3,11 +3,12 @@
 .listening-transcript,
 .reading-transcript,
 .listening-translation,
+/* U7.1-C: soft 底无边框，左侧主色竖条 */
 .review-shared-passage {
   margin-top: 12px;
   padding: 12px;
-  border: 2px solid var(--line);
-  border-radius: var(--r-md);
+  border-left: 3px solid var(--primary);
+  border-radius: 0 var(--r-md) var(--r-md) 0;
   background: var(--primary-soft);
 }
 
