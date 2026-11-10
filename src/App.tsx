@@ -639,13 +639,6 @@ function App() {
     }));
   }
 
-  function skipQuizQuestion() {
-    const question = session.questions[session.index];
-    const finalAnswers = [...session.answers, { questionId: question.id, stem: question.stem, chosenOptionId: null, chosenText: null, isCorrect: false }];
-    if (session.index === session.questions.length - 1) { finishSession(finalAnswers); return; }
-    setSession((current) => ({ ...current, index: current.index + 1, answers: finalAnswers, chosen: null, checked: false, checkResult: null }));
-  }
-
   const gate = loading ? <div className="center-state">正在加载题库…</div>
     : !authToken || !currentUser ? <LoginView onLogin={login} />
     : error ? <div className="center-state error">{error}</div>
@@ -756,7 +749,6 @@ function App() {
                 onChoose={chooseOption}
                 onCheck={checkAnswer}
                 onNext={nextQuestion}
-                onSkip={skipQuizQuestion}
                 onMove={moveQuizQuestion}
                 onComplete={completeImmersiveQuiz}
               />

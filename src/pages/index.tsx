@@ -671,7 +671,7 @@ function ExitConfirmOverlay({ onStay, onLeave }) {
   );
 }
 
-export function QuizView({ session, onBack, onDiscard, onChoose, onCheck, onNext, onSkip, onMove, onComplete }) {
+export function QuizView({ session, onBack, onDiscard, onChoose, onCheck, onNext, onMove, onComplete }) {
   const question = session.questions[session.index];
   const { checked, checkResult } = session;
   const isCorrect = Boolean(checkResult?.is_correct);
@@ -753,7 +753,7 @@ export function QuizView({ session, onBack, onDiscard, onChoose, onCheck, onNext
           </div>
         ) : (
           <div className="feedback muted">
-            <strong>{session.chosen === null ? "可选择答案，也可以跳过" : "答案已记录"}</strong>
+            <strong>{session.chosen === null ? "请选择答案" : "答案已记录"}</strong>
             <span>{immersive ? "完成练习后统一查看答案和解析" : "检查后将锁定本题答案"}</span>
           </div>
         )}
@@ -768,7 +768,6 @@ export function QuizView({ session, onBack, onDiscard, onChoose, onCheck, onNext
           </button>
         ) : (
           <div className="practice-basic-actions">
-            <button className="secondary-button" onClick={onSkip} type="button">跳过</button>
             <button className="primary-button" disabled={session.chosen === null} onClick={onCheck} type="button">检查答案 <kbd className="kbd-hint">↵</kbd></button>
           </div>
         )}

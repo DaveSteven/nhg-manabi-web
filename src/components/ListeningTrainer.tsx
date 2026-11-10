@@ -351,8 +351,8 @@ export default function ListeningTrainer({ question: q, examId, token, saved, fe
                 </button>
               ))}
             </div>
-            {feedbackMode === "instant" && !result ? <div className="listening-feedback-actions"><button className="secondary-button" onClick={() => onNext(null)}>跳过</button><button className="primary-button" disabled={!choice || busy} onClick={check}>{busy ? "检查中…" : "检查答案"}</button></div> : null}
-            {feedbackMode === "immersive" && !result ? <div className="listening-feedback-actions"><button className="secondary-button" onClick={() => onNext(null)}>跳过</button><button className="primary-button" disabled={!choice} onClick={continuePractice}>下一题</button></div> : null}
+            {feedbackMode === "instant" && !result ? <div className="listening-feedback-actions"><button className="primary-button" disabled={!choice || busy} onClick={check}>{busy ? "检查中…" : "检查答案"}</button></div> : null}
+            {feedbackMode === "immersive" && !result ? <div className="listening-feedback-actions"><button className="primary-button" disabled={!choice} onClick={continuePractice}>下一题</button></div> : null}
             {result && <><AnswerFeedback result={result} question={q} choice={choice} onFocusMode={() => changeMode(MODE_FOCUS)} /><button className="primary-button" onClick={continuePractice}>继续下一题</button></>}
           </>
         )}

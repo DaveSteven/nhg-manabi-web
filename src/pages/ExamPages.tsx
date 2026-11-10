@@ -183,7 +183,6 @@ export function UnifiedPracticeSessionView({ session, onBack, onChoose, onMove, 
 
           <footer className="practice-action-bar">
             <button className="secondary-button" disabled={groupIndex === 0 || submitting} onClick={() => moveGroup(groupIndex - 1)} type="button">上一{sharedMaterialGroup ? "篇" : "题"}</button>
-            {!groupChecked && instant ? <button className="secondary-button" disabled={submitting} onClick={() => { if (isLast) complete(); else moveGroup(groupIndex + 1); }} type="button">跳过</button> : null}
             <button className="primary-button" disabled={(instant && !groupChecked && groupAnswered === 0) || submitting} onClick={primary} type="button">
               {submitting ? "正在保存…" : instant && !groupChecked ? (sharedMaterialGroup ? "检查本篇" : "检查答案") : isLast ? "完成练习" : `下一${sharedMaterialGroup ? "篇" : "题"}`}
             </button>
