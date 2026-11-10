@@ -408,7 +408,7 @@ export function SearchView({ token, currentLevel, onBack }) {
 
   return (
     <section className="search-page">
-      <PageHeader className="search-header" onBack={onBack} text="返回首页">
+      <PageHeader className="search-header" onBack={onBack} label="返回首页">
         <TitleBlock eyebrow="全题库检索" title="搜索题目" />
       </PageHeader>
 

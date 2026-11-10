@@ -181,6 +181,7 @@ button:disabled {
   color: var(--muted);
   background: var(--surface);
   border: 2px solid var(--line);
+  box-shadow: var(--shadow-rest);
 }
 
 .icon-button:focus-visible,

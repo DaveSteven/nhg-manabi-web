@@ -104,7 +104,7 @@ export default function AdminQuestions({ token, onBack }) {
 
   return (
     <section className="admin-questions-page">
-      <PageHeader className="admin-page-header" onBack={onBack} text="返回">
+      <PageHeader className="admin-page-header" onBack={onBack}>
         <div><div className="eyebrow">JLPT GO! ADMIN</div><h1>真题校正</h1><p>校正答案，整理解析并保留修改历史</p></div>
       </PageHeader>
 
