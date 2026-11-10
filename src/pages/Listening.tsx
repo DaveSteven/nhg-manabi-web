@@ -143,7 +143,7 @@ function ExamQuestionGroups({ groups, detail, questions, progress, onOpen }) {
             {g.questions.map((q, i) => (
               <button className="secondary-button listening-question" key={q.id} onClick={() => onOpen(q)}>
                 <strong>第 {i + 1} 题</strong>
-                <span>{segments(q.subtitle).length} 个精听片段</span>
+                <span>{q.segment_count ?? segments(q.subtitle).length} 个精听片段</span>
                 <span>{progress[q.id]?.done ? "已完成" : progress[q.id]?.started ? "练习中" : "未练"}</span>
               </button>
             ))}

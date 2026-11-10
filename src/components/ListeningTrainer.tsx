@@ -137,8 +137,12 @@ export default function ListeningTrainer({ question: q, examId, token, saved, fe
   const range = useRef<any>(null);
   const transcriptList = useRef<HTMLDivElement>(null);
 
-  const rows = useMemo(() => segments(q.subtitle), [q.subtitle]);
-  const translations = useMemo(() => translationLines(q.translation), [q.translation]);
+  const [result, setResult] = useState<any>(saved.result || null);
+  // 原文分段答题后才由接口下发；复习页等已带 subtitle 的场景直接解析。
+  const rows = useMemo(
+    () => (result?.segments?.length ? result.segments : segments(q.subtitle)),
+    [result, q.subtitle],
+  );
   const [mode, setMode] = useState(MODE_FULL);
   const [showFullTranscript, setShowFullTranscript] = useState(Boolean(saved.result));
   const [index, setIndex] = useState(() => Math.max(0, Math.min(rows.length - 1, saved.segment || 0)));
@@ -150,9 +154,21 @@ export default function ListeningTrainer({ question: q, examId, token, saved, fe
   const [duration, setDuration] = useState(0);
   const [muted, setMuted] = useState(false);
   const [choice, setChoice] = useState(saved.choice || null);
-  const [result, setResult] = useState<any>(saved.result || null);
+  // 译文由答题后的 /api/listening/check 按段返回；旧的本地缓存没有 segments 时回退到整题译文。
+  const translations = useMemo(
+    () => result?.segments?.length === rows.length ? result.segments.map((x) => x.translation) : translationLines(q.translation),
+    [result, rows.length, q.translation],
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  // 旧的本地缓存没有 segments，且题目不再下发原文：重新取一次（不影响答题记录）。
+  useEffect(() => {
+    if (!result || result.segments || q.subtitle || !saved.choice) return;
+    api("/api/listening/check", { method: "POST", body: JSON.stringify({ exam_id: examId, answers: [{ question_id: q.id, chosen_option_id: saved.choice }] }) }, token)
+      .then((r) => setResult((prev) => (prev ? { ...prev, segments: r.segments || [] } : prev)))
+      .catch(() => null);
+  }, [q.id]);
 
   const activeTranscript = rows.findIndex((row) => position >= row.start && position < row.end);
   const toggleReveal = () => setRevealed((v) => (v.includes(index) ? [] : [index]));
