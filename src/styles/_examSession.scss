@@ -521,14 +521,44 @@
 
 .exam-image,
 .review-image {
-  width: min(100%, 680px);
-  max-height: 520px;
+  width: min(100%, 860px);
+  /* 竖版 A4 扫描页高度是显示尺寸的瓶颈，放宽到接近视口高度；细节查看走 ZoomImage 全屏。 */
+  max-height: min(72dvh, 800px);
   object-fit: contain;
   border: 2px solid var(--line);
   border-radius: var(--r-md);
   /* U6: scans keep a literal white liner in both themes — never invert or tint exam media. */
   background: #ffffff;
   padding: 8px;
+}
+
+.zoomable-image {
+  cursor: zoom-in;
+}
+
+.image-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--overlay);
+  cursor: zoom-out;
+
+  img {
+    max-width: min(96vw, 1100px);
+    max-height: 94dvh;
+    object-fit: contain;
+    border-radius: var(--r-md);
+    /* U6: scans keep a literal white liner in both themes — never invert or tint exam media. */
+    background: #ffffff;
+    padding: 12px;
+  }
+}
+
+body.lightbox-open {
+  overflow: hidden;
 }
 
 .exam-shared-image {

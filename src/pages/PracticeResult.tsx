@@ -16,6 +16,7 @@ import {
   scoreTone,
 } from "../components/ResultParts";
 import { PRACTICE_CATEGORIES } from "./PracticePages";
+import { ZoomImage } from "../components/ZoomImage";
 
 /**
  * 专项练习（文字词汇 / 文法 / 读解）的结果页。
@@ -108,7 +109,7 @@ function ReviewGroup({ group, visible, numberById, answerById, statusOf }) {
             <span>第 {range} 题 · 答对 {correct} / {group.questions.length}</span>
             {group.sourceExamTitle ? <small>{group.sourceExamTitle}</small> : null}
           </header>
-          {group.groupImage ? <img className="exam-image exam-shared-image" src={assetSrc(group.groupImage)} alt="" /> : null}
+          {group.groupImage ? <ZoomImage className="exam-image exam-shared-image" src={assetSrc(group.groupImage)} /> : null}
           {hasPassage ? (
             <details className={`practice-result-passage ${reading ? "reading" : ""}`.trim()} open>
               <summary>文章</summary>
@@ -129,7 +130,7 @@ function ReviewGroup({ group, visible, numberById, answerById, statusOf }) {
             status={statusOf(question)}
             meta={shared ? null : group.sourceExamTitle}
             stem={<HtmlContent html={answer?.title || question.title || ""} />}
-            media={question.image_url ? <img className="exam-image" src={assetSrc(question.image_url)} alt="" /> : null}
+            media={question.image_url ? <ZoomImage className="exam-image" src={assetSrc(question.image_url)} /> : null}
             options={question.options || []}
             chosenId={answer?.chosenOptionId || null}
             correctId={answer?.correctOptionId || null}

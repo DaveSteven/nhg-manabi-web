@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { ZoomImage } from "./ZoomImage";
 import { Headphones } from "lucide-react";
 import {
   assetSrc,
@@ -90,7 +91,7 @@ function ReviewItem({ question, answer, displayNumber, index, hasGroupPassage })
           <span className="review-question-number">{displayNumber}</span>
           <div className="review-title"><HtmlContent html={answer.title || question?.title || ""} /></div>
         </div>
-        {question?.image_url ? <img className="review-image" src={assetSrc(question.image_url)} alt="" /> : null}
+        {question?.image_url ? <ZoomImage className="review-image" src={assetSrc(question.image_url)} /> : null}
         {question?.media_url ? <audio className="exam-audio compact" controls src={assetSrc(question.media_url)} /> : null}
         {listening && (question?.subtitle || question?.translation)
           ? <BilingualTranscript sourceHtml={question.subtitle} translationHtml={question.translation} /> : null}
@@ -188,7 +189,7 @@ export function ExamReview({ reviewProblemGroups, answerByQuestion, answerForQue
             {group.sections.map((section) => (
               <section className="review-problem-block" key={section.id}>
                 <div className="review-problem-heading">{section.problemLabel}</div>
-                {section.layer?.image_url ? <img className="review-image" src={assetSrc(section.layer.image_url)} alt="" /> : null}
+                {section.layer?.image_url ? <ZoomImage className="review-image" src={assetSrc(section.layer.image_url)} /> : null}
                 {groupReviewItemsByPassage(section.items).map((passageGroup, groupIndex) => (
                   <section
                     className={`review-passage-group ${passageGroup.passage ? "has-shared-passage" : "single-question-group"}`}

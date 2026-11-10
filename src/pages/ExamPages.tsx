@@ -32,6 +32,7 @@ import {
 } from "../components/CommonUi";
 import { markKeyboardHintSeen, useKeyboardAnswer } from "../hooks/useKeyboardAnswer";
 import { AnswerSheet, ExamReview, ListeningExamPlayer } from "../components/ExamParts";
+import { ZoomImage } from "../components/ZoomImage";
 
 const pad2 = (n) => String(n).padStart(2, "0");
 
@@ -156,7 +157,7 @@ export function UnifiedPracticeSessionView({ session, onBack, onChoose, onMove, 
               <strong>{sharedMaterialGroup ? `第 ${groupIndex + 1} 篇 · 本篇已答 ${groupAnswered}/${group.questions.length}` : `第 ${session.index + 1} 题`}</strong>
               <div><span className="book-pill">{session.exam.level} · {examQuestionCategoryLabel(group.questions[0])}</span><small>{group.sourceExamTitle}</small></div>
             </header>
-            {group.groupImage ? <img className="exam-image exam-shared-image" src={assetSrc(group.groupImage)} alt="" /> : null}
+            {group.groupImage ? <ZoomImage className="exam-image exam-shared-image" src={assetSrc(group.groupImage)} /> : null}
             {hasVisibleHtml(group.passage) ? <section className="exam-passage practice-shared-passage" id="practice-passage"><HtmlContent html={group.passage} /></section> : null}
             {group.questions.map((question, questionIndex) => {
               const chosen = session.answers[question.id] || null;
@@ -165,7 +166,7 @@ export function UnifiedPracticeSessionView({ session, onBack, onChoose, onMove, 
               return (
                 <section className="practice-sub-question" id={`practice-question-${question.id}`} key={question.id}>
                   <div className="random-practice-title">{group.questions.length > 1 ? <span>{questionIndex + 1}.</span> : null}<HtmlContent html={question.title} /></div>
-                  {question.image_url ? <img className="exam-image" src={assetSrc(question.image_url)} alt="" /> : null}
+                  {question.image_url ? <ZoomImage className="exam-image" src={assetSrc(question.image_url)} /> : null}
                   <section className="options-grid exam-options">
                     {question.options.map((option, optionIndex) => {
                       const state = feedback ? (option.id === feedback.correct_option_id ? "correct" : option.id === chosen ? "wrong" : "") : option.id === chosen ? "selected" : "";
@@ -399,7 +400,7 @@ export function RandomPracticeSessionView({ session, onBack, onChoose, onMove, o
         <div className="random-practice-number">第 {question.practice_order || session.index + 1} 题</div>
         {hasVisibleHtml(question.passage) ? <section className="exam-passage"><HtmlContent html={question.passage} /></section> : null}
         <div className="random-practice-title"><HtmlContent html={question.title} /></div>
-        {question.image_url ? <img className="exam-image" src={assetSrc(question.image_url)} alt="" /> : null}
+        {question.image_url ? <ZoomImage className="exam-image" src={assetSrc(question.image_url)} /> : null}
         <section className="options-grid exam-options keyboard-active">
           {question.options.map((option, index) => (
             <OptionButton key={option.id} index={index} option={option} className={chosenOptionId === option.id ? "selected" : ""} onClick={() => onChoose(question.id, option.id)}><span /></OptionButton>
@@ -591,7 +592,7 @@ export function ExamSessionView({ session, onBack, onChoose, onMove, onSubmit, s
             {currentProblem?.partLabel === "阅读" && currentProblemPages.length > 1 ? <small>第 {currentProblemPageIndex + 1} / {currentProblemPages.length} 页</small> : null}
           </div>
 
-          {currentProblem?.layer?.image_url ? <img className="exam-image exam-shared-image" src={assetSrc(currentProblem.layer.image_url)} alt="" /> : null}
+          {currentProblem?.layer?.image_url ? <ZoomImage className="exam-image exam-shared-image" src={assetSrc(currentProblem.layer.image_url)} /> : null}
 
           {isTimedListening ? (
             <ListeningExamPlayer
@@ -616,7 +617,7 @@ export function ExamSessionView({ session, onBack, onChoose, onMove, onSubmit, s
                   <article className="exam-sub-question" key={item.id}>
                     <div className="exam-sub-question-title"><span>{pad2(displayNumber)}.</span><HtmlContent html={item.title} /></div>
                     {item.media_url && !isTimedListening ? <audio className="exam-audio" controls src={assetSrc(item.media_url)} /> : null}
-                    {item.image_url ? <img className="exam-image" src={assetSrc(item.image_url)} alt="" /> : null}
+                    {item.image_url ? <ZoomImage className="exam-image" src={assetSrc(item.image_url)} /> : null}
                     <section className={`options-grid exam-options ${item.id === activeQuestion?.id ? "keyboard-active" : ""}`.trim()}>
                       {item.options.map((option, index) => (
                         <OptionButton

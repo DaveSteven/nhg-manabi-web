@@ -8,6 +8,7 @@ import ListeningTrainer from "../components/ListeningTrainer";
 import { ModalOverlay, PageHeader, TitleBlock } from "../components/CommonUi";
 import { ResultFilter, ResultGroupCard, ResultPage, ResultQuestion, ResultReview, ResultSummary, answerStatus, countStatuses, scoreTone, singleNavChunk } from "../components/ResultParts";
 import { HtmlContent, hasVisibleHtml } from "../components/Html";
+import { ZoomImage } from "../components/ZoomImage";
 import { ChoiceCard, ConfigSection } from "./PracticePages";
 import { readPracticeMode, writePracticeMode } from "../lib/appHelpers";
 
@@ -107,7 +108,7 @@ function PracticeResult({ attempt, questions, onReviewWrong, onReset, onHome }) 
                 status={statuses[index]}
                 meta={question?.sourceExamTitle || null}
                 stem={hasVisibleHtml(answer.title || question?.title) ? <HtmlContent inline html={answer.title || question?.title} /> : null}
-                media={question?.image_url ? <img className="exam-image" src={assetSrc(question.image_url)} alt="" /> : null}
+                media={question?.image_url ? <ZoomImage className="exam-image" src={assetSrc(question.image_url)} /> : null}
                 options={question?.options || []}
                 chosenId={answer.chosenOptionId}
                 correctId={answer.correctOptionId}
