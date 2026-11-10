@@ -51,61 +51,95 @@ const scrollTop = () => requestAnimationFrame(() => window.scrollTo({ top: 0, be
 const enterFullscreen = () => document.documentElement.requestFullscreen?.();
 const TIMER_NOTICES = [[600, "本科剩余 10 分钟"], [300, "本科剩余 5 分钟"], [60, "本科只剩 1 分钟"]] as const;
 
+/** "2019.12" from an exam date — the distinguishing info between papers (B10 #2). */
+function examDateBadge(exam) {
+  const match = String(exam.examDate || "").match(/(\d{4})-(\d{2})/);
+  return match ? `${match[1]}.${match[2]}` : String(exam.examDate || exam.level);
+}
+
+/** Active-run banner card with its own ticking clock, so the list does not re-render every second (B10 #6). */
+function ActiveRunCard({ exam, run, onResumeExam, onAbandonExam }) {
+  const expiresAt = run.section_expires_at;
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (!expiresAt) return undefined;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [expiresAt]);
+
+  const resting = run.status === "awaiting_section" || !expiresAt;
+  const remainingSeconds = expiresAt ? secondsUntil(expiresAt, now) : 0;
+  const urgent = !resting && remainingSeconds <= 300;
+  const clock = resting ? "休息中" : formatClock(Math.max(0, remainingSeconds));
+  const sub = resting ? "等待开始下一科" : `本科剩余 ${Math.max(1, Math.ceil(remainingSeconds / 60))} 分钟`;
+  const section = run.sections?.[run.current_section];
+
+  return (
+    <article className="exam-card active-run">
+      <div className={`active-run-clockbox ${urgent ? "urgent" : ""}`.trim()}>
+        <strong>{clock}</strong>
+        <small><Clock3 size={14} />继续上次考试</small>
+      </div>
+      <div className="active-run-context">
+        <h3>{exam.title}</h3>
+        <p>{section?.label ? <>{section.label} · </> : null}{sub}</p>
+      </div>
+      <div className="active-run-actions">
+        <button className="primary-button" onClick={() => onResumeExam(exam, run)} type="button">继续考试</button>
+        <button className="active-run-abandon" onClick={() => onAbandonExam(exam, run)} type="button">放弃考试</button>
+      </div>
+    </article>
+  );
+}
+
 export function ExamListView({ exams, level, examAttempts, examRuns = [], onBack, onStartExam, onResumeExam, onAbandonExam, onReviewAttempt }) {
   const examStats = latestExamAttemptByExam(examAttempts);
   const activeRuns = new Map<number, any>(examRuns.map((run) => [run.exam_id, run]));
-  const orderedExams = [...exams].sort((a, b) => Number(activeRuns.has(b.id)) - Number(activeRuns.has(a.id)));
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(timer);
-  }, []);
+  const byDateDesc = (left, right) => String(right.examDate || "").localeCompare(String(left.examDate || ""));
+  const activeExams = exams.filter((exam) => activeRuns.has(exam.id));
+  const freshExams = exams.filter((exam) => !activeRuns.has(exam.id) && !examStats.get(exam.id)).sort(byDateDesc);
+  const doneExams = exams.filter((exam) => !activeRuns.has(exam.id) && examStats.get(exam.id)).sort(byDateDesc);
 
-  function remainingInfo(run) {
-    if (run.status === "awaiting_section") return { label: "科间休息", value: "等待开始", resting: true };
-    if (!run.section_expires_at) return { label: "考试进行中", value: "计时中", resting: false };
-    return { label: "本科剩余", value: formatClock(secondsUntil(run.section_expires_at, now)), resting: false };
-  }
+  const renderCard = (exam) => {
+    const activeRun = activeRuns.get(exam.id);
+    if (activeRun) {
+      return <ActiveRunCard key={exam.id} exam={exam} run={activeRun} onResumeExam={onResumeExam} onAbandonExam={onAbandonExam} />;
+    }
+    const last = examStats.get(exam.id);
+    return (
+      <article className={`exam-card ${last ? "done" : ""}`.trim()} key={exam.id}>
+        <div>
+          <div className="book-badge subject-reading">{examDateBadge(exam)}</div>
+          <h3>{exam.title}</h3>
+          {last ? <p>最近成绩 {pct(last.correct, last.total)}% · {last.correct}/{last.total}</p> : null}
+        </div>
+        <div className="exam-card-actions">
+          {last ? <button className="secondary-button review-exam-button" onClick={() => onReviewAttempt(last)} type="button">查看解析</button> : null}
+          <button className="start-button" onClick={() => onStartExam(exam)} type="button" aria-label={`开始 ${exam.title}`}><ChevronRight size={24} /></button>
+        </div>
+      </article>
+    );
+  };
 
   return (
     <section className="exam-list-view">
       <PageHeader onBack={onBack}><TitleBlock eyebrow="考试题库" title="模拟考试" /></PageHeader>
       {exams.length ? (
-        <div className="exam-list">
-          {orderedExams.map((exam) => {
-            const last = examStats.get(exam.id);
-            const activeRun = activeRuns.get(exam.id);
-            const remaining = activeRun ? remainingInfo(activeRun) : null;
-            const heading = <><span className="book-badge subject-reading">{exam.level}</span><h3>{exam.title}</h3></>;
-            return (
-              <article className={`exam-card ${activeRun ? "active-run" : ""}`} key={exam.id}>
-                <div className={activeRun ? "active-run-main" : ""}>
-                  {activeRun
-                    ? <div className="active-run-identity"><div className="active-run-kicker"><Clock3 size={17} />继续上次考试</div><div>{heading}</div></div>
-                    : <><div className="book-badge subject-reading">{exam.level}</div><h3>{exam.title}</h3></>}
-                  {activeRun && remaining ? (
-                    <div className={`exam-run-status ${remaining.resting ? "resting" : ""}`}>
-                      <div><span>当前科目</span><strong>{activeRun.sections[activeRun.current_section]?.label}</strong></div>
-                      <div className="exam-run-countdown"><Clock3 size={18} /><span>{remaining.label}</span><strong>{remaining.value}</strong></div>
-                    </div>
-                  ) : null}
-                  {last ? <p>最近成绩 {pct(last.correct, last.total)}%</p> : null}
-                </div>
-                <div className="exam-card-actions">
-                  {last ? <button className="secondary-button review-exam-button" onClick={() => onReviewAttempt(last)} type="button">查看解析</button> : null}
-                  {activeRun ? (
-                    <>
-                      <button className="secondary-button" onClick={() => onAbandonExam(exam, activeRun)} type="button">放弃</button>
-                      <button className="primary-button" onClick={() => onResumeExam(exam, activeRun)} type="button">继续考试</button>
-                    </>
-                  ) : (
-                    <button className="start-button" onClick={() => onStartExam(exam)} type="button" aria-label={`开始 ${exam.title}`}><ChevronRight size={24} /></button>
-                  )}
-                </div>
-              </article>
-            );
-          })}
-        </div>
+        <>
+          {activeExams.length ? <div className="exam-list">{activeExams.map(renderCard)}</div> : null}
+          {freshExams.length ? (
+            <>
+              {doneExams.length ? <div className="exam-group-title">未挑战</div> : null}
+              <div className="exam-list">{freshExams.map(renderCard)}</div>
+            </>
+          ) : null}
+          {doneExams.length ? (
+            <>
+              <div className="exam-group-title">已完成</div>
+              <div className="exam-list">{doneExams.map(renderCard)}</div>
+            </>
+          ) : null}
+        </>
       ) : <EmptyState title={`${level} 考试题库`} text="该等级暂时没有考试数据。" />}
     </section>
   );

@@ -269,25 +269,6 @@
 .exam-save-state { padding: 7px 10px; border: 0; border-radius: 999px; color: var(--muted); background: var(--surface); font: inherit; font-size: .78rem; font-weight: 700; }
 .exam-save-state.saving { color: var(--blue-dark); }
 .exam-save-state.error { color: #b42318; background: #fee4e2; cursor: pointer; }
-.exam-run-status {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  margin-top: 12px;
-  padding: 11px 12px;
-  border: 1px solid #b8d4ee;
-  border-radius: 13px;
-  color: var(--blue-dark);
-  background: #eef7ff;
-}
-.exam-run-status > div:first-child { display: grid; gap: 2px; min-width: 0; }
-.exam-run-status span { color: #58708d; font-size: .76rem; font-weight: 700; }
-.exam-run-status strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.exam-run-status.resting { border-color: #ead7a6; color: #785814; background: #fff8e5; }
-.exam-run-countdown { display: grid; grid-template-columns: auto auto; align-items: center; gap: 1px 7px; min-width: 92px; }
-.exam-run-countdown > svg { grid-row: 1 / 3; }
-.exam-run-countdown > strong { font-size: 1.05rem; font-variant-numeric: tabular-nums; letter-spacing: .03em; }
 .exam-time-notice { grid-column: 1 / -1; display: flex; align-items: center; gap: 9px; padding: 12px 16px; border-radius: 12px; color: #8a3218; background: #fff1d6; font-weight: 750; }
 .exam-time-notice button { display: grid; place-items: center; margin-left: auto; border: 0; color: inherit; background: transparent; cursor: pointer; }
 .listening-device-check { display: flex; align-items: center; gap: 14px; max-width: 600px; margin: 24px auto; padding: 18px; border: 1px solid #b8d4ee; border-radius: 16px; background: #eef7ff; text-align: left; }
@@ -347,55 +328,122 @@
   box-shadow: 0 4px 0 var(--shadow);
 }
 
+/* B10: attempted papers are visually dimmed; hover restores full strength. */
+.exam-card.done {
+  opacity: 0.72;
+}
+
+.exam-card.done:hover {
+  opacity: 1;
+}
+
+.exam-group-title {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
 .exam-card.active-run {
   grid-column: 1 / -1;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 20px;
   min-height: 0;
   padding: 16px 18px;
+  /* B10.5: hardcoded blue stays until the UI redesign (方案一 U1) swaps in new tokens. */
   border-color: #9cc9ee;
   background: linear-gradient(135deg, #ffffff 0%, #f1f8ff 100%);
   box-shadow: 0 5px 0 #c9d9e8;
 }
 
-.active-run-main {
+/* Banner layout: countdown leads with the strongest visual weight (B10.5 ①). */
+.active-run-clockbox {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) auto;
+  gap: 3px;
+  justify-items: start;
+}
+
+.active-run-clockbox strong {
+  color: var(--blue-dark);
+  font-size: 1.9rem;
+  line-height: 1.1;
+  letter-spacing: .03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.active-run-clockbox.urgent strong {
+  color: #b42318;
+}
+
+.active-run-clockbox small {
+  display: inline-flex;
   align-items: center;
-  gap: 18px;
+  gap: 5px;
+  color: #58708d;
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.active-run-context {
+  display: grid;
+  gap: 4px;
   min-width: 0;
 }
 
-.active-run-identity { display: grid; gap: 8px; }
-.active-run-identity > div:last-child { display: flex; align-items: center; gap: 10px; }
-.active-run-identity h3 { margin: 0; }
-
-.active-run-kicker {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: var(--blue-dark);
-  font-size: .82rem;
-  font-weight: 800;
+.active-run-context h3 {
+  margin: 0;
 }
 
-.exam-card.active-run .exam-card-actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 10px;
+.active-run-context p {
+  margin: 0;
 }
 
-.exam-card.active-run .exam-card-actions .primary-button {
+/* Actions column: primary on top, destructive abandon demoted to a text link (B10.5 ③). */
+.active-run-actions {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.active-run-actions .primary-button {
   min-width: 132px;
 }
 
-.exam-card.active-run .exam-run-status {
-  justify-self: end;
-  width: fit-content;
-  min-width: 310px;
-  margin-top: 0;
+.active-run-abandon {
+  padding: 2px 4px;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  font-size: .82rem;
+  font-weight: 650;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  cursor: pointer;
+}
+
+.active-run-abandon:hover {
+  color: var(--coral-dark);
+  text-decoration-color: currentColor;
+}
+
+@media (max-width: $bpMd) {
+  .exam-card.active-run {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .active-run-actions {
+    justify-items: stretch;
+  }
+
+  .active-run-actions .primary-button {
+    width: 100%;
+  }
+
+  .active-run-abandon {
+    justify-self: end;
+  }
 }
 
 .exam-card h3 {
