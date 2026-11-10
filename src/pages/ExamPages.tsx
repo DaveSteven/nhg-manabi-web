@@ -52,9 +52,20 @@ const enterFullscreen = () => document.documentElement.requestFullscreen?.();
 const TIMER_NOTICES = [[600, "本科剩余 10 分钟"], [300, "本科剩余 5 分钟"], [60, "本科只剩 1 分钟"]] as const;
 
 /** "2019.12" from an exam date — the distinguishing info between papers (B10 #2). */
+function examDateTime(exam) {
+  const raw = exam.examDate;
+  if (raw === null || raw === undefined || raw === "") return NaN;
+  const value = Number(raw);
+  return Number.isFinite(value) && String(raw).trim() !== "" && /^\d+$/.test(String(raw).trim())
+    ? value
+    : new Date(raw).getTime();
+}
+
 function examDateBadge(exam) {
-  const match = String(exam.examDate || "").match(/(\d{4})-(\d{2})/);
-  return match ? `${match[1]}.${match[2]}` : String(exam.examDate || exam.level);
+  const time = examDateTime(exam);
+  if (!Number.isFinite(time)) return String(exam.examDate || exam.level);
+  const date = new Date(time);
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
 /** Active-run banner card with its own ticking clock, so the list does not re-render every second (B10 #6). */
@@ -95,7 +106,7 @@ function ActiveRunCard({ exam, run, onResumeExam, onAbandonExam }) {
 export function ExamListView({ exams, level, examAttempts, examRuns = [], onBack, onStartExam, onResumeExam, onAbandonExam, onReviewAttempt }) {
   const examStats = latestExamAttemptByExam(examAttempts);
   const activeRuns = new Map<number, any>(examRuns.map((run) => [run.exam_id, run]));
-  const byDateDesc = (left, right) => String(right.examDate || "").localeCompare(String(left.examDate || ""));
+  const byDateDesc = (left, right) => (Number.isFinite(examDateTime(right)) ? examDateTime(right) : 0) - (Number.isFinite(examDateTime(left)) ? examDateTime(left) : 0);
   const activeExams = exams.filter((exam) => activeRuns.has(exam.id));
   const freshExams = exams.filter((exam) => !activeRuns.has(exam.id) && !examStats.get(exam.id)).sort(byDateDesc);
   const doneExams = exams.filter((exam) => !activeRuns.has(exam.id) && examStats.get(exam.id)).sort(byDateDesc);
