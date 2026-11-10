@@ -42,10 +42,10 @@ export const PRACTICE_CATEGORIES = {
   },
 };
 
-export function ConfigSection({ step, title, hint, className = "", children }) {
+export function ConfigSection({ step, title, hint = null, className = "", children }) {
   return (
     <section className={`practice-config-section ${className}`.trim()}>
-      <div className="practice-config-heading"><span>{step}</span><div><h2>{title}</h2><p>{hint}</p></div></div>
+      <div className="practice-config-heading"><span>{step}</span><div><h2>{title}</h2>{hint ? <p>{hint}</p> : null}</div></div>
       {children}
     </section>
   );
@@ -56,7 +56,7 @@ export function ChoiceCard({ type, checked, onChange, icon, title, description, 
     <label className={selected ? "selected" : ""}>
       <input type={type} name={type === "radio" ? (name || "source") : undefined} checked={checked} onChange={onChange} />
       {icon}
-      <span><strong>{title}</strong><small>{description}</small></span>
+      <span><strong>{title}</strong>{description ? <small>{description}</small> : null}</span>
     </label>
   );
 }
@@ -93,14 +93,14 @@ export function GrammarPracticeSetupView({ exams, level, category = "grammar", o
   return (
     <section className="grammar-practice-setup">
       <PageHeader onBack={onBack}>
-        <TitleBlock className="grammar-practice-title" eyebrow={practiceCategory.eyebrow} title={`${level} ${practiceCategory.label}专项`} subtitle="按需要组合题型、来源和练习数量" />
+        <TitleBlock className="grammar-practice-title" eyebrow={practiceCategory.eyebrow} title={`${level} ${practiceCategory.label}专项`} />
       </PageHeader>
 
       <form onSubmit={submit}>
-        <ConfigSection step={1} title="选择题目来源" hint="可以指定一张试卷，也可以跨试卷随机抽题">
+        <ConfigSection step={1} title="选择题目来源">
           <div className="practice-source-grid">
-            <ChoiceCard type="radio" checked={mode === "random"} onChange={() => setMode("random")} icon={<Target size={23} />} title="全部试卷随机" description={`从 ${level} 历年试卷中打乱抽取`} />
-            <ChoiceCard type="radio" checked={mode === "exam"} onChange={() => setMode("exam")} icon={<ClipboardList size={23} />} title="指定试卷" description={`只练习一张试卷中的${practiceCategory.label}题`} />
+            <ChoiceCard type="radio" checked={mode === "random"} onChange={() => setMode("random")} icon={<Target size={23} />} title="全部试卷随机" />
+            <ChoiceCard type="radio" checked={mode === "exam"} onChange={() => setMode("exam")} icon={<ClipboardList size={23} />} title="指定试卷" />
           </div>
           {mode === "exam" ? (
             <UiSelect
@@ -113,7 +113,7 @@ export function GrammarPracticeSetupView({ exams, level, category = "grammar", o
           ) : null}
         </ConfigSection>
 
-        <ConfigSection step={2} title={`选择${practiceCategory.label}题型`} hint="可同时选择多种题型">
+        <ConfigSection step={2} title={`选择${practiceCategory.label}题型`}>
           <div className="practice-type-grid">
             {practiceCategory.types.map((item) => (
               <ChoiceCard key={item.id} type="checkbox" checked={types.includes(item.id)} onChange={() => toggleType(item.id)} icon={<Check size={20} />} title={item.label} description={item.description} />
@@ -130,7 +130,7 @@ export function GrammarPracticeSetupView({ exams, level, category = "grammar", o
           </ConfigSection>
         ) : null}
 
-        <ConfigSection step={mode === "random" ? 4 : 3} title="选择练习模式" hint="本次练习开始后不可切换，下次会记住你的选择">
+        <ConfigSection step={mode === "random" ? 4 : 3} title="选择练习模式" hint="开始后不可切换模式">
           <div className="practice-source-grid practice-feedback-modes">
             <ChoiceCard name="feedback-mode" type="radio" checked={feedbackMode === "instant"} onChange={() => setFeedbackMode("instant")} icon={<Eye size={23} />} title="即时反馈" description="检查当前题（阅读按篇检查），查看解析后继续" />
             <ChoiceCard name="feedback-mode" type="radio" checked={feedbackMode === "immersive"} onChange={() => setFeedbackMode("immersive")} icon={<Focus size={23} />} title="沉浸练习" description="自由跳题和修改，完成整次练习后统一看解析" />
@@ -160,7 +160,7 @@ export function BasicPracticeSetupView({ source, questionCount, initialMode, onB
       <PageHeader onBack={onBack}>
         <TitleBlock className="grammar-practice-title" eyebrow="练习设置" title={source?.book_name || source?.title || "开始练习"} subtitle={`${source?.categoryLabel || source?.level || ""} · 共 ${questionCount} 题`} />
       </PageHeader>
-      <ConfigSection step={1} title="选择练习模式" hint="本次练习开始后不可切换，下次会记住你的选择">
+      <ConfigSection step={1} title="选择练习模式" hint="开始后不可切换模式">
         <div className="practice-source-grid practice-feedback-modes">
           <ChoiceCard name="basic-feedback-mode" type="radio" checked={feedbackMode === "instant"} onChange={() => setFeedbackMode("instant")} icon={<Eye size={23} />} title="即时反馈" description="逐题检查，查看答案和解析后继续" />
           <ChoiceCard name="basic-feedback-mode" type="radio" checked={feedbackMode === "immersive"} onChange={() => setFeedbackMode("immersive")} icon={<Focus size={23} />} title="沉浸练习" description="自由跳题和修改，完成后统一查看结果" />

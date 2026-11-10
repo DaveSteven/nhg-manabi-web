@@ -19,13 +19,13 @@ function PracticeSetup({ level, exams, mode, setMode, examId, setExamId, types, 
     <form className="listening-setup-form" onSubmit={onSubmit}>
       <ConfigSection step={1} title="选择题目来源" hint={`当前等级 · ${level}，等级统一在首页切换`}>
         <div className="practice-source-grid">
-          <ChoiceCard type="radio" checked={random} onChange={() => setMode("random")} icon={<Play size={23} />} title="全部试卷随机" description={`从 ${level} 历年试卷中随机抽取`} />
-          <ChoiceCard type="radio" checked={!random} onChange={() => setMode("exam")} icon={<ClipboardList size={23} />} title="指定试卷" description="练习一张试卷中的所选听力题型" />
+          <ChoiceCard type="radio" checked={random} onChange={() => setMode("random")} icon={<Play size={23} />} title="全部试卷随机" />
+          <ChoiceCard type="radio" checked={!random} onChange={() => setMode("exam")} icon={<ClipboardList size={23} />} title="指定试卷" />
         </div>
         {!random ? <UiSelect className="practice-exam-select" ariaLabel="选择听力试卷" value={examId} onChange={setExamId} options={exams.map((exam) => ({ value: String(exam.id), label: exam.title }))} /> : null}
       </ConfigSection>
 
-      <ConfigSection step={2} title="选择听力题型" hint="可同时选择多种题型">
+      <ConfigSection step={2} title="选择听力题型">
         <div className="practice-type-grid">
           {LISTENING_TYPES.map((item) => (
             <ChoiceCard key={item.id} type="checkbox" checked={types.includes(item.id)} onChange={() => toggleType(item.id)} icon={<CheckCircle2 size={20} />} title={item.label} description={item.description} />
@@ -42,7 +42,7 @@ function PracticeSetup({ level, exams, mode, setMode, examId, setExamId, types, 
         </ConfigSection>
       ) : null}
 
-      <ConfigSection step={random ? 4 : 3} title="选择练习模式" hint="本次练习开始后不可切换，下次会记住你的选择">
+      <ConfigSection step={random ? 4 : 3} title="选择练习模式" hint="开始后不可切换模式">
         <div className="practice-source-grid">
           <ChoiceCard name="listening-feedback-mode" type="radio" checked={feedbackMode === "instant"} onChange={() => setFeedbackMode("instant")} icon={<Play size={23} />} title="即时反馈" description="检查后开放解析、原文、译文和逐段精听" />
           <ChoiceCard name="listening-feedback-mode" type="radio" checked={feedbackMode === "immersive"} onChange={() => setFeedbackMode("immersive")} icon={<ClipboardList size={23} />} title="沉浸练习" description="完成整次练习后统一开放复习内容" />
@@ -246,7 +246,7 @@ export default function Listening({ userId, token, globalLevel: level }) {
 
   const subtitle = practiceQuestion
     ? `${practiceQuestion.sourceLevel} · ${practiceQuestion.sourceExamTitle} · ${practiceSession.index + 1}/${practiceSession.questions.length}`
-    : detail ? `${detail.level} · ${detail.title}` : "按来源、题型和题量组合听力练习";
+    : detail ? `${detail.level} · ${detail.title}` : null;
   const backProps = practiceSession
     ? { onBack: () => setShowExit(true), label: "返回设置" }
     : { to: questionId ? `/listening/${examId}` : examId ? "/listening" : "/" };

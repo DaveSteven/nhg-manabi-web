@@ -76,7 +76,7 @@ function FocusStage({ rows, index, playing, revealed, translated, translations, 
           {playing ? <Pause size={30} /> : <Play size={30} />}{playing ? "暂停" : "播放当前句"}
         </button>
         <div className="focus-transcript">
-          {shown ? <p lang="ja">{rows[index].text}</p> : <p className="focus-placeholder">先听一遍，听不清时再展开原文。</p>}
+          {shown ? <p lang="ja">{rows[index].text}</p> : null}
           <EyeToggle visible={shown} onClick={onReveal} />
           {shown && <button className="secondary-button" aria-expanded={translated} onClick={onTranslate}>{translated ? "隐藏译文" : "显示译文"}</button>}
           {translated && shown && <p className="translation">{aligned ? translations[index] : "本题译文未逐句对应。"} </p>}
@@ -118,7 +118,6 @@ function AnswerFeedback({ result, question, choice, onFocusMode }: any) {
         {ok ? <CheckCircle2 size={24} /> : <CircleAlert size={24} />}
         <div>
           <h3>{ok ? "回答正确" : "这次没有选对"}</h3>
-          <p>{ok ? "继续精听，确认每一段都听懂了。" : "看看答案和解析，再回到音频中听一遍。"}</p>
         </div>
       </div>
       <div className="listening-answer-summary">
@@ -341,7 +340,7 @@ export default function ListeningTrainer({ question: q, examId, token, saved, fe
           </>
         ) : (
           <>
-            <p>{result ? "答案已开放，可以结合原文和译文复习。" : "作答阶段可反复播放；检查前不显示原文和译文。"}</p>
+            {!result ? <p>检查答案后可查看原文和译文。</p> : null}
             {result ? <FullTranscript question={q} rows={rows} listRef={transcriptList} visible={showFullTranscript} onToggle={() => setShowFullTranscript((v) => !v)} playing={playing} active={activeTranscript} /> : null}
             {q.image_url && <img className="listening-image" src={assetSrc(q.image_url)} alt="听力题目配图" />}
             <div className="listening-grid">

@@ -23,7 +23,7 @@ const SUBJECT_COLORS = {
 };
 
 function changeText(value, suffix = "%") {
-  if (value === null) return "数据积累中";
+  if (value === null) return null;
   if (value === 0) return "与上个 30 天持平";
   return `比上个 30 天${value > 0 ? "提升" : "下降"} ${Math.abs(value)}${suffix}`;
 }
@@ -32,7 +32,7 @@ function MetricCard({ icon: Icon, label, value, detail, tone = "" }) {
   return (
     <article className={`stats-metric-card ${tone}`.trim()}>
       <span className="stats-metric-icon"><Icon size={21} /></span>
-      <div><small>{label}</small><strong>{value}</strong><p>{detail}</p></div>
+      <div><small>{label}</small><strong>{value}</strong>{detail ? <p>{detail}</p> : null}</div>
     </article>
   );
 }
@@ -61,7 +61,7 @@ function ActivityHeatmap({ activity }) {
 
 function AccuracyLineChart({ points }) {
   const chartPoints = points.filter((point) => point.accuracy !== null);
-  if (!chartPoints.length) return <EmptyState title="还没有趋势数据" text="完成一次练习后，这里会显示正确率变化。" />;
+  if (!chartPoints.length) return <EmptyState title="暂无正确率数据" />;
   const width = 720;
   const height = 220;
   const padX = 34;
@@ -137,7 +137,7 @@ export function StatsView({ level, token, onBack, onAction, onExams }) {
     return measured.sort((left, right) => left.accuracy - right.accuracy)[0] || null;
   }, [overview]);
 
-  if (loading && !overview) return <div className="center-state">正在整理学习数据…</div>;
+  if (loading && !overview) return <div className="center-state">加载中…</div>;
   if (error && !overview) return <div className="center-state error">{error}</div>;
 
   const totals = overview.totals;
@@ -145,16 +145,15 @@ export function StatsView({ level, token, onBack, onAction, onExams }) {
   return (
     <section className="stats-page">
       <PageHeader onBack={onBack} className="stats-header">
-        <div className="stats-title"><small>{level} 学习报告</small><h1>数据中心</h1><p>看见积累，找到下一步最值得练习的地方。</p></div>
+        <div className="stats-title"><small>{level} 学习报告</small><h1>数据中心</h1></div>
         <ThemeToggle />
       </PageHeader>
 
       {!hasData ? (
         <section className="stats-empty-card">
           <Sparkles size={36} />
-          <h2>你的学习报告正在等待第一笔记录</h2>
-          <p>完成一次练习或模拟考试后，这里会生成趋势、连续学习天数和科目洞察。</p>
-          <button className="primary-button" type="button" onClick={() => onAction("vocabulary")}>开始第一次练习</button>
+          <h2>暂无学习记录</h2>
+          <button className="primary-button" type="button" onClick={() => onAction("vocabulary")}>开始练习</button>
         </section>
       ) : (
         <>
@@ -168,29 +167,29 @@ export function StatsView({ level, token, onBack, onAction, onExams }) {
           <div className="stats-layout">
             <main className="stats-main-column">
               <section className="stats-panel">
-                <div className="stats-panel-heading"><div><span><CalendarDays size={20} /> 学习热力图</span><h2>过去一年，你学习了多少？</h2></div><strong>{overview.streak.current} 天连续</strong></div>
+                <div className="stats-panel-heading"><div><span><CalendarDays size={20} /> 学习热力图</span><h2>近一年学习记录</h2></div><strong>连续 {overview.streak.current} 天</strong></div>
                 <ActivityHeatmap activity={overview.activity} />
-                <div className="stats-conclusion"><p>{comparison.recent.answered ? `最近 30 天完成 ${comparison.recent.answered} 题，坚持比单次冲刺更重要。` : "最近 30 天还没有学习记录，今天很适合重新开始。"}</p><button type="button" onClick={() => onAction(weakest?.subject || "vocabulary")}>开始今日练习 <ArrowRight size={16} /></button></div>
+                <div className="stats-conclusion"><p>{comparison.recent.answered ? `最近 30 天完成 ${comparison.recent.answered} 题。` : "最近 30 天暂无学习记录。"}</p><button type="button" onClick={() => onAction(weakest?.subject || "vocabulary")}>开始练习 <ArrowRight size={16} /></button></div>
               </section>
 
               <section className="stats-panel">
-                <div className="stats-panel-heading trend-heading"><div><span><TrendingUp size={20} /> 正确率趋势</span><h2>练习效果正在怎样变化？</h2></div><div className="stats-range-tabs">{[[90, "90 天"], [180, "半年"], [365, "一年"]].map(([value, label]) => <button className={days === Number(value) ? "active" : ""} onClick={() => setDays(Number(value))} type="button" key={value}>{label}</button>)}</div></div>
+                <div className="stats-panel-heading trend-heading"><div><span><TrendingUp size={20} /> 正确率趋势</span><h2>正确率变化</h2></div><div className="stats-range-tabs">{[[90, "90 天"], [180, "半年"], [365, "一年"]].map(([value, label]) => <button className={days === Number(value) ? "active" : ""} onClick={() => setDays(Number(value))} type="button" key={value}>{label}</button>)}</div></div>
                 <AccuracyLineChart points={trend} />
-                <div className="stats-conclusion"><p>{comparison.accuracyChange === null ? "继续积累数据，就能看出正确率的变化趋势。" : comparison.accuracyChange >= 0 ? `最近 30 天正确率提升了 ${comparison.accuracyChange} 个百分点。` : `最近 30 天正确率回落了 ${Math.abs(comparison.accuracyChange)} 个百分点，建议复习薄弱科目。`}</p><button type="button" onClick={() => onAction(weakest?.subject || "grammar")}>强化薄弱项 <ArrowRight size={16} /></button></div>
+                <div className="stats-conclusion"><p>{comparison.accuracyChange === null ? "暂无对比数据。" : comparison.accuracyChange === 0 ? "最近 30 天正确率与上个 30 天持平。" : comparison.accuracyChange > 0 ? `最近 30 天正确率上升 ${comparison.accuracyChange} 个百分点。` : `最近 30 天正确率下降 ${Math.abs(comparison.accuracyChange)} 个百分点。`}</p><button type="button" onClick={() => onAction(weakest?.subject || "grammar")}>专项练习 <ArrowRight size={16} /></button></div>
               </section>
 
               <section className="stats-panel">
-                <div className="stats-panel-heading"><div><span><BarChart3 size={20} /> 科目掌握度</span><h2>哪里最值得优先投入？</h2></div></div>
+                <div className="stats-panel-heading"><div><span><BarChart3 size={20} /> 科目统计</span><h2>各科正确率</h2></div></div>
                 <SubjectBars subjects={overview.breakdown_by_subject} onAction={onAction} />
-                <div className="stats-conclusion"><p>{weakest ? `${weakest.label}正确率最低（${weakest.accuracy}%），优先专项练习会更有效。` : "完成不同科目的练习后，这里会帮你识别薄弱项。"}</p><button type="button" onClick={() => onAction(weakest?.subject || "reading")}>开始{weakest?.label || "科目"}专项 <ArrowRight size={16} /></button></div>
+                <div className="stats-conclusion"><p>{weakest ? `${weakest.label}正确率最低（${weakest.accuracy}%）。` : "暂无科目数据。"}</p><button type="button" onClick={() => onAction(weakest?.subject || "reading")}>开始{weakest?.label || "科目"}专项 <ArrowRight size={16} /></button></div>
               </section>
             </main>
 
-            <aside className="stats-insights" aria-label="学习洞察摘要">
-              <div className="stats-insights-title"><Sparkles size={19} /><h2>洞察摘要</h2></div>
-              <article><span className="insight-icon weak"><TrendingDown size={19} /></span><small>优先提升</small><h3>{weakest ? `${weakest.label}是当前薄弱项` : "继续积累科目数据"}</h3><p>{weakest ? `每 10 题约答对 ${Math.round(weakest.accuracy / 10)} 题，建议先做一组专项。` : "完成一组专项练习后即可识别。"}</p><button type="button" onClick={() => onAction(weakest?.subject || "reading")}>去专项练习 <ArrowRight size={15} /></button></article>
-              <article><span className="insight-icon"><Flame size={19} /></span><small>学习节奏</small><h3>{overview.streak.current ? `已连续学习 ${overview.streak.current} 天` : "今天开启新的连续记录"}</h3><p>你的历史最长记录是 {overview.streak.longest} 天。</p><button type="button" onClick={() => onAction("grammar")}>完成今日练习 <ArrowRight size={15} /></button></article>
-              <article><span className="insight-icon exam"><Target size={19} /></span><small>考试距离</small><h3>{totals.exam_attempts ? `已完成 ${totals.exam_attempts} 次模拟考试` : "还没有模拟考试成绩"}</h3><p>{totals.exam_attempts ? "继续用整套试卷检验知识迁移。" : "完成一次考试可建立成绩基线。"}</p><button type="button" onClick={onExams}>查看模拟考试 <ArrowRight size={15} /></button></article>
+            <aside className="stats-insights" aria-label="学习概况">
+              <div className="stats-insights-title"><Sparkles size={19} /><h2>学习概况</h2></div>
+              <article><span className="insight-icon weak"><TrendingDown size={19} /></span><small>薄弱科目</small><h3>{weakest ? `${weakest.label}正确率最低` : "暂无科目数据"}</h3><button type="button" onClick={() => onAction(weakest?.subject || "reading")}>去专项练习 <ArrowRight size={15} /></button></article>
+              <article><span className="insight-icon"><Flame size={19} /></span><small>连续学习</small><h3>{overview.streak.current ? `已连续学习 ${overview.streak.current} 天` : "当前连续学习 0 天"}</h3><p>最长连续学习 {overview.streak.longest} 天。</p><button type="button" onClick={() => onAction("grammar")}>开始练习 <ArrowRight size={15} /></button></article>
+              <article><span className="insight-icon exam"><Target size={19} /></span><small>模拟考试</small><h3>{totals.exam_attempts ? `已完成 ${totals.exam_attempts} 次模拟考试` : "暂无考试成绩"}</h3><button type="button" onClick={onExams}>查看模拟考试 <ArrowRight size={15} /></button></article>
             </aside>
           </div>
         </>

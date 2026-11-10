@@ -47,11 +47,11 @@ export function TitleBlock({ eyebrow, title, subtitle = null, className = "" }: 
   );
 }
 
-export function EmptyState({ title, text }) {
+export function EmptyState({ title, text = null }) {
   return (
     <div className="empty-books">
       <strong>{title}</strong>
-      <span>{text}</span>
+      {text ? <span>{text}</span> : null}
     </div>
   );
 }

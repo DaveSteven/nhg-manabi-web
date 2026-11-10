@@ -119,7 +119,7 @@ export function LibraryView({
   const skeletonCount = Math.max(12, books.length);
 
   return (
-    <>
+    <div className="home-page">
       <header className="topbar">
         <div className="topbar-brand">
           <BrandMark size={44} />
@@ -227,21 +227,21 @@ export function LibraryView({
 
       <section className="home-section">
         <div className="home-section-heading">
-          <div><h2>开始练习</h2><p>选择专项训练，或进行完整模拟考试</p></div>
+          <div><h2>开始练习</h2></div>
         </div>
         <div className="home-module-grid">
           <article className="home-training-module featured">
-            <div className="home-module-heading"><div><Target size={25} /><span><strong>专项练习</strong><small>针对不同能力单独强化</small></span></div><em>{weakPracticeCategory ? `${PRACTICE_CATEGORIES[weakPracticeCategory.category].label}正确率最低` : "推荐"}</em></div>
+            <div className="home-module-heading"><div><Target size={25} /><span><strong>专项练习</strong></span></div><em>{weakPracticeCategory ? `${PRACTICE_CATEGORIES[weakPracticeCategory.category].label}正确率最低` : "推荐"}</em></div>
             <div className="home-module-actions">
-              <button onClick={onOpenVocabularyPractice} disabled={!exams.length} title={exams.length ? undefined : "需先有该级别真题题库"} type="button"><Languages size={22} /><span><strong>文字词汇专项</strong><small>{exams.length ? "读音、词义和用法强化" : "需先有该级别真题题库"}</small></span><ChevronRight size={19} /></button>
-              <button onClick={onOpenGrammarPractice} disabled={!exams.length} title={exams.length ? undefined : "需先有该级别真题题库"} type="button"><BrainCircuit size={22} /><span><strong>文法专项</strong><small>{exams.length ? "按题型、试卷和题量组题" : "需先有该级别真题题库"}</small></span><ChevronRight size={19} /></button>
-              <button onClick={onOpenReadingPractice} disabled={!exams.length} title={exams.length ? undefined : "需先有该级别真题题库"} type="button"><BookOpen size={22} /><span><strong>读解专项</strong><small>{exams.length ? "短篇、长篇和信息检索" : "需先有该级别真题题库"}</small></span><ChevronRight size={19} /></button>
-              <button onClick={onOpenListening} type="button"><Headphones size={22} /><span><strong>听力专项</strong><small>按试卷逐题精听与循环</small></span><ChevronRight size={19} /></button>
+              <button onClick={onOpenVocabularyPractice} disabled={!exams.length} title={exams.length ? undefined : "需先有该级别真题题库"} type="button"><Languages size={22} /><span><strong>文字词汇专项</strong></span><ChevronRight size={19} /></button>
+              <button onClick={onOpenGrammarPractice} disabled={!exams.length} title={exams.length ? undefined : "需先有该级别真题题库"} type="button"><BrainCircuit size={22} /><span><strong>文法专项</strong></span><ChevronRight size={19} /></button>
+              <button onClick={onOpenReadingPractice} disabled={!exams.length} title={exams.length ? undefined : "需先有该级别真题题库"} type="button"><BookOpen size={22} /><span><strong>读解专项</strong></span><ChevronRight size={19} /></button>
+              <button onClick={onOpenListening} type="button"><Headphones size={22} /><span><strong>听力专项</strong></span><ChevronRight size={19} /></button>
             </div>
           </article>
           <article className="home-training-module exam-module">
-            <div className="home-module-heading"><div><ClipboardList size={25} /><span><strong>模拟考试</strong><small>按照正式考试结构完成整套试卷</small></span></div></div>
-            <div className="home-exam-summary"><strong>{exams.length}</strong><span>{level} 历年试卷</span>{latestExamAttempt ? <small>最近成绩 {pct(latestExamAttempt.correct, latestExamAttempt.total)}% · {latestExamAttempt.correct}/{latestExamAttempt.total}</small> : <small>尚未参加考试</small>}</div>
+            <div className="home-module-heading"><div><ClipboardList size={25} /><span><strong>模拟考试</strong></span></div></div>
+            <div className="home-exam-summary"><span>{level} 历年试卷</span>{latestExamAttempt ? <small>最近成绩 {pct(latestExamAttempt.correct, latestExamAttempt.total)}% · {latestExamAttempt.correct}/{latestExamAttempt.total}</small> : <small>尚未参加考试</small>}</div>
             <button className="outline-button" onClick={onOpenExamList} type="button">选择模拟试卷 <ArrowRight size={19} /></button>
           </article>
         </div>
@@ -251,9 +251,7 @@ export function LibraryView({
         <div className="home-section-heading">
           <div>
             <h2>基础题库</h2>
-            <p>
-              {!booksLoading && books.length ? librarySummary : "选择知识领域后，按组练习"}
-            </p>
+            {!booksLoading && books.length ? <p>{librarySummary}</p> : null}
           </div>
         </div>
         <div className="subject-library-tabs" role="tablist" aria-label="题目科目">
@@ -302,7 +300,7 @@ export function LibraryView({
         )}
       </section>
 
-    </>
+    </div>
   );
 }
 
@@ -565,7 +563,6 @@ export function LoginView({ onLogin }) {
         <div className="login-brand">
           <BrandMark size={52} />
           <div className="brand-title">JLPT <span>GO!</span></div>
-          <p>登录后继续你的 JLPT 学习</p>
         </div>
         <form className="new-user-form" onSubmit={submit}>
           <FieldInput label="Username" value={username} onChange={setUsername} placeholder="例：david" />
@@ -629,7 +626,7 @@ export function UserView({ currentUser, attempts, onBack, onOpenStats, onLogout,
         <section className="profile-admin-card">
           <div className="section-title">
             <UserRoundPlus size={22} />
-            <div><h2>注册用户</h2><p>管理员可以创建学习账号。</p></div>
+            <div><h2>注册用户</h2></div>
           </div>
           <form className="new-user-form" onSubmit={submitRegistration}>
             <FieldInput label="显示名称" value={form.displayName} onChange={field("displayName")} placeholder="例如：小明" />
