@@ -562,7 +562,7 @@ export function UserView({ currentUser, attempts, onBack, onLogout, onRegisterUs
   );
 }
 
-function ExitConfirmOverlay({ onStay, onLeave }) {
+function ExitConfirmOverlay({ onStay, onLeave, onDiscard }) {
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       if (event.key === "Escape") { event.preventDefault(); onStay(); }
@@ -575,14 +575,15 @@ function ExitConfirmOverlay({ onStay, onLeave }) {
     <ModalOverlay title="暂停练习？">
       <p className="modal-footnote">退出后进度会保存，下次打开可从首页「继续学习」接着做。</p>
       <div className="modal-actions">
-        <button className="primary-button" onClick={onStay} type="button">继续练习</button>
+        {onDiscard ? <button className="discard-button" onClick={onDiscard} type="button">放弃本次练习</button> : null}
         <button className="secondary-button" onClick={onLeave} type="button">保存并退出</button>
+        <button className="primary-button" onClick={onStay} type="button">继续练习</button>
       </div>
     </ModalOverlay>
   );
 }
 
-export function QuizView({ session, onBack, onPause, onChoose, onCheck, onNext }) {
+export function QuizView({ session, onBack, onPause, onDiscard, onChoose, onCheck, onNext }) {
   const question = session.questions[session.index];
   const { checked, checkResult } = session;
   const isCorrect = Boolean(checkResult?.is_correct);
@@ -670,7 +671,11 @@ export function QuizView({ session, onBack, onPause, onChoose, onCheck, onNext }
         </ModalOverlay>
       ) : null}
       {showExitConfirm ? (
-        <ExitConfirmOverlay onStay={() => setShowExitConfirm(false)} onLeave={onPause || onBack} />
+        <ExitConfirmOverlay
+          onStay={() => setShowExitConfirm(false)}
+          onLeave={onPause || onBack}
+          onDiscard={onDiscard}
+        />
       ) : null}
     </div>
   );

@@ -106,7 +106,23 @@ kbd,
 .modal-actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: 10px;
+}
+
+// Destructive text action inside dialogs (e.g. "discard this session"), pushed away from primary actions.
+.discard-button {
+  margin-right: auto;
+  padding: 10px 6px;
+  border: none;
+  color: var(--coral-dark);
+  background: transparent;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.discard-button:hover {
+  text-decoration: underline;
 }
 
 .key-toast {

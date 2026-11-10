@@ -9,7 +9,9 @@ import {
   writeExamCache,
 } from "./study";
 
-const QUIZ_SESSION_KEY = "japanese-study-quiz-session";
+const QUIZ_SESSION_KEY = "manabi_quiz_session";
+/** Pre-rename key; read once for migration, then always written under QUIZ_SESSION_KEY. */
+const LEGACY_QUIZ_SESSION_KEY = "japanese-study-quiz-session";
 
 /** Unfinished quiz sessions older than this are discarded on load (ux plan §七). */
 export const QUIZ_SESSION_MAX_AGE_MS = 72 * 60 * 60 * 1000;
@@ -23,9 +25,18 @@ export function isQuizSessionExpired(session) {
 
 export function readStoredQuizSession() {
   try {
-    return JSON.parse(localStorage.getItem(QUIZ_SESSION_KEY) || "null");
+    const stored = localStorage.getItem(QUIZ_SESSION_KEY);
+    if (stored !== null) return JSON.parse(stored);
+    // One-time migration from the pre-rename key.
+    const legacy = localStorage.getItem(LEGACY_QUIZ_SESSION_KEY);
+    if (legacy !== null) {
+      localStorage.removeItem(LEGACY_QUIZ_SESSION_KEY);
+      return JSON.parse(legacy);
+    }
+    return null;
   } catch {
     localStorage.removeItem(QUIZ_SESSION_KEY);
+    localStorage.removeItem(LEGACY_QUIZ_SESSION_KEY);
     return null;
   }
 }

@@ -191,8 +191,11 @@ function App() {
         setSession(null);
         return;
       }
+      // B4: clear storage once the session finishes; the in-memory result view stays until navigation.
+      writeStoredQuizSession(session.finishedAttempt ? null : session);
+      return;
     }
-    writeStoredQuizSession(session);
+    writeStoredQuizSession(null);
   }, [currentUser, session]);
 
   const bookStats = useMemo(() => {
@@ -404,6 +407,13 @@ function App() {
     navigate(path);
   }
   const resetToLibrary = () => resetTo("/");
+
+  // B4: explicit discard — drop the stored session entirely instead of pausing it.
+  function discardQuizSession() {
+    writeStoredQuizSession(null);
+    setSession(null);
+    navigate("/");
+  }
   const resetToExamList = () => resetTo("/exams");
 
   function chooseOption(optionIndex) {
@@ -645,6 +655,7 @@ function App() {
                 session={session}
                 onBack={resetToLibrary}
                 onPause={() => navigate("/")}
+                onDiscard={discardQuizSession}
                 onChoose={chooseOption}
                 onCheck={checkAnswer}
                 onNext={nextQuestion}
