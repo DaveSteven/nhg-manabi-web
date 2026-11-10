@@ -164,6 +164,22 @@
   border-radius: 20px;
   background: var(--surface);
   box-shadow: 0 5px 0 var(--shadow);
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+/* B6 hover: interactive cards deepen one shade and lift slightly. */
+.book-card:hover {
+  border-color: var(--shadow);
+  transform: translateY(-1px);
+}
+
+.exam-card:not(.active-run) {
+  transition: transform 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+}
+
+.exam-card:not(.active-run):hover {
+  border-color: var(--shadow);
+  transform: translateY(-1px);
 }
 
 .book-card-skeleton {

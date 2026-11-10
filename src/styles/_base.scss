@@ -46,6 +46,15 @@ button {
   font: inherit;
 }
 
+/* B6 cursor rules: every clickable control points, disabled ones say not-allowed. */
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
 .app-shell {
   min-height: 100vh;
   background:

@@ -9,6 +9,7 @@ import {
 } from "../lib/study";
 import { BilingualTranscript, HtmlContent } from "./Html";
 import { ReviewMark, ReviewOptions } from "./CommonUi";
+import { Tooltip } from "./Tooltip";
 import { useKeyboardAnswer } from "../hooks/useKeyboardAnswer";
 
 const pad2 = (n) => String(n).padStart(2, "0");
@@ -154,19 +155,24 @@ export function ExamReview({ reviewProblemGroups, answerByQuestion, answerForQue
                 <div className="review-jump-problem-title">{section.problemLabel}</div>
                 <div className="review-jump-grid">
                   {section.items.map(({ question, displayNumber }) => (
-                    <button
+                    <Tooltip
                       key={question.id}
-                      aria-label={`${group.label} ${section.problemLabel} ${displayNumber}番`}
-                      className={[
-                        "review-jump-dot",
-                        answerByQuestion.get(question.id)?.isCorrect ? "right" : "miss",
-                        question.id === orderedIds[focusIndex] ? "focused" : "",
-                      ].filter(Boolean).join(" ")}
-                      onClick={() => jumpToIndex(orderedIds.indexOf(question.id))}
-                      type="button"
+                      className="jump-tip"
+                      tip={`${displayNumber}番 · ${answerByQuestion.get(question.id)?.isCorrect ? "正确" : "有误"}`}
                     >
-                      {displayNumber}
-                    </button>
+                      <button
+                        aria-label={`${group.label} ${section.problemLabel} ${displayNumber}番`}
+                        className={[
+                          "review-jump-dot",
+                          answerByQuestion.get(question.id)?.isCorrect ? "right" : "miss",
+                          question.id === orderedIds[focusIndex] ? "focused" : "",
+                        ].filter(Boolean).join(" ")}
+                        onClick={() => jumpToIndex(orderedIds.indexOf(question.id))}
+                        type="button"
+                      >
+                        {displayNumber}
+                      </button>
+                    </Tooltip>
                   ))}
                 </div>
               </section>
