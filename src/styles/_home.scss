@@ -364,6 +364,13 @@
   font-size: var(--fs-lg);
 }
 
+// B9: collapsed book grid — centered "show all" toggle under the grid.
+.show-all-books {
+  display: flex;
+  width: fit-content;
+  margin: 14px auto 0;
+}
+
 .grammar-practice-setup {
   width: min(980px, 100%);
   margin: 0 auto;
