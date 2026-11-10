@@ -187,6 +187,7 @@
   color: var(--correct-dark);
 }
 
+/* U2.5 §3.5: the longest-lived component in the product. */
 .option-button {
   display: grid;
   grid-template-columns: 38px 1fr 24px;
@@ -195,14 +196,19 @@
   min-height: 70px;
   padding: 12px 16px;
   border: 2px solid var(--line);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-md);
   color: var(--ink);
-  background: var(--surface);
+  background: var(--card);
   box-shadow: var(--shadow-rest);
   cursor: pointer;
   text-align: left;
-  font-size: var(--fs-lg);
+  font-size: var(--fs-base);
   font-weight: var(--fw-medium);
+  transition: border-color 0.2s ease-out, background-color 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.option-button:hover:not(:disabled) {
+  border-color: var(--muted);
 }
 
 .option-letter {
@@ -210,11 +216,27 @@
   place-items: center;
   width: 34px;
   height: 34px;
-  border-radius: var(--r-md);
-  color: var(--primary-dark);
-  background: var(--primary-soft);
-  font-size: var(--fs-md);
+  border-radius: var(--r-xs);
+  color: var(--muted);
+  background: var(--line);
+  font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
+  transition: color 0.2s ease-out, background-color 0.2s ease-out;
+}
+
+.option-button.selected .option-letter {
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.option-button.correct .option-letter {
+  color: var(--correct-dark);
+  background: var(--correct-soft);
+}
+
+.option-button.wrong .option-letter {
+  color: var(--error-dark);
+  background: var(--error-soft);
 }
 
 .option-button.selected {
@@ -233,6 +255,18 @@
   border-color: var(--error);
   background: var(--error-soft);
   box-shadow: 0 3px 0 var(--error-dark);
+  animation: option-shake 0.2s ease-out;
+}
+
+@keyframes option-shake {
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .option-button.wrong {
+    animation: none;
+  }
 }
 
 .answer-dock {
@@ -270,38 +304,6 @@
 
 .feedback strong {
   font-size: var(--fs-lg);
-}
-
-.primary-button,
-.secondary-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 50px;
-  padding: 0 22px;
-  border-radius: var(--r-md);
-  font-weight: var(--fw-medium);
-}
-
-.primary-button {
-  color: #ffffff;
-  background: var(--correct);
-  box-shadow: 0 3px 0 var(--correct-dark);
-}
-
-.primary-button:disabled {
-  cursor: not-allowed;
-  color: var(--muted);
-  background: var(--correct-soft);
-  box-shadow: 0 3px 0 var(--correct-dark);
-}
-
-.secondary-button {
-  color: var(--primary-dark);
-  background: var(--surface);
-  border: 2px solid var(--line);
-  box-shadow: var(--shadow-rest);
 }
 
 .logout-button {

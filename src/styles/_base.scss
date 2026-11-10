@@ -113,6 +113,63 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* U2.5 §3.1: canonical button variants — page overrides may only adjust width/margin. */
+.primary-button,
+.secondary-button,
+.success-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--r-md);
+  font: inherit;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+}
+
+.primary-button {
+  color: #ffffff;
+  background: var(--primary);
+  box-shadow: 0 3px 0 var(--primary-dark);
+}
+
+.primary-button:hover:not(:disabled),
+.success-button:hover:not(:disabled),
+.secondary-button:hover:not(:disabled) {
+  filter: brightness(1.04);
+}
+
+.primary-button:disabled {
+  cursor: not-allowed;
+  color: var(--muted);
+  background: var(--line);
+  box-shadow: none;
+}
+
+.success-button {
+  color: #ffffff;
+  background: var(--correct);
+  box-shadow: 0 3px 0 var(--correct-dark);
+}
+
+.secondary-button {
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--line);
+  box-shadow: var(--shadow-rest);
+}
+
+.secondary-button:disabled {
+  cursor: not-allowed;
+  color: var(--muted);
+  background: var(--line);
+  border-color: var(--line);
+  box-shadow: none;
+}
+
 .app-shell {
   min-height: 100vh;
   background:
@@ -138,8 +195,9 @@ button:disabled {
 
 .eyebrow {
   color: var(--primary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-xs);
   font-weight: var(--fw-medium);
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 

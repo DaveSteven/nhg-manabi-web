@@ -127,19 +127,18 @@
   width: 100%;
   min-height: 48px;
   padding: 0 12px;
-  border: 0;
-  border-bottom: 3px solid var(--shadow);
-  border-radius: var(--r-md) var(--r-md) 0 0;
+  border: 2px solid var(--line);
+  border-radius: var(--r-sm);
   color: var(--ink);
-  background: var(--surface);
+  background: var(--card);
   font: inherit;
-  font-weight: var(--fw-medium);
+  font-size: var(--fs-base);
 }
 
 .new-user-form input:focus {
   outline: 0;
-  border-bottom-color: var(--primary);
-  background: var(--card);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
 .form-error {

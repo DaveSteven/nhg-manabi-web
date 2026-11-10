@@ -695,7 +695,7 @@ export function QuizView({ session, onBack, onPause, onDiscard, onChoose, onChec
           </div>
         )}
         {checked ? (
-          <button className="primary-button" onClick={onNext} type="button">
+          <button className={`primary-button ${isCorrect ? "success-button" : ""}`.trim()} onClick={onNext} type="button">
             {session.index === session.questions.length - 1 ? "完成" : "下一题"} <kbd className="kbd-hint">↵</kbd>
           </button>
         ) : (
