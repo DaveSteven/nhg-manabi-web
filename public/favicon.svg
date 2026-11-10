@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect x="4" y="4" width="56" height="56" rx="14" fill="#b94968"/>
-  <rect x="10" y="10" width="44" height="44" rx="9" fill="none" stroke="#ffffff" stroke-opacity="0.45" stroke-width="2"/>
-  <text x="32" y="45" font-family="Noto Serif JP, Hiragino Mincho ProN, Yu Mincho, serif" font-size="34" font-weight="700" fill="#ffffff" text-anchor="middle">学</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="18" fill="#B94968"/>
+  <path d="M14 20.1C14 18.6 15.6 17.7 16.9 18.4L29 25.4V47L15 38.9C14.4 38.5 14 37.9 14 37.2V20.1Z" fill="#F3B9CA"/>
+  <path d="M34 25.4L42 20.8V16.7C42 15.8 43.1 15.3 43.8 16L54.1 26.3C54.9 27.1 54.9 28.4 54.1 29.2L34 47V25.4Z" fill="white"/>
 </svg>

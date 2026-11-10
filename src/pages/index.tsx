@@ -23,7 +23,7 @@ import { LEVELS, SUBJECTS, api, formatDate, pct, subjectLabel } from "../lib/stu
 import UiSelect from "../components/UiSelect";
 import { Tooltip } from "../components/Tooltip";
 import { HtmlInline } from "../components/Html";
-import { DailyRing, EmptyState, FieldInput, KeyboardToast, ModalOverlay, OptionButton, PageHeader, PetalFall, Progress, ResultScore, ReviewMark, ReviewOptions, SealMark, ShortcutHelp, ThemeToggle, TitleBlock } from "../components/CommonUi";
+import { DailyRing, EmptyState, FieldInput, KeyboardToast, ModalOverlay, OptionButton, PageHeader, PetalFall, Progress, ResultScore, ReviewMark, ReviewOptions, BrandMark, ShortcutHelp, ThemeToggle, TitleBlock } from "../components/CommonUi";
 import { markKeyboardHintSeen, useKeyboardAnswer } from "../hooks/useKeyboardAnswer";
 import { PRACTICE_CATEGORIES } from "./PracticePages";
 
@@ -120,7 +120,7 @@ export function LibraryView({
     <>
       <header className="topbar">
         <div className="topbar-brand">
-          <SealMark size={44} />
+          <BrandMark size={44} />
           <h1 className="brand-title">JLPT <span>GO!</span></h1>
         </div>
         <div className="top-actions">
@@ -511,7 +511,7 @@ export function LoginView({ onLogin }) {
     <section className="login-page">
       <div className="login-card">
         <div className="login-brand">
-          <SealMark size={52} />
+          <BrandMark size={52} />
           <div className="brand-title">JLPT <span>GO!</span></div>
           <p>登录后继续你的 JLPT 学习</p>
         </div>

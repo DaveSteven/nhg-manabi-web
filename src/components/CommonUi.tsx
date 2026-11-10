@@ -219,17 +219,9 @@ export function DailyRing({ value, goal }: { value: number; goal: number }) {
   );
 }
 
-/** Square seal mark (方案一 U3): sakura-red rounded square with a serif character. */
-export function SealMark({ char = "学", size = 44 }: { char?: string; size?: number }) {
-  return (
-    <span
-      className="seal-mark"
-      style={{ width: size, height: size, fontSize: Math.round(size * 0.5) }}
-      aria-hidden="true"
-    >
-      {char}
-    </span>
-  );
+/** Folded geometric pages form a forward arrow: the JLPT GO! brand mark. */
+export function BrandMark({ size = 44 }: { size?: number }) {
+  return <img className="brand-mark" src="/logo.svg" width={size} height={size} alt="" aria-hidden="true" />;
 }
 
 /** Small sakura blossom SVG (方案一 U4 material); page integration lands with 方案二 streak data. */

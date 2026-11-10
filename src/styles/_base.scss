@@ -357,17 +357,9 @@ h1 {
   text-shadow: 0 2px 0 rgba(147, 53, 79, .2);
 }
 
-/* U3: square seal mark (朱印) used for logo, login and avatars. */
-.seal-mark {
-  display: grid;
-  place-items: center;
-  border-radius: var(--r-md);
-  color: var(--on-accent);
-  background: var(--primary);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4), var(--shadow-rest);
-  font-family: var(--font-serif);
-  font-weight: var(--fw-bold);
-  line-height: 1;
+.brand-mark {
+  display: block;
+  flex-shrink: 0;
   user-select: none;
 }
 
