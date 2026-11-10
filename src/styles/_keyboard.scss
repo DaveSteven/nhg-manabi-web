@@ -2,7 +2,7 @@
 
 // Number badges act as keycap hints while keyboard mode is active on the options grid.
 .options-grid.keyboard-active .option-letter {
-  border: 1.5px solid #b9cbe2;
+  border: 1.5px solid var(--line);
   border-bottom-width: 3px;
   border-radius: 9px;
   background: var(--surface);
@@ -37,22 +37,22 @@ kbd,
   border-radius: 12px;
   color: var(--muted);
   background: var(--surface);
-  box-shadow: 0 4px 0 var(--shadow);
+  box-shadow: 0 3px 0 var(--shadow);
   cursor: pointer;
 }
 
 .shortcut-toggle:hover {
-  color: var(--blue-dark);
-  border-color: var(--blue);
+  color: var(--primary-dark);
+  border-color: var(--primary);
   transform: translateY(-1px);
 }
 
 // Current question in the exam review ← / → navigation.
 .review-jump-dot.focused {
   color: #ffffff;
-  border-color: var(--blue);
-  background: var(--blue);
-  box-shadow: 0 0 0 2px var(--blue-soft);
+  border-color: var(--primary);
+  background: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-soft);
 }
 
 .modal-overlay {
@@ -115,7 +115,7 @@ kbd,
   margin-right: auto;
   padding: 10px 6px;
   border: none;
-  color: var(--coral-dark);
+  color: var(--error-dark);
   background: transparent;
   font-weight: 650;
   cursor: pointer;
@@ -145,6 +145,6 @@ kbd,
 }
 
 .key-toast > svg {
-  color: var(--blue-dark);
+  color: var(--primary-dark);
   flex-shrink: 0;
 }

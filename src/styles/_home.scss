@@ -6,10 +6,10 @@
   align-items: center;
   gap: 24px;
   padding: 24px;
-  border: 2px solid #b9e7cd;
+  border: 2px solid var(--sakura);
   border-radius: 22px;
-  background: linear-gradient(135deg, #f0fff5, #ffffff);
-  box-shadow: 0 5px 0 #c9dfd2;
+  background: linear-gradient(135deg, var(--sakura-soft), var(--card));
+  box-shadow: 0 3px 0 var(--shadow);
 }
 
 .home-continue-card > div {
@@ -36,8 +36,8 @@
   justify-self: start;
   padding: 4px 10px;
   border-radius: 999px;
-  color: var(--green-dark);
-  background: #ffffff;
+  color: var(--correct-dark);
+  background: var(--card);
   font-size: 0.72rem;
   font-style: normal;
   font-weight: 700;
@@ -61,7 +61,7 @@
 }
 
 .continue-swap-button:hover {
-  color: var(--blue-dark);
+  color: var(--primary-dark);
   border-color: var(--line);
   transform: none;
 }
@@ -110,7 +110,7 @@
   border-radius: 19px;
   color: var(--ink);
   background: var(--surface);
-  box-shadow: 0 4px 0 var(--shadow);
+  box-shadow: 0 3px 0 var(--shadow);
   text-align: left;
   cursor: pointer;
 }
@@ -127,7 +127,7 @@
 }
 
 .training-action > svg {
-  color: var(--blue-dark);
+  color: var(--primary-dark);
 }
 
 .training-action > span {
@@ -146,21 +146,21 @@
   right: 14px;
   padding: 4px 8px;
   border-radius: 999px;
-  color: var(--green-dark);
-  background: #ffffff;
+  color: var(--correct-dark);
+  background: var(--card);
   font-size: 0.72rem;
   font-style: normal;
   font-weight: 700;
 }
 
 .training-action.featured {
-  border-color: #b9e7cd;
-  background: linear-gradient(145deg, var(--green-soft), #f8fff4);
-  box-shadow: 0 4px 0 #bdd9c7;
+  border-color: var(--sakura);
+  background: linear-gradient(145deg, var(--correct-soft), var(--sakura-soft));
+  box-shadow: 0 3px 0 var(--shadow);
 }
 
 .training-action.featured > svg {
-  color: var(--green-dark);
+  color: var(--correct-dark);
 }
 
 .home-module-grid {
@@ -178,13 +178,13 @@
   border: 2px solid var(--line);
   border-radius: 20px;
   background: var(--surface);
-  box-shadow: 0 4px 0 var(--shadow);
+  box-shadow: 0 3px 0 var(--shadow);
 }
 
 .home-training-module.featured {
-  border-color: #b9e7cd;
-  background: linear-gradient(145deg, var(--green-soft), #ffffff 72%);
-  box-shadow: 0 4px 0 #bdd9c7;
+  border-color: var(--sakura);
+  background: linear-gradient(145deg, var(--correct-soft), var(--card) 72%);
+  box-shadow: 0 3px 0 var(--shadow);
 }
 
 .home-module-heading,
@@ -199,11 +199,11 @@
 }
 
 .home-module-heading > div > svg {
-  color: var(--green-dark);
+  color: var(--correct-dark);
 }
 
 .exam-module .home-module-heading > div > svg {
-  color: var(--blue-dark);
+  color: var(--primary-dark);
 }
 
 .home-module-heading span {
@@ -225,8 +225,8 @@
 .home-module-heading em {
   padding: 4px 9px;
   border-radius: 999px;
-  color: var(--green-dark);
-  background: #ffffff;
+  color: var(--correct-dark);
+  background: var(--card);
   font-size: 0.72rem;
   font-style: normal;
   font-weight: 700;
@@ -245,7 +245,7 @@
   align-items: center;
   gap: 10px;
   padding: 15px;
-  border: 2px solid #cfe3d6;
+  border: 2px solid var(--line);
   border-radius: 15px;
   color: var(--ink);
   background: rgba(255, 255, 255, 0.84);
@@ -254,7 +254,7 @@
 }
 
 .home-module-actions button:hover {
-  border-color: var(--green);
+  border-color: var(--correct);
   transform: translateY(-1px);
 }
 
@@ -264,7 +264,7 @@
 }
 
 .home-module-actions button > svg:first-child {
-  color: var(--green-dark);
+  color: var(--correct-dark);
 }
 
 .home-module-actions button span {
@@ -283,7 +283,7 @@
 .home-exam-summary strong {
   grid-row: 1 / 3;
   font-size: 2.5rem;
-  color: var(--blue-dark);
+  color: var(--primary-dark);
 }
 
 .home-exam-summary small {
@@ -315,7 +315,7 @@
   border-radius: 16px;
   color: var(--muted);
   background: var(--surface);
-  box-shadow: 0 4px 0 var(--shadow);
+  box-shadow: 0 3px 0 var(--shadow);
   text-align: left;
   cursor: pointer;
 }
@@ -329,22 +329,22 @@
 }
 
 .subject-library-tabs button.subject-grammar {
-  border-color: var(--blue);
-  background: var(--blue);
-  box-shadow: 0 4px 0 #168ac2;
+  border-color: var(--primary);
+  background: var(--primary);
+  box-shadow: 0 3px 0 var(--primary-dark);
 }
 
 .subject-library-tabs button.subject-meaning {
-  color: #4c3900;
-  border-color: var(--yellow);
-  background: var(--yellow);
-  box-shadow: 0 4px 0 #d8a900;
+  color: var(--warn-dark);
+  border-color: var(--warn);
+  background: var(--warn);
+  box-shadow: 0 3px 0 var(--warn-dark);
 }
 
 .subject-library-tabs button.subject-kanji {
-  border-color: var(--coral);
-  background: var(--coral);
-  box-shadow: 0 4px 0 #d94c4c;
+  border-color: var(--error);
+  background: var(--error);
+  box-shadow: 0 3px 0 var(--error-dark);
 }
 
 .home-library-heading {
@@ -410,7 +410,7 @@
 }
 
 .home-review-grid button > svg:first-child {
-  color: var(--coral-dark);
+  color: var(--error-dark);
 }
 
 // B9: collapsed book grid — centered "show all" toggle under the grid.
@@ -457,7 +457,7 @@
   border: 2px solid var(--line);
   border-radius: 20px;
   background: var(--surface);
-  box-shadow: 0 4px 0 var(--shadow);
+  box-shadow: 0 3px 0 var(--shadow);
 }
 
 .practice-config-heading {
@@ -475,7 +475,7 @@
   flex: 0 0 34px;
   border-radius: 11px;
   color: #ffffff;
-  background: var(--blue);
+  background: var(--primary);
   font-weight: 700;
 }
 
@@ -508,7 +508,7 @@
   padding: 16px;
   border: 2px solid var(--line);
   border-radius: 16px;
-  background: #fbfcfe;
+  background: var(--card);
   cursor: pointer;
 }
 
@@ -521,7 +521,7 @@
 
 .practice-source-grid label > svg,
 .practice-type-grid label > svg {
-  color: #9aa5b3;
+  color: var(--muted);
 }
 
 .practice-source-grid label > span,
@@ -532,14 +532,14 @@
 
 .practice-source-grid label.selected,
 .practice-type-grid label.selected {
-  border-color: var(--blue);
-  background: var(--blue-soft);
-  box-shadow: 0 3px 0 #b7ddf0;
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  box-shadow: 0 3px 0 var(--primary-dark);
 }
 
 .practice-source-grid label.selected > svg,
 .practice-type-grid label.selected > svg {
-  color: var(--blue-dark);
+  color: var(--primary-dark);
 }
 
 .practice-exam-select {
@@ -569,15 +569,15 @@
   border: 2px solid var(--line);
   border-radius: 13px;
   color: var(--muted);
-  background: #ffffff;
+  background: var(--card);
   cursor: pointer;
 }
 
 .practice-count-options > button.selected {
   color: #ffffff;
-  border-color: var(--green);
-  background: var(--green);
-  box-shadow: 0 3px 0 var(--green-dark);
+  border-color: var(--correct);
+  background: var(--correct);
+  box-shadow: 0 3px 0 var(--correct-dark);
 }
 
 .practice-count-options > label {
@@ -586,7 +586,7 @@
   min-height: 48px;
   border: 2px solid var(--line);
   border-radius: 13px;
-  background: #ffffff;
+  background: var(--card);
   overflow: hidden;
 }
 
@@ -609,9 +609,9 @@
   justify-content: space-between;
   gap: 18px;
   padding: 18px 22px;
-  border: 2px solid #b9e7cd;
+  border: 2px solid var(--sakura);
   border-radius: 18px;
-  background: linear-gradient(135deg, var(--green-soft), #ffffff);
+  background: linear-gradient(135deg, var(--correct-soft), var(--card));
 }
 
 .practice-start-bar > div {
@@ -636,7 +636,7 @@
 }
 
 .grammar-type-summary strong {
-  color: var(--green-dark);
+  color: var(--correct-dark);
   font-size: 1.65rem;
 }
 
@@ -657,7 +657,7 @@
   border: 2px solid var(--line);
   border-radius: 22px;
   background: var(--surface);
-  box-shadow: 0 5px 0 var(--shadow);
+  box-shadow: 0 3px 0 var(--shadow);
 }
 
 .random-practice-meta {
@@ -672,7 +672,7 @@
 }
 
 .random-practice-number {
-  color: var(--blue-dark);
+  color: var(--primary-dark);
   font-size: 0.88rem;
   font-weight: 700;
 }

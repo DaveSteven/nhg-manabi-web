@@ -12,13 +12,13 @@
 }
 
 .review-again {
-  background: var(--coral);
-  box-shadow: 0 4px 0 #d94c4c;
+  background: var(--error);
+  box-shadow: 0 3px 0 var(--error-dark);
 }
 
 .review-known {
-  background: var(--green);
-  box-shadow: 0 4px 0 var(--green-dark);
+  background: var(--correct);
+  box-shadow: 0 3px 0 var(--correct-dark);
 }
 
 .review-again:disabled,
@@ -76,14 +76,14 @@
   border: 2px solid var(--line);
   border-radius: 12px;
   color: var(--muted);
-  background: #ffffff;
+  background: var(--card);
   cursor: pointer;
   font-weight: 650;
 }
 
 .auth-tabs .active {
   color: #ffffff;
-  background: var(--blue);
+  background: var(--primary);
   box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.14);
 }
 
@@ -117,9 +117,9 @@
   padding: 0 16px;
   border: 2px solid var(--line);
   border-radius: 13px;
-  color: var(--blue-dark);
+  color: var(--primary-dark);
   background: var(--surface);
-  box-shadow: 0 4px 0 var(--shadow);
+  box-shadow: 0 3px 0 var(--shadow);
   font: inherit;
   font-size: .9rem;
   font-weight: 700;
@@ -129,8 +129,8 @@
 }
 
 .back-button:hover {
-  border-color: #b7ddf0;
-  background: var(--blue-soft);
+  border-color: var(--primary-soft);
+  background: var(--primary-soft);
 }
 
 .back-button:active {
@@ -139,7 +139,7 @@
 }
 
 .back-button:focus-visible {
-  outline: 3px solid rgba(28, 176, 246, .3);
+  outline: 3px solid var(--primary-soft);
   outline-offset: 3px;
 }
 
@@ -211,14 +211,14 @@
   padding: 14px;
   border: 2px solid var(--line);
   border-radius: 18px;
-  background: #ffffff;
-  box-shadow: 0 4px 0 var(--shadow);
+  background: var(--card);
+  box-shadow: 0 3px 0 var(--shadow);
 }
 
 .answer-sheet-toggle.active {
   color: #ffffff;
-  border-color: var(--blue-dark);
-  background: var(--blue-dark);
+  border-color: var(--primary-dark);
+  background: var(--primary-dark);
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.18);
 }
 
@@ -262,7 +262,7 @@
 }
 
 .answer-section.active {
-  background: var(--blue-soft);
+  background: var(--primary-soft);
 }
 
 .answer-section-title {
@@ -300,15 +300,15 @@
 }
 
 .answer-dot.answered {
-  color: var(--green-dark);
-  background: var(--green-soft);
-  border-color: var(--green);
+  color: var(--correct-dark);
+  background: var(--correct-soft);
+  border-color: var(--correct);
 }
 
 .answer-dot.active {
   color: #ffffff;
-  background: var(--blue);
-  border-color: var(--blue);
+  background: var(--primary);
+  border-color: var(--primary);
 }
 
 .submit-exam-button {
@@ -322,7 +322,7 @@
   padding: 20px;
   border: 2px solid var(--line);
   border-radius: 18px;
-  background: #ffffff;
+  background: var(--card);
 }
 
 .exam-question-head {
@@ -342,13 +342,13 @@
   width: 38px;
   height: 38px;
   border-radius: 12px;
-  color: var(--blue-dark);
-  background: var(--blue-soft);
+  color: var(--primary-dark);
+  background: var(--primary-soft);
 }
 
 .exam-question-head small {
   grid-column: 2;
-  color: var(--blue-dark);
+  color: var(--primary-dark);
   font-size: 0.82rem;
 }
 
@@ -383,13 +383,13 @@
 }
 
 .exam-sub-question-title > span {
-  color: var(--blue-dark);
+  color: var(--primary-dark);
   font-weight: 650;
   font-size: 1.08rem;
 }
 
 .exam-sub-question-title .html-content {
-  color: #263446;
+  color: var(--ink);
   font-weight: 500;
 }
 
@@ -398,7 +398,7 @@
 }
 
 .html-content {
-  color: #2f3d4f;
+  color: var(--ink);
   font-size: 1.08rem;
   font-weight: 400;
   line-height: 1.75;
@@ -442,7 +442,7 @@
   object-fit: contain;
   border: 2px solid var(--line);
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--card);
 }
 
 .exam-shared-image {
@@ -478,17 +478,17 @@
   padding: 14px;
   border: 2px solid var(--line);
   border-radius: 14px;
-  background: #ffffff;
+  background: var(--card);
 }
 
 .exam-score-summary.passed > div:first-child {
-  border-color: var(--green);
-  background: var(--green-soft);
+  border-color: var(--correct);
+  background: var(--correct-soft);
 }
 
 .exam-score-summary.failed > div:first-child {
-  border-color: #ff9a9a;
-  background: #fff0f0;
+  border-color: var(--error);
+  background: var(--error-soft);
 }
 
 .exam-score-summary span,
@@ -521,7 +521,7 @@
   padding: 12px;
   border: 2px solid var(--line);
   border-radius: 14px;
-  background: #ffffff;
+  background: var(--card);
 }
 
 .review-jump-title {
@@ -581,15 +581,15 @@
 }
 
 .review-jump-dot.right {
-  color: var(--green-dark);
-  border-color: var(--green);
-  background: var(--green-soft);
+  color: var(--correct-dark);
+  border-color: var(--correct);
+  background: var(--correct-soft);
 }
 
 .review-jump-dot.miss {
-  color: #d93535;
-  border-color: #ff9a9a;
-  background: #fff0f0;
+  color: var(--error-dark);
+  border-color: var(--error);
+  background: var(--error-soft);
 }
 
 .exam-review-item {
@@ -617,8 +617,8 @@
   height: 28px;
   box-sizing: border-box;
   border-radius: 9px;
-  color: #334155;
-  background: #eef4f8;
+  color: var(--ink);
+  background: var(--surface);
   font-size: 0.82rem;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
@@ -626,7 +626,7 @@
 }
 
 .review-title .html-content {
-  color: #263446;
+  color: var(--ink);
   font-size: 1.14rem;
   font-weight: 500;
 }
@@ -637,8 +637,8 @@
   margin: 2px 0 10px;
   padding: 5px 9px;
   border-radius: 8px;
-  color: #b42318;
-  background: #fff0f0;
+  color: var(--error-dark);
+  background: var(--error-soft);
   font-size: 0.82rem;
   font-weight: 650;
 }
@@ -646,10 +646,10 @@
 .analysis-text {
   margin-top: 12px;
   padding: 12px;
-  border-left: 4px solid var(--blue);
+  border-left: 4px solid var(--primary);
   border-radius: 0 12px 12px 0;
-  color: #4d5b6f;
-  background: #f6f9ff;
+  color: var(--muted);
+  background: var(--primary-soft);
   line-height: 1.72;
 }
 

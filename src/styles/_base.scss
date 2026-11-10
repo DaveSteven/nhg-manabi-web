@@ -1,29 +1,59 @@
 @use "variables" as *;
 
 :root {
-  color: #243043;
-  background: #f6f8fc;
-  --ink: #243043;
-  --muted: #687386;
-  --surface: #ffffff;
-  --line: #dbe2ec;
-  --shadow: #cfd8e6;
-  --green: #58cc02;
-  --green-dark: #49a900;
-  --green-soft: #e9ffd9;
-  --blue: #1cb0f6;
-  --blue-dark: #137db0;
-  --blue-soft: #eaf7ff;
-  --yellow: #ffc800;
-  --yellow-dark: #8d6b00;
-  --yellow-soft: #fff6cf;
-  --coral: #ff6b6b;
-  --coral-dark: #b53535;
-  --coral-soft: #fff0f0;
-  /* B5 reward tokens — reconcile with the UI redesign palette (方案一 U1). */
-  --sakura: #ff9ec0;
-  --sakura-dark: #e0608f;
-  --sakura-soft: #ffeef4;
+  /* 「樱与墨」 palette (方案一 U1) — old variable names kept as aliases below. */
+  color: var(--ink);
+  background: var(--surface);
+
+  // 基础
+  --ink: #2b2b33;         // 墨：正文、标题
+  --muted: #7a7580;       // 退墨：辅助文字
+  --surface: #faf7f2;     // 和纸白：页面背景
+  --card: #ffffff;        // 卡片面
+  --line: #e8e2da;        // 和纸描边
+  --shadow: #e3dcd2;      // 柔和投影
+
+  // 主题色
+  --primary: #b94968;       // 深樱：主按钮、链接、选中态
+  --primary-dark: #93354f;
+  --primary-soft: #fbe3ea;  // 淡樱：选中背景、标签底
+
+  // 点缀（情绪场景专用）
+  --sakura: #f4a7b9;
+  --sakura-dark: #d16d8d;   // 花瓣渐变深端（U1 补充，方案一未列）
+  --sakura-soft: #fdeef2;
+
+  // 反馈
+  --correct: #2f7d4f;       // 松绿
+  --correct-dark: #245f3d;
+  --correct-soft: #e8f3ec;
+  --error: #c73e3a;         // 绯红
+  --error-dark: #9c2f2c;
+  --error-soft: #fbeceb;
+  --warn: #b98a1e;          // 山吹茶
+  --warn-dark: #8d6b00;
+  --warn-soft: #faf3e0;
+
+  // 图表分类色（统计页四科目专用，方案二消费）
+  --chart-vocabulary: #5d9bc4;  // 缥色 —— 词汇
+  --chart-grammar: #8aa646;     // 抹茶 —— 语法
+  --chart-reading: #8f77b5;     // 藤紫 —— 阅读
+  --chart-listening: #e8b042;   // 山吹 —— 听解
+
+  /* 兼容别名：旧变量名 → 新语义 token（逐文件替换完成后移除）。 */
+  --blue: var(--primary);
+  --blue-dark: var(--primary-dark);
+  --blue-soft: var(--primary-soft);
+  --green: var(--correct);
+  --green-dark: var(--correct-dark);
+  --green-soft: var(--correct-soft);
+  --coral: var(--error);
+  --coral-dark: var(--error-dark);
+  --coral-soft: var(--error-soft);
+  --yellow: var(--warn);
+  --yellow-dark: var(--warn-dark);
+  --yellow-soft: var(--warn-soft);
+
   font-family:
     Inter, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic",
     "YuGothic", "Noto Sans JP", "Noto Sans CJK JP", "Segoe UI",
@@ -58,9 +88,9 @@ button:disabled {
 .app-shell {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(28, 176, 246, 0.2), transparent 330px),
-    linear-gradient(180deg, rgba(255, 200, 0, 0.16), transparent 260px),
-    #f6f8fc;
+    radial-gradient(circle at top left, rgba(185, 73, 104, 0.12), transparent 330px),
+    linear-gradient(180deg, rgba(185, 138, 30, 0.12), transparent 260px),
+    var(--surface);
   padding: 24px;
 }
 
@@ -79,7 +109,7 @@ button:disabled {
 }
 
 .eyebrow {
-  color: var(--blue);
+  color: var(--primary);
   font-size: 0.84rem;
   font-weight: 650;
   text-transform: uppercase;
@@ -99,8 +129,8 @@ h1 {
 }
 
 .brand-title span {
-  color: var(--green);
-  text-shadow: 0 3px 0 rgba(73, 169, 0, .18);
+  color: var(--primary);
+  text-shadow: 0 2px 0 rgba(147, 53, 79, .2);
 }
 
 .level-switch {
@@ -110,7 +140,7 @@ h1 {
   padding: 6px;
   border: 2px solid var(--line);
   border-radius: 18px;
-  background: #ffffff;
+  background: var(--card);
 }
 
 .top-actions {
@@ -143,8 +173,8 @@ h1 {
   min-height: 54px;
   border-radius: 50%;
   color: #ffffff;
-  background: var(--blue);
-  box-shadow: 0 5px 0 #168ac2;
+  background: var(--primary);
+  box-shadow: 0 3px 0 var(--primary-dark);
   font-weight: 650;
   font-size: 1.25rem;
 }
@@ -159,9 +189,9 @@ h1 {
   height: 54px;
   min-height: 54px;
   border-radius: 50%;
-  color: var(--coral-dark);
-  background: var(--coral-soft);
-  box-shadow: 0 5px 0 #e7c5ce;
+  color: var(--error-dark);
+  background: var(--error-soft);
+  box-shadow: 0 3px 0 var(--error-soft);
 }
 
 .wrong-badge {
@@ -173,10 +203,10 @@ h1 {
   min-width: 24px;
   height: 24px;
   padding: 0 6px;
-  border: 2px solid #ffffff;
+  border: 2px solid var(--card);
   border-radius: 999px;
   color: #ffffff;
-  background: var(--coral);
+  background: var(--error);
   font-size: 0.78rem;
   font-weight: 650;
 }
@@ -191,7 +221,7 @@ h1 {
 
 .level-switch .active {
   color: #ffffff;
-  background: var(--green);
+  background: var(--correct);
   box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.12);
 }
 
@@ -208,29 +238,29 @@ h1 {
   border-radius: 16px;
   color: var(--muted);
   background: var(--surface);
-  box-shadow: 0 4px 0 var(--shadow);
+  box-shadow: 0 3px 0 var(--shadow);
   font-weight: 650;
 }
 
 .subject-tabs button:nth-child(1).active {
   color: #ffffff;
-  border-color: var(--blue);
-  background: var(--blue);
-  box-shadow: 0 4px 0 #168ac2;
+  border-color: var(--primary);
+  background: var(--primary);
+  box-shadow: 0 3px 0 var(--primary-dark);
 }
 
 .subject-tabs button:nth-child(2).active {
-  color: #4c3900;
-  border-color: var(--yellow);
-  background: var(--yellow);
-  box-shadow: 0 4px 0 #d8a900;
+  color: var(--warn-dark);
+  border-color: var(--warn);
+  background: var(--warn);
+  box-shadow: 0 3px 0 var(--warn-dark);
 }
 
 .subject-tabs button:nth-child(3).active {
   color: #ffffff;
-  border-color: var(--coral);
-  background: var(--coral);
-  box-shadow: 0 4px 0 #d94c4c;
+  border-color: var(--error);
+  background: var(--error);
+  box-shadow: 0 3px 0 var(--error-dark);
 }
 
 .stats-strip {
@@ -248,7 +278,7 @@ h1 {
   padding: 16px;
   border: 2px solid var(--line);
   border-radius: 18px;
-  background: #ffffff;
+  background: var(--card);
 }
 
 .metric-icon {
@@ -257,18 +287,18 @@ h1 {
   width: 42px;
   height: 42px;
   border-radius: 14px;
-  color: var(--blue-dark);
-  background: var(--blue-soft);
+  color: var(--primary-dark);
+  background: var(--primary-soft);
 }
 
 .metric:nth-child(2) .metric-icon {
-  color: var(--yellow-dark);
-  background: var(--yellow-soft);
+  color: var(--warn-dark);
+  background: var(--warn-soft);
 }
 
 .metric:nth-child(3) .metric-icon {
-  color: var(--green-dark);
-  background: var(--green-soft);
+  color: var(--correct-dark);
+  background: var(--correct-soft);
 }
 
 .metric strong,
@@ -284,7 +314,7 @@ h1 {
 .book-meta,
 .history-row,
 .feedback span {
-  color: #65746a;
+  color: var(--muted);
 }
 
 .book-grid {
