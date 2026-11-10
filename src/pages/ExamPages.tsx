@@ -51,7 +51,7 @@ const scrollTop = () => requestAnimationFrame(() => window.scrollTo({ top: 0, be
 const enterFullscreen = () => document.documentElement.requestFullscreen?.();
 const TIMER_NOTICES = [[600, "本科剩余 10 分钟"], [300, "本科剩余 5 分钟"], [60, "本科只剩 1 分钟"]] as const;
 
-/** "2019.12" from an exam date — the distinguishing info between papers (B10 #2). */
+/** Exam date as a comparable number; titles already carry the date, so it is only used for ordering. */
 function examDateTime(exam) {
   const raw = exam.examDate;
   if (raw === null || raw === undefined || raw === "") return NaN;
@@ -59,13 +59,6 @@ function examDateTime(exam) {
   return Number.isFinite(value) && String(raw).trim() !== "" && /^\d+$/.test(String(raw).trim())
     ? value
     : new Date(raw).getTime();
-}
-
-function examDateBadge(exam) {
-  const time = examDateTime(exam);
-  if (!Number.isFinite(time)) return String(exam.examDate || exam.level);
-  const date = new Date(time);
-  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
 /** Active-run banner card with its own ticking clock, so the list does not re-render every second (B10 #6). */
@@ -120,7 +113,7 @@ export function ExamListView({ exams, level, examAttempts, examRuns = [], onBack
     return (
       <article className={`exam-card ${last ? "done" : ""}`.trim()} key={exam.id}>
         <div>
-          <div className="book-badge subject-reading">{examDateBadge(exam)}</div>
+          <div className="book-badge subject-reading">{exam.level}</div>
           <h3>{exam.title}</h3>
           {last ? <p>最近成绩 {pct(last.correct, last.total)}% · {last.correct}/{last.total}</p> : null}
         </div>
