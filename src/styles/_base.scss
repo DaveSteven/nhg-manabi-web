@@ -414,7 +414,7 @@ h1 {
 }
 
 .subject-tabs button:nth-child(2).active {
-  color: var(--warn-dark);
+  color: var(--on-accent);
   border-color: var(--warn);
   background: var(--warn);
   box-shadow: 0 3px 0 var(--warn-dark);
