@@ -275,10 +275,16 @@ export default function Listening({ userId, token, globalLevel: level }) {
       setPracticeSession((current) => ({ ...current, saving: false, saveError: e.message || "保存失败，请重试" }));
     }
   };
-  const savePractice = (patch) => save({
-    last: { examId: practiceQuestion.sourceExamId, questionId: practiceQuestion.id, title: `${practiceQuestion.sourceLevel} · ${practiceQuestion.sourceExamTitle}` },
-    [practiceQuestion.id]: { ...progress[practiceQuestion.id], examId: practiceQuestion.sourceExamId, started: true, ...patch },
-  });
+  // 专项练习里的作答只属于本次练习：choice/result 不写入长期精听进度，
+  // 否则退出重进（尤其指定试卷同一批题）会把上次的选项和解析带回来。
+  const savePractice = (patch) => {
+    const { choice: _choice, result: _result, ...rest } = patch;
+    if (!Object.keys(rest).length) return;
+    save({
+      last: { examId: practiceQuestion.sourceExamId, questionId: practiceQuestion.id, title: `${practiceQuestion.sourceLevel} · ${practiceQuestion.sourceExamTitle}` },
+      [practiceQuestion.id]: { ...progress[practiceQuestion.id], examId: practiceQuestion.sourceExamId, started: true, ...rest },
+    });
+  };
   const nextExamQuestion = () => {
     const next = questions[questions.indexOf(q) + 1];
     if (next) openQuestion(next);
@@ -304,7 +310,7 @@ export default function Listening({ userId, token, globalLevel: level }) {
       setPracticeSession((current) => ({ ...current, questions: current.questions.filter((question) => wrongIds.has(question.id)), index: 0, answers: {}, saving: false, finishedAttempt: null }));
     }} onReset={() => setPracticeSession(null)} onHome={() => navigate("/")} />;
   } else if (practiceQuestion) {
-    body = <ListeningTrainer key={`practice:${practiceQuestion.id}`} question={practiceQuestion} examId={practiceQuestion.sourceExamId} token={token} saved={progress[practiceQuestion.id] || {}} feedbackMode={practiceSession.feedbackMode} onSave={savePractice} onNext={advancePractice} />;
+    body = <ListeningTrainer key={`practice:${practiceQuestion.id}`} question={practiceQuestion} examId={practiceQuestion.sourceExamId} token={token} saved={{}} feedbackMode={practiceSession.feedbackMode} onSave={savePractice} onNext={advancePractice} />;
   } else if (loading) {
     body = <p role="status">正在加载听力题目…</p>;
   } else if (!examId) {
