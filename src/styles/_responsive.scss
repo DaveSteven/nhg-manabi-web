@@ -94,6 +94,17 @@
     flex-direction: column;
   }
 
+  .wrong-list-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .wrong-pagination {
+    justify-content: space-between;
+    gap: 8px;
+  }
+
   .exam-list {
     grid-template-columns: 1fr;
   }

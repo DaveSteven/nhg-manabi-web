@@ -33,6 +33,7 @@ export * from "./PracticePages";
 // 汇总里"待加强"与方块打勾的正确率阈值
 const WEAK_ACCURACY = 60;
 const MASTERED_ACCURACY = 85;
+const WRONG_BOOK_PAGE_SIZE = 10;
 
 // 靠近网格左右边缘的方块，tooltip 改为贴边对齐，避免气泡超出页面
 function alignLessonTip(event) {
@@ -450,10 +451,29 @@ export function SearchView({ token, currentLevel, onBack }) {
 }
 
 export function WrongBookView({ level, items, onBack, onReview, onReviewPractice }) {
-  const libraryItems = items.filter((item) => item.source === "library");
-  const practiceCategories = Object.keys(PRACTICE_CATEGORIES).filter((category) =>
-    items.some((item) => item.source === "practice" && item.subject === category),
+  const [page, setPage] = useState(1);
+  const sortedItems = useMemo(
+    () => [...items].sort((left, right) => new Date(right.lastWrongAt).getTime() - new Date(left.lastWrongAt).getTime()),
+    [items],
   );
+  const libraryItems = sortedItems.filter((item) => item.source === "library");
+  const practiceItems = sortedItems.filter((item) => item.source === "practice");
+  const practiceCategories = Object.keys(PRACTICE_CATEGORIES).filter((category) =>
+    practiceItems.some((item) => item.subject === category),
+  );
+  const totalPages = Math.max(1, Math.ceil(sortedItems.length / WRONG_BOOK_PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageStart = (currentPage - 1) * WRONG_BOOK_PAGE_SIZE;
+  const visibleItems = sortedItems.slice(pageStart, pageStart + WRONG_BOOK_PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [level]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
   return (
     <section className="wrong-page">
       <PageHeader onBack={onBack}>
@@ -472,30 +492,52 @@ export function WrongBookView({ level, items, onBack, onReview, onReviewPractice
               <p>从错题中随机抽取最多 20 题。答对后会自动移出错题本。</p>
             </div>
             <div className="wrong-review-actions">
-              {libraryItems.length ? <button className="primary-button" onClick={onReview} type="button">基础题库错题</button> : null}
+              {libraryItems.length ? <button className="primary-button" onClick={onReview} type="button">复习</button> : null}
               {practiceCategories.map((category) => (
                 <button className="secondary-button" onClick={() => onReviewPractice(category)} type="button" key={category}>
-                  {PRACTICE_CATEGORIES[category].label}错题
+                  复习{PRACTICE_CATEGORIES[category].label}（{practiceItems.filter((item) => item.subject === category).length} 题）
                 </button>
               ))}
             </div>
           </section>
 
+          <aside className="wrong-scope-note" aria-label="错题收录范围">
+            <strong>收录范围</strong>
+            <span>基础题库 {libraryItems.length} 题 · 专项练习 {practiceItems.length} 题</span>
+            <p>专项练习包括文字词汇、文法和读解；整套真题与听力训练暂未收录。</p>
+          </aside>
+
+          <div className="wrong-list-heading">
+            <h2>全部错题</h2>
+            <span>显示 {pageStart + 1}–{Math.min(pageStart + WRONG_BOOK_PAGE_SIZE, sortedItems.length)}，共 {sortedItems.length} 题</span>
+          </div>
           <div className="wrong-list">
-            {items.map((item) => (
+            {visibleItems.map((item) => (
               <article className="wrong-item" key={item.key}>
                 <div className="wrong-count">{item.wrongCount}</div>
                 <div>
                   <h3>{item.stem}</h3>
                   <p>
                     正确答案：<HtmlInline html={item.answerText} />
-                    {item.lastChosenText ? <> / Last: <HtmlInline html={item.lastChosenText} /></> : ""}
+                    {item.lastChosenText ? <> / 上次选择：<HtmlInline html={item.lastChosenText} /></> : ""}
                   </p>
                   <small>{item.subjectLabel} · {item.bookName}</small>
                 </div>
               </article>
             ))}
           </div>
+
+          {totalPages > 1 ? (
+            <nav className="wrong-pagination" aria-label="错题列表分页">
+              <button className="secondary-button" type="button" disabled={currentPage === 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>
+                <ArrowLeft size={18} />上一页
+              </button>
+              <span>第 {currentPage} / {totalPages} 页</span>
+              <button className="secondary-button" type="button" disabled={currentPage === totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))}>
+                下一页<ArrowRight size={18} />
+              </button>
+            </nav>
+          ) : null}
         </>
       ) : <p className="empty-history">该分类暂无错题。</p>}
     </section>

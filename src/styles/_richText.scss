@@ -52,10 +52,16 @@
 .random-practice-title,
 .exam-passage,
 .exam-sub-question-title,
-.analysis-text,
-.translation-block,
 .rich-text {
   font-family: var(--font-serif);
+  letter-spacing: 0.02em;
+}
+
+/* 解析与译文以中文为主，使用简体中文本地化字形。 */
+.analysis-text,
+.translation-block,
+.listening-translation {
+  font-family: var(--font-serif-zh);
   letter-spacing: 0.02em;
 }
 

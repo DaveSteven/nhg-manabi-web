@@ -78,11 +78,14 @@
   --fw-medium: 600;
   --fw-bold: 700;
 
-  /* 字体双轨制（方案一 U2）：衬线内容、无衬线界面。 */
-  --font-ui: Inter, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic",
-    "Noto Sans JP", "Noto Sans CJK JP", "Segoe UI", system-ui, sans-serif;
+  /* 字体双轨制（方案一 U2）：中文界面、日文教材内容分别选择本地化字形。 */
+  --font-ui: Inter, "Noto Sans SC", "PingFang SC", "Microsoft YaHei UI",
+    "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", "Hiragino Sans GB",
+    "Segoe UI", system-ui, sans-serif;
   --font-serif: "Noto Serif JP", "Noto Serif SC", "Hiragino Mincho ProN",
     "Yu Mincho", "Noto Serif CJK JP", serif;
+  --font-serif-zh: "Noto Serif SC", "Songti SC", STSong, "Source Han Serif SC",
+    "Noto Serif CJK SC", SimSun, serif;
 
   // 字号 7 档（归并原 30+ 种散值）
   --fs-xs: 0.75rem;    // 12px 角标、计数徽章
@@ -169,7 +172,10 @@ body {
   background: var(--surface);
 }
 
-button {
+button,
+input,
+select,
+textarea {
   font: inherit;
 }
 
