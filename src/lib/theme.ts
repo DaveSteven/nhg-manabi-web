@@ -1,10 +1,10 @@
 export const THEME_KEY = "manabi_theme";
 
-export type ThemePref = "system" | "light" | "dark";
+export type ThemePref = "light" | "dark";
 
+/** 默认日间模式；只有用户手动选过夜间才会是 dark（旧的 "system" 值按日间处理）。 */
 export function readThemePref(): ThemePref {
-  const value = localStorage.getItem(THEME_KEY);
-  return value === "light" || value === "dark" ? value : "system";
+  return localStorage.getItem(THEME_KEY) === "dark" ? "dark" : "light";
 }
 
 export function writeThemePref(pref: ThemePref) {
@@ -12,11 +12,9 @@ export function writeThemePref(pref: ThemePref) {
 }
 
 export function cycleTheme(pref: ThemePref): ThemePref {
-  return pref === "system" ? "light" : pref === "light" ? "dark" : "system";
+  return pref === "light" ? "dark" : "light";
 }
 
 export function applyTheme(pref: ThemePref) {
-  const dark = pref === "dark"
-    || (pref === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  document.documentElement.dataset.theme = pref === "dark" ? "dark" : "light";
 }
