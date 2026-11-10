@@ -17,8 +17,53 @@
   gap: 8px;
 }
 
+@media (max-width: $bpMd) {
+  .home-continue-card {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .home-continue-actions {
+    justify-items: stretch;
+  }
+
+  .home-continue-actions button {
+    width: 100%;
+  }
+}
+
+.home-continue-badge {
+  justify-self: start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--green-dark);
+  background: #ffffff;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 700;
+}
+
 .home-continue-card h2 {
   font-size: clamp(1.35rem, 2.5vw, 1.8rem);
+}
+
+.home-continue-actions {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+.continue-swap-button {
+  color: var(--muted);
+  border-color: transparent;
+  box-shadow: none;
+  background: transparent;
+}
+
+.continue-swap-button:hover {
+  color: var(--blue-dark);
+  border-color: var(--line);
+  transform: none;
 }
 
 .home-continue-card p,

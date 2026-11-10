@@ -10,6 +10,7 @@ import {
   ClipboardList,
   Headphones,
   History,
+  Keyboard,
   Languages,
   Layers3,
   NotebookPen,
@@ -22,7 +23,8 @@ import {
 import { LEVELS, SUBJECTS, api, formatDate, pct, subjectLabel } from "../lib/study";
 import UiSelect from "../components/UiSelect";
 import { HtmlInline } from "../components/Html";
-import { EmptyState, FieldInput, OptionButton, PageHeader, Progress, ResultActions, ResultScore, ReviewMark, ReviewOptions, TitleBlock } from "../components/CommonUi";
+import { EmptyState, FieldInput, KeyboardToast, ModalOverlay, OptionButton, PageHeader, Progress, ResultScore, ReviewMark, ReviewOptions, ShortcutHelp, TitleBlock } from "../components/CommonUi";
+import { markKeyboardHintSeen, useKeyboardAnswer } from "../hooks/useKeyboardAnswer";
 import { PRACTICE_CATEGORIES } from "./PracticePages";
 
 export * from "./ExamPages";
@@ -47,6 +49,9 @@ export function LibraryView({
   wrongItems,
   bookStats,
   currentUser,
+  continueSuggestions = [],
+  onResume,
+  onReviewWrong,
   onLevel,
   onSubject,
   onStart,
@@ -60,6 +65,14 @@ export function LibraryView({
   onSearch,
 }) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [suggestionIndex, setSuggestionIndex] = useState(0);
+  const safeIndex = Math.min(suggestionIndex, Math.max(0, continueSuggestions.length - 1));
+  const suggestion = continueSuggestions[safeIndex];
+  const startSuggestion = (item) => {
+    if (item.key === "resume") onResume?.();
+    else if (item.key === "wrong") (item.useWrongReview ? onReviewWrong : onOpenWrongBook)?.();
+    else onStart?.(books.find((book) => book.id === item.bookId));
+  };
   const currentAttempts = attempts.filter(
     (item) => item.level === level && item.subject === subject,
   );
@@ -132,6 +145,30 @@ export function LibraryView({
           </button>
         </div>
       </header>
+
+      {suggestion ? (
+        <section className="home-continue-card" aria-label="继续学习推荐">
+          <div>
+            <em className="home-continue-badge">{suggestion.badge}</em>
+            <h2>{suggestion.title}</h2>
+            <p>{suggestion.detail}</p>
+          </div>
+          <div className="home-continue-actions">
+            <button className="primary-button" onClick={() => startSuggestion(suggestion)} type="button">
+              {suggestion.key === "resume" ? "继续练习" : suggestion.key === "wrong" ? "开始复习" : "开始练习"}
+            </button>
+            {continueSuggestions.length > 1 ? (
+              <button
+                className="secondary-button continue-swap-button"
+                onClick={() => setSuggestionIndex((safeIndex + 1) % continueSuggestions.length)}
+                type="button"
+              >
+                换一个
+              </button>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
 
       <section className="home-section">
         <div className="home-section-heading">
@@ -525,18 +562,60 @@ export function UserView({ currentUser, attempts, onBack, onLogout, onRegisterUs
   );
 }
 
-export function QuizView({ session, onBack, onChoose, onCheck, onNext }) {
+function ExitConfirmOverlay({ onStay, onLeave }) {
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); onStay(); }
+      if (event.key === "Enter") { event.preventDefault(); onLeave(); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onStay, onLeave]);
+  return (
+    <ModalOverlay title="暂停练习？">
+      <p className="modal-footnote">退出后进度会保存，下次打开可从首页「继续学习」接着做。</p>
+      <div className="modal-actions">
+        <button className="primary-button" onClick={onStay} type="button">继续练习</button>
+        <button className="secondary-button" onClick={onLeave} type="button">保存并退出</button>
+      </div>
+    </ModalOverlay>
+  );
+}
+
+export function QuizView({ session, onBack, onPause, onChoose, onCheck, onNext }) {
   const question = session.questions[session.index];
   const { checked, checkResult } = session;
   const isCorrect = Boolean(checkResult?.is_correct);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+
+  useKeyboardAnswer({
+    active: !showExitConfirm && !showShortcuts,
+    optionCount: question.options.length,
+    onNumber: (index) => onChoose(index),
+    onAdvance: () => (checked ? onNext() : onCheck()),
+    onExit: () => setShowExitConfirm((value) => !value),
+    onHelp: () => {
+      markKeyboardHintSeen();
+      setShowShortcuts((value) => !value);
+    },
+  });
 
   return (
     <div className="quiz-view">
-      <PageHeader onBack={onBack}>
+      <PageHeader onBack={() => setShowExitConfirm(true)}>
         <div className="quiz-progress">
           <Progress value={pct(session.index + (checked ? 1 : 0), session.questions.length)} />
           <span>{session.index + 1} / {session.questions.length}</span>
         </div>
+        <button
+          className="shortcut-toggle"
+          onClick={() => { markKeyboardHintSeen(); setShowShortcuts(true); }}
+          type="button"
+          aria-label="快捷键速查"
+        >
+          <Keyboard size={18} />
+        </button>
       </PageHeader>
 
       <section className="question-area">
@@ -544,7 +623,7 @@ export function QuizView({ session, onBack, onChoose, onCheck, onNext }) {
         <h2>{question.stem}</h2>
       </section>
 
-      <section className="options-grid">
+      <section className="options-grid keyboard-active">
         {question.options.map((option, index) => {
           const selected = session.chosen === index;
           const answer = checkResult?.correct_option_id === option.id;
@@ -571,20 +650,52 @@ export function QuizView({ session, onBack, onChoose, onCheck, onNext }) {
           </div>
         )}
         {checked ? (
-          <button className="primary-button" onClick={onNext} type="button">{session.index === session.questions.length - 1 ? "完成" : "下一题"}</button>
+          <button className="primary-button" onClick={onNext} type="button">
+            {session.index === session.questions.length - 1 ? "完成" : "下一题"} <kbd className="kbd-hint">↵</kbd>
+          </button>
         ) : (
-          <button className="primary-button" disabled={session.chosen === null} onClick={onCheck} type="button">检查答案</button>
+          <button className="primary-button" disabled={session.chosen === null} onClick={onCheck} type="button">
+            检查答案 <kbd className="kbd-hint">↵</kbd>
+          </button>
         )}
       </footer>
+
+      <KeyboardToast suppress={showExitConfirm || showShortcuts} />
+      {showShortcuts ? (
+        <ModalOverlay title="键盘快捷键" onClose={() => setShowShortcuts(false)}>
+          <ShortcutHelp />
+          <div className="modal-actions">
+            <button className="primary-button" onClick={() => setShowShortcuts(false)} type="button">知道了</button>
+          </div>
+        </ModalOverlay>
+      ) : null}
+      {showExitConfirm ? (
+        <ExitConfirmOverlay onStay={() => setShowExitConfirm(false)} onLeave={onPause || onBack} />
+      ) : null}
     </div>
   );
 }
 
-export function ResultView({ attempt, onRepeat, onLibrary }) {
+export function ResultView({ attempt, onRepeat, onLibrary, onReviewWrong }) {
+  const wrongAnswers = attempt.answers.filter((answer) => !answer.isCorrect);
+  const wrongCount = wrongAnswers.length;
+  const wrongReview = attempt.mode === "wrong_review";
+  const clearedAll = wrongReview && wrongCount === 0;
+  const reviewWrongFirst = !wrongReview && wrongCount > 0;
   return (
     <section className="result-view">
-      <ResultScore score={pct(attempt.correct, attempt.total)}>答对 {attempt.correct} / {attempt.total}</ResultScore>
-      <ResultActions onRepeat={onRepeat} repeatLabel="再做一次" onLibrary={onLibrary} libraryLabel="选择课程" />
+      <ResultScore score={pct(attempt.correct, attempt.total)}>
+        {clearedAll ? <>全部清完 🌸 · 答对 {attempt.correct} / {attempt.total}</> : <>答对 {attempt.correct} / {attempt.total}</>}
+      </ResultScore>
+      <div className="result-actions">
+        {reviewWrongFirst ? (
+          <button className="primary-button" onClick={onReviewWrong} type="button"><RotateCcw size={20} />复习本次错题（{wrongCount} 题）</button>
+        ) : null}
+        <button className={reviewWrongFirst ? "secondary-button" : "primary-button"} onClick={onRepeat} type="button">
+          <RotateCcw size={20} />{wrongReview ? "再来一轮错题" : "再来一组"}
+        </button>
+        <button className="secondary-button" onClick={onLibrary} type="button">返回书目</button>
+      </div>
 
       <section className="review-list">
         {attempt.answers.map((answer, index) => (

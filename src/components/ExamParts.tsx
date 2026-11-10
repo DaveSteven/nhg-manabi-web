@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { Headphones } from "lucide-react";
 import {
   assetSrc,
@@ -9,6 +9,7 @@ import {
 } from "../lib/study";
 import { BilingualTranscript, HtmlContent } from "./Html";
 import { ReviewMark, ReviewOptions } from "./CommonUi";
+import { useKeyboardAnswer } from "../hooks/useKeyboardAnswer";
 
 const pad2 = (n) => String(n).padStart(2, "0");
 
@@ -127,6 +128,20 @@ function PassageGroupHeader({ group }) {
 }
 
 export function ExamReview({ reviewProblemGroups, answerByQuestion, answerForQuestion }) {
+  const orderedIds = useMemo(
+    () => reviewProblemGroups.flatMap((group) => group.sections.flatMap((section) => section.items.map((item) => item.question.id))),
+    [reviewProblemGroups],
+  );
+  const [focusIndex, setFocusIndex] = useState(0);
+  const jumpToIndex = (index) => {
+    if (!orderedIds.length) return;
+    const clamped = Math.max(0, Math.min(orderedIds.length - 1, index));
+    setFocusIndex(clamped);
+    document.getElementById(`exam-review-${orderedIds[clamped]}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  // B3: ← → walk through questions in display order.
+  useKeyboardAnswer({ onPrev: () => jumpToIndex(focusIndex - 1), onNext: () => jumpToIndex(focusIndex + 1) });
+
   return (
     <div className="result-review-layout">
       <aside className="review-jump-panel" aria-label="复习题目导航">
@@ -142,8 +157,12 @@ export function ExamReview({ reviewProblemGroups, answerByQuestion, answerForQue
                     <button
                       key={question.id}
                       aria-label={`${group.label} ${section.problemLabel} ${displayNumber}番`}
-                      className={`review-jump-dot ${answerByQuestion.get(question.id)?.isCorrect ? "right" : "miss"}`}
-                      onClick={() => document.getElementById(`exam-review-${question.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                      className={[
+                        "review-jump-dot",
+                        answerByQuestion.get(question.id)?.isCorrect ? "right" : "miss",
+                        question.id === orderedIds[focusIndex] ? "focused" : "",
+                      ].filter(Boolean).join(" ")}
+                      onClick={() => jumpToIndex(orderedIds.indexOf(question.id))}
                       type="button"
                     >
                       {displayNumber}

@@ -1,0 +1,134 @@
+// Keyboard-first interaction styles (ux plan B3): keycap hints, shortcut overlay, exit confirm, hint toast.
+
+// Number badges act as keycap hints while keyboard mode is active on the options grid.
+.options-grid.keyboard-active .option-letter {
+  border: 1.5px solid #b9cbe2;
+  border-bottom-width: 3px;
+  border-radius: 9px;
+  background: var(--surface);
+}
+
+kbd,
+.kbd-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  padding: 2px 7px;
+  border: 1.5px solid var(--line);
+  border-bottom-width: 3px;
+  border-radius: 7px;
+  color: var(--muted);
+  background: var(--surface);
+  font-family: inherit;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.4;
+  vertical-align: middle;
+}
+
+.shortcut-toggle {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-left: 10px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  color: var(--muted);
+  background: var(--surface);
+  box-shadow: 0 4px 0 var(--shadow);
+  cursor: pointer;
+}
+
+.shortcut-toggle:hover {
+  color: var(--blue-dark);
+  border-color: var(--blue);
+  transform: translateY(-1px);
+}
+
+// Current question in the exam review ← / → navigation.
+.review-jump-dot.focused {
+  color: #ffffff;
+  border-color: var(--blue);
+  background: var(--blue);
+  box-shadow: 0 0 0 2px var(--blue-soft);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(20, 30, 45, 0.45);
+}
+
+.modal-card {
+  display: grid;
+  gap: 14px;
+  width: min(430px, 100%);
+  padding: 24px;
+  border: 2px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 12px 32px rgba(20, 30, 45, 0.28);
+}
+
+.modal-card h2 {
+  font-size: 1.2rem;
+}
+
+.modal-footnote {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.shortcut-rows {
+  display: grid;
+  gap: 10px;
+}
+
+.shortcut-rows div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.shortcut-rows span {
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.key-toast {
+  position: fixed;
+  bottom: 96px;
+  left: 50%;
+  z-index: 55;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 18px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgba(20, 30, 45, 0.18);
+  font-size: 0.9rem;
+  transform: translateX(-50%);
+  max-width: calc(100vw - 48px);
+}
+
+.key-toast > svg {
+  color: var(--blue-dark);
+  flex-shrink: 0;
+}

@@ -14,7 +14,9 @@ import {
   writeUserLevelCache,
 } from "./lib/study";
 import {
+  buildContinueSuggestions,
   fetchStudyData,
+  isQuizSessionExpired,
   makePracticeSession,
   mapPracticeQuestions,
   practiceLayers,
@@ -178,10 +180,17 @@ function App() {
   }, [level, currentUser?.id, authToken]);
 
   useEffect(() => {
-    if (!currentUser || !session) return;
-    if (session.userId && session.userId !== currentUser.id) {
-      setSession(null);
-      return;
+    if (!currentUser) return;
+    if (session) {
+      if (session.userId && session.userId !== currentUser.id) {
+        setSession(null);
+        return;
+      }
+      if (!session.finishedAttempt && isQuizSessionExpired(session)) {
+        writeStoredQuizSession(null);
+        setSession(null);
+        return;
+      }
     }
     writeStoredQuizSession(session);
   }, [currentUser, session]);
@@ -215,6 +224,39 @@ function App() {
       .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()),
     [attempts, practiceAttempts],
   );
+  const continueSuggestions = useMemo(() => buildContinueSuggestions({
+    session,
+    userId: currentUser?.id,
+    wrongCount: allWrongItems.length,
+    libraryWrongCount: wrongItems.length,
+    attempts,
+    books,
+  }), [session, currentUser?.id, allWrongItems, wrongItems, attempts, books]);
+
+  // B1: rebuild an in-place session from exactly the wrong answers of the finished attempt
+  // (falls back to the server wrong-question quiz when option data is incomplete).
+  function reviewAttemptWrong() {
+    const attempt = session?.finishedAttempt;
+    if (!attempt) return;
+    const wrongAnswers = attempt.answers.filter((answer) => !answer.isCorrect);
+    const reviewable = wrongAnswers.filter((answer) => answer.options?.length >= 2);
+    if (reviewable.length && reviewable.length === wrongAnswers.length) {
+      startSession({
+        id: null,
+        book_id: null,
+        book_name: "错题重练",
+        level: attempt.level,
+        subject: "wrong_review",
+        subjectLabel: "错题",
+        categoryLabel: `${attempt.level} 错题`,
+      }, {
+        title: "错题重练",
+        questions: reviewable.map((answer) => ({ id: answer.questionId, stem: answer.stem, options: answer.options })),
+      }, "wrong_review");
+      return;
+    }
+    startWrongReview();
+  }
 
   async function startBook(book) {
     setError("");
@@ -521,6 +563,9 @@ function App() {
               wrongItems={allWrongItems}
               bookStats={bookStats}
               currentUser={currentUser}
+              continueSuggestions={continueSuggestions}
+              onResume={() => navigate("/quiz")}
+              onReviewWrong={() => (wrongItems.length ? startWrongReview() : navigate("/wrong"))}
               onLevel={chooseLevel}
               onSubject={setSubject}
               onStart={startBook}
@@ -593,11 +638,13 @@ function App() {
                       : startBook(session.book || selectedBook)
                 )}
                 onLibrary={resetToLibrary}
+                onReviewWrong={reviewAttemptWrong}
               />
             ) : session ? (
               <QuizView
                 session={session}
                 onBack={resetToLibrary}
+                onPause={() => navigate("/")}
                 onChoose={chooseOption}
                 onCheck={checkAnswer}
                 onNext={nextQuestion}

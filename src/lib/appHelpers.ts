@@ -11,6 +11,16 @@ import {
 
 const QUIZ_SESSION_KEY = "japanese-study-quiz-session";
 
+/** Unfinished quiz sessions older than this are discarded on load (ux plan §七). */
+export const QUIZ_SESSION_MAX_AGE_MS = 72 * 60 * 60 * 1000;
+/** Wrong-question backlog that triggers the "clear wrong answers" suggestion (ux plan §二). */
+export const WRONG_BACKLOG_THRESHOLD = 10;
+
+export function isQuizSessionExpired(session) {
+  const startedAt = new Date(session?.startedAt || 0).getTime();
+  return !Number.isFinite(startedAt) || Date.now() - startedAt > QUIZ_SESSION_MAX_AGE_MS;
+}
+
 export function readStoredQuizSession() {
   try {
     return JSON.parse(localStorage.getItem(QUIZ_SESSION_KEY) || "null");
@@ -112,4 +122,79 @@ export function makePracticeSession({ config, level, title, layers, questions })
 
 export function persistExamProgress(userId, examId, runId, index, answers) {
   writeExamCache(userId, examId, { runId, index, answers, updatedAt: new Date().toISOString() });
+}
+
+export interface ContinueSuggestion {
+  key: "resume" | "wrong" | "next-book" | "first-book";
+  badge: string;
+  title: string;
+  detail: string;
+  bookId?: number;
+  useWrongReview?: boolean;
+}
+
+/**
+ * Ordered "continue learning" recommendations for the home card (ux plan §二):
+ * resume unfinished session → clear wrong-question backlog → next lesson → first book.
+ * Pure data; the caller maps `action` keys to actual callbacks.
+ */
+export function buildContinueSuggestions({
+  session,
+  userId,
+  wrongCount,
+  libraryWrongCount,
+  attempts,
+  books,
+}): ContinueSuggestion[] {
+  const suggestions: ContinueSuggestion[] = [];
+
+  if (session && session.userId === userId && !session.finishedAttempt && !isQuizSessionExpired(session)) {
+    const total = session.questions?.length || 0;
+    if (total) {
+      suggestions.push({
+        key: "resume",
+        badge: "上次未完成",
+        title: "继续上次练习",
+        detail: `${session.book?.book_name || session.title || "练习"} · 做到第 ${Math.min(session.index + 1, total)} / ${total} 题`,
+      });
+    }
+  }
+
+  if (wrongCount >= WRONG_BACKLOG_THRESHOLD) {
+    suggestions.push({
+      key: "wrong",
+      badge: "错题积压",
+      title: `清错题：你有 ${wrongCount} 题待复习`,
+      detail: "从错题本随机抽题复习，答对后自动移出错题本",
+      useWrongReview: libraryWrongCount > 0,
+    });
+  }
+
+  const lastBookId = [...attempts]
+    .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
+    .find((attempt) => attempt.bookId)?.bookId;
+  const lastBook = lastBookId ? books.find((book) => book.id === lastBookId) : null;
+  const nextBook = lastBook ? books[books.indexOf(lastBook) + 1] : null;
+  if (nextBook) {
+    suggestions.push({
+      key: "next-book",
+      badge: "上次练到",
+      title: `继续《${lastBook.book_name}》的下一课`,
+      detail: `下一课：${nextBook.book_name} · ${nextBook.question_count} 道题`,
+      bookId: nextBook.id,
+    });
+  }
+
+  if (books.length) {
+    const firstBook = books[0];
+    suggestions.push({
+      key: "first-book",
+      badge: "今日推荐",
+      title: `从《${firstBook.book_name}》开始`,
+      detail: `${firstBook.categoryLabel} · ${firstBook.question_count} 道题`,
+      bookId: firstBook.id,
+    });
+  }
+
+  return suggestions;
 }

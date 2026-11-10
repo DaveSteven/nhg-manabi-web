@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Check, RotateCcw, Trophy, X } from "lucide-react";
+import { ArrowLeft, Check, Keyboard, RotateCcw, Trophy, X } from "lucide-react";
 import { HtmlInline } from "./Html";
+import { useKeyboardHintToast } from "../hooks/useKeyboardAnswer";
 
 export function Progress({ value }) {
   return (
@@ -91,6 +92,61 @@ export function ResultActions({ onRepeat, repeatLabel, onLibrary, libraryLabel }
     <div className="result-actions">
       <button className="primary-button" onClick={onRepeat} type="button"><RotateCcw size={20} />{repeatLabel}</button>
       <button className="secondary-button" onClick={onLibrary} type="button">{libraryLabel}</button>
+    </div>
+  );
+}
+
+/** Light modal layer used for the shortcut cheat sheet and exit confirmation. */
+export function ModalOverlay({ title, onClose, children }: { title: string; onClose?: () => void; children: React.ReactNode }) {
+  React.useEffect(() => {
+    if (!onClose) return undefined;
+    const handler = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); onClose(); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card" role="dialog" aria-modal="true" aria-label={title} onClick={(event) => event.stopPropagation()}>
+        <h2>{title}</h2>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export const QUIZ_SHORTCUT_ROWS: Array<[string, string]> = [
+  ["1 ~ 4", "选择对应选项"],
+  ["Enter / Space", "检查答案，再看下一题"],
+  ["Esc", "暂停 / 退出练习"],
+  ["?", "显示快捷键速查"],
+];
+
+export function ShortcutHelp({ rows = QUIZ_SHORTCUT_ROWS }: { rows?: Array<[string, string]> }) {
+  return (
+    <>
+      <div className="shortcut-rows">
+        {rows.map(([keys, label]) => (
+          <div key={keys}><kbd>{keys}</kbd><span>{label}</span></div>
+        ))}
+      </div>
+      <p className="modal-footnote">输入框聚焦时快捷键自动失效。</p>
+    </>
+  );
+}
+
+/** One-time hint toast shown on answer pages until the user has seen keyboard support. */
+export function KeyboardToast({ suppress = false }: { suppress?: boolean }) {
+  const [show, dismiss] = useKeyboardHintToast();
+  useEffect(() => {
+    if (suppress) dismiss();
+  }, [suppress, dismiss]);
+  if (!show) return null;
+  return (
+    <div className="key-toast" role="status">
+      <Keyboard size={18} />
+      <span>支持键盘操作，按 <kbd className="kbd-hint">?</kbd> 查看速查</span>
     </div>
   );
 }

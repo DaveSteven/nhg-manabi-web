@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ChevronRight, ClipboardList, Clock3, Headphones, X } from "lucide-react";
+import { ChevronRight, ClipboardList, Clock3, Headphones, Keyboard, X } from "lucide-react";
 import {
   assetSrc,
   buildExamProblemSections,
@@ -18,17 +18,35 @@ import {
 import { HtmlContent, hasVisibleHtml } from "../components/Html";
 import {
   EmptyState,
+  KeyboardToast,
+  ModalOverlay,
   OptionButton,
   PageHeader,
   Progress,
   ResultActions,
   ResultScore,
+  ShortcutHelp,
   TitleBlock,
 } from "../components/CommonUi";
+import { markKeyboardHintSeen, useKeyboardAnswer } from "../hooks/useKeyboardAnswer";
 import { AnswerSheet, ExamReview, ListeningExamPlayer } from "../components/ExamParts";
 import { PRACTICE_CATEGORIES } from "./PracticePages";
 
 const pad2 = (n) => String(n).padStart(2, "0");
+
+const EXAM_SHORTCUT_ROWS: Array<[string, string]> = [
+  ["1 ~ 4", "为当前未作答的小题选择选项"],
+  ["Enter / Space", "进入下一组"],
+  ["Esc", "暂停 / 退出确认"],
+  ["?", "显示快捷键速查"],
+];
+
+const PRACTICE_SHORTCUT_ROWS: Array<[string, string]> = [
+  ["1 ~ 4", "选择对应选项"],
+  ["Enter / Space", "进入下一题"],
+  ["Esc", "退出专项练习"],
+  ["?", "显示快捷键速查"],
+];
 const scrollTop = () => requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
 const enterFullscreen = () => document.documentElement.requestFullscreen?.();
 const TIMER_NOTICES = [[600, "本科剩余 10 分钟"], [300, "本科剩余 5 分钟"], [60, "本科只剩 1 分钟"]] as const;
@@ -165,11 +183,32 @@ export function RandomPracticeSessionView({ session, onBack, onChoose, onMove, o
   const question = session.questions[session.index];
   const chosenOptionId = session.answers[question.id] || null;
   const isLast = session.index === session.questions.length - 1;
+  const [showShortcuts, setShowShortcuts] = useState(false);
+
+  const handleExit = () => {
+    if (window.confirm("退出后本次专项练习进度不会保存。确定退出吗？")) onBack();
+  };
+  useKeyboardAnswer({
+    active: !showShortcuts,
+    optionCount: question.options.length,
+    onNumber: (index) => onChoose(question.id, question.options[index].id),
+    onAdvance: isLast ? undefined : () => onMove(session.index + 1),
+    onExit: handleExit,
+    onHelp: () => { markKeyboardHintSeen(); setShowShortcuts((value) => !value); },
+  });
 
   return (
     <section className="random-practice-view">
       <PageHeader onBack={onBack}>
         <div className="quiz-progress"><Progress value={pct(session.index + 1, session.questions.length)} /><span>{session.index + 1} / {session.questions.length}</span></div>
+        <button
+          className="shortcut-toggle"
+          onClick={() => { markKeyboardHintSeen(); setShowShortcuts(true); }}
+          type="button"
+          aria-label="快捷键速查"
+        >
+          <Keyboard size={18} />
+        </button>
       </PageHeader>
       <article className="random-practice-question">
         <div className="random-practice-meta"><span className="book-pill subject-reading">{session.exam.level} · {examQuestionCategoryLabel(question)}</span><small>{question.source_exam_title}</small></div>
@@ -177,7 +216,7 @@ export function RandomPracticeSessionView({ session, onBack, onChoose, onMove, o
         {hasVisibleHtml(question.passage) ? <section className="exam-passage"><HtmlContent html={question.passage} /></section> : null}
         <div className="random-practice-title"><HtmlContent html={question.title} /></div>
         {question.image_url ? <img className="exam-image" src={assetSrc(question.image_url)} alt="" /> : null}
-        <section className="options-grid exam-options">
+        <section className="options-grid exam-options keyboard-active">
           {question.options.map((option, index) => (
             <OptionButton key={option.id} index={index} option={option} className={chosenOptionId === option.id ? "selected" : ""} onClick={() => onChoose(question.id, option.id)}><span /></OptionButton>
           ))}
@@ -187,14 +226,25 @@ export function RandomPracticeSessionView({ session, onBack, onChoose, onMove, o
         <button className="secondary-button" disabled={session.index === 0} onClick={() => onMove(session.index - 1)} type="button">上一题</button>
         {isLast
           ? <button className="primary-button" onClick={onSubmit} type="button">提交</button>
-          : <button className="primary-button" onClick={() => onMove(session.index + 1)} type="button">下一题</button>}
+          : <button className="primary-button" onClick={() => onMove(session.index + 1)} type="button">下一题 <kbd className="kbd-hint">↵</kbd></button>}
       </footer>
+
+      <KeyboardToast suppress={showShortcuts} />
+      {showShortcuts ? (
+        <ModalOverlay title="键盘快捷键" onClose={() => setShowShortcuts(false)}>
+          <ShortcutHelp rows={PRACTICE_SHORTCUT_ROWS} />
+          <div className="modal-actions">
+            <button className="primary-button" onClick={() => setShowShortcuts(false)} type="button">知道了</button>
+          </div>
+        </ModalOverlay>
+      ) : null}
     </section>
   );
 }
 
 export function ExamSessionView({ session, onBack, onChoose, onMove, onSubmit, saveState = "idle", onRetrySave = () => {}, submitting = false }) {
   const [showAnswerSheet, setShowAnswerSheet] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [timerNotice, setTimerNotice] = useState("");
   const [listeningStarted, setListeningStarted] = useState(false);
@@ -259,6 +309,27 @@ export function ExamSessionView({ session, onBack, onChoose, onMove, onSubmit, s
   };
   const moveToPage = (pageIndex) => jumpToFirstOf(problemPages[pageIndex]);
 
+  // B3 keyboard: digits answer the first unanswered sub-question on the page; Enter advances a group.
+  const activeQuestion = currentPage.questions.find((item) => !session.answers[item.id]) || null;
+  const handleKeyboardExit = () => {
+    // Real exam runs confirm inside onBack (leaveActiveExam); standalone practice needs its own guard.
+    if (session.run) {
+      onBack();
+      return;
+    }
+    if (window.confirm("退出后本次专项练习进度不会保存。确定退出吗？")) onBack();
+  };
+  useKeyboardAnswer({
+    active: !showShortcuts,
+    optionCount: activeQuestion ? activeQuestion.options.length : 0,
+    onNumber: (index) => {
+      if (activeQuestion) onChoose(activeQuestion.id, activeQuestion.options[index].id);
+    },
+    onAdvance: !isTimedListening && canNext ? () => moveToPage(currentPageIndex + 1) : undefined,
+    onExit: handleKeyboardExit,
+    onHelp: () => { markKeyboardHintSeen(); setShowShortcuts((value) => !value); },
+  });
+
   useEffect(() => {
     setAudioError("");
     if (!isTimedListening || !listeningStarted || !audioRef.current || !currentAudioUrl) return;
@@ -300,6 +371,14 @@ export function ExamSessionView({ session, onBack, onChoose, onMove, onSubmit, s
               {showAnswerSheet ? "收起答题卡" : "答题卡"}
             </button>
           ) : null}
+          <button
+            className="shortcut-toggle"
+            onClick={() => { markKeyboardHintSeen(); setShowShortcuts(true); }}
+            type="button"
+            aria-label="快捷键速查"
+          >
+            <Keyboard size={18} />
+          </button>
           <button className="primary-button" onClick={() => onSubmit(false)} disabled={submitting || saveState === "saving"} type="button">
             {submitting ? "正在提交…" : session.run ? "提交本科" : "提交"}
           </button>
@@ -354,7 +433,7 @@ export function ExamSessionView({ session, onBack, onChoose, onMove, onSubmit, s
                     <div className="exam-sub-question-title"><span>{pad2(displayNumber)}.</span><HtmlContent html={item.title} /></div>
                     {item.media_url && !isTimedListening ? <audio className="exam-audio" controls src={assetSrc(item.media_url)} /> : null}
                     {item.image_url ? <img className="exam-image" src={assetSrc(item.image_url)} alt="" /> : null}
-                    <section className="options-grid exam-options">
+                    <section className={`options-grid exam-options ${item.id === activeQuestion?.id ? "keyboard-active" : ""}`.trim()}>
                       {item.options.map((option, index) => (
                         <OptionButton
                           key={`${item.id}-${option.id}`}
@@ -375,11 +454,21 @@ export function ExamSessionView({ session, onBack, onChoose, onMove, onSubmit, s
           {!isTimedListening ? (
             <footer className="exam-nav">
               <button className="secondary-button" onClick={() => moveToPage(currentPageIndex - 1)} disabled={!canPrev} type="button">上一组</button>
-              <button className="primary-button" onClick={() => moveToPage(currentPageIndex + 1)} disabled={!canNext} type="button">下一组</button>
+              <button className="primary-button" onClick={() => moveToPage(currentPageIndex + 1)} disabled={!canNext} type="button">下一组 <kbd className="kbd-hint">↵</kbd></button>
             </footer>
           ) : null}
         </section>
       </section>
+
+      <KeyboardToast suppress={showShortcuts} />
+      {showShortcuts ? (
+        <ModalOverlay title="键盘快捷键" onClose={() => setShowShortcuts(false)}>
+          <ShortcutHelp rows={EXAM_SHORTCUT_ROWS} />
+          <div className="modal-actions">
+            <button className="primary-button" onClick={() => setShowShortcuts(false)} type="button">知道了</button>
+          </div>
+        </ModalOverlay>
+      ) : null}
     </div>
   );
 }
