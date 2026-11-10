@@ -1,0 +1,42 @@
+// Unified press interaction (方案一 U1.2): 2px depress with a reduced shadow.
+// Imported after component styles so :active wins over their :hover lifts.
+// Floating layers (menus, modals, tooltip) intentionally not pressable.
+
+.primary-button:active,
+.secondary-button:active,
+.start-button:active,
+.icon-button:active,
+.avatar-button:active,
+.wrong-icon-button:active,
+.shortcut-toggle:active,
+.back-button:active,
+.option-button:active,
+.training-action:active,
+.subject-library-tabs button:active,
+.home-module-actions button:active,
+.home-review-grid button:active,
+.home-search button:active,
+.practice-type-grid label:active,
+.practice-source-grid label:active {
+  transform: translateY(2px);
+  box-shadow: var(--shadow-press);
+}
+
+// Flat controls (no resting shadow): depress without inventing a shadow.
+.review-jump-dot:active,
+.answer-dot:active,
+.exam-run-abandon:active {
+  transform: translateY(1px);
+}
+
+.primary-button:not(:disabled),
+.secondary-button:not(:disabled),
+.start-button:not(:disabled),
+.icon-button:not(:disabled),
+.back-button:not(:disabled),
+.option-button:not(:disabled),
+.training-action:not(:disabled),
+.subject-library-tabs button:not(:disabled),
+.shortcut-toggle:not(:disabled) {
+  transition: transform 0.12s ease-out, box-shadow 0.12s ease-out;
+}

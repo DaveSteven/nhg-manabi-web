@@ -4,12 +4,12 @@
 
   p, blockquote, ol, ul, pre { margin: 0 0 0.6em; }
   > :last-child { margin-bottom: 0; }
-  h1, h2, h3 { margin: 0.9em 0 0.45em; font-weight: 700; line-height: 1.4; }
+  h1, h2, h3 { margin: 0.9em 0 0.45em; font-weight: var(--fw-bold); line-height: 1.4; }
   h1 { font-size: 1.6em; }
   h2 { font-size: 1.35em; }
   h3 { font-size: 1.15em; }
   > :first-child { margin-top: 0; }
-  strong, b { font-weight: 700; }
+  strong, b { font-weight: var(--fw-bold); }
   em, i { font-style: italic; }
   s { text-decoration: line-through; }
   a { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
@@ -36,7 +36,7 @@
   .ql-size-huge { font-size: 2.5em; }
   .ql-font-serif { font-family: Georgia, "Noto Serif JP", serif; }
   .ql-font-monospace, code, pre { font-family: monospace; }
-  pre, .ql-code-block-container { white-space: pre-wrap; background: var(--surface); padding: 0.75em; border-radius: 6px; }
+  pre, .ql-code-block-container { white-space: pre-wrap; background: var(--surface); padding: 0.75em; border-radius: var(--r-xs); }
   img { max-width: 100%; height: auto; }
   table { width: 100%; border-collapse: collapse; }
   td, th { border: 1px solid var(--line); padding: 0.4em 0.6em; }

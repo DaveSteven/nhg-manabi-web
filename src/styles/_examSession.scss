@@ -5,10 +5,10 @@
   min-height: 48px;
   padding: 0 18px;
   border: 0;
-  border-radius: 14px;
+  border-radius: var(--r-md);
   color: #ffffff;
   cursor: pointer;
-  font-weight: 750;
+  font-weight: var(--fw-bold);
 }
 
 .review-again {
@@ -39,7 +39,7 @@
   width: min(460px, 100%);
   padding: 28px;
   border: 2px solid var(--line);
-  border-radius: 24px;
+  border-radius: var(--r-xl);
   background: var(--surface);
   box-shadow: 0 7px 0 var(--shadow);
 }
@@ -52,13 +52,13 @@
 .login-brand div {
   color: var(--ink);
   font-size: clamp(2.4rem, 9vw, 4.4rem);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
   line-height: 0.95;
 }
 
 .login-brand p {
   color: var(--muted);
-  font-weight: 700;
+  font-weight: var(--fw-bold);
 }
 
 .auth-tabs {
@@ -74,11 +74,11 @@
 .auth-tabs button {
   min-height: 44px;
   border: 2px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-md);
   color: var(--muted);
   background: var(--card);
   cursor: pointer;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .auth-tabs .active {
@@ -116,13 +116,13 @@
   min-height: 44px;
   padding: 0 16px;
   border: 2px solid var(--line);
-  border-radius: 13px;
+  border-radius: var(--r-md);
   color: var(--primary-dark);
   background: var(--surface);
-  box-shadow: 0 3px 0 var(--shadow);
+  box-shadow: var(--shadow-rest);
   font: inherit;
   font-size: .9rem;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   white-space: nowrap;
   cursor: pointer;
   transition: border-color .15s ease, background .15s ease, box-shadow .15s ease, transform .15s ease;
@@ -149,7 +149,7 @@
   align-items: center;
   gap: 14px;
   flex: 1;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .question-area {
@@ -210,9 +210,9 @@
   overflow: hidden;
   padding: 14px;
   border: 2px solid var(--line);
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: var(--card);
-  box-shadow: 0 3px 0 var(--shadow);
+  box-shadow: var(--shadow-rest);
 }
 
 .answer-sheet-toggle.active {
@@ -251,14 +251,14 @@
   color: var(--muted);
   text-align: center;
   font-size: 0.82rem;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .answer-section {
   display: grid;
   gap: 8px;
   padding: 8px;
-  border-radius: 12px;
+  border-radius: var(--r-md);
 }
 
 .answer-section.active {
@@ -276,7 +276,7 @@
   color: var(--ink);
   background: transparent;
   font-size: 0.88rem;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
   text-align: left;
   cursor: pointer;
 }
@@ -292,11 +292,11 @@
   aspect-ratio: 1;
   min-width: 0;
   border: 2px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--r-sm);
   color: var(--muted);
   background: var(--surface);
   font-size: 0.82rem;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .answer-dot.answered {
@@ -321,7 +321,7 @@
   min-height: 620px;
   padding: 20px;
   border: 2px solid var(--line);
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: var(--card);
 }
 
@@ -332,7 +332,7 @@
   align-items: start;
   color: var(--muted);
   font-size: 1.08rem;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
   line-height: 1.55;
 }
 
@@ -341,7 +341,7 @@
   place-items: center;
   width: 38px;
   height: 38px;
-  border-radius: 12px;
+  border-radius: var(--r-md);
   color: var(--primary-dark);
   background: var(--primary-soft);
 }
@@ -384,13 +384,13 @@
 
 .exam-sub-question-title > span {
   color: var(--primary-dark);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
   font-size: 1.08rem;
 }
 
 .exam-sub-question-title .html-content {
   color: var(--ink);
-  font-weight: 500;
+  font-weight: var(--fw-normal);
 }
 
 .exam-sub-question .options-grid {
@@ -400,7 +400,7 @@
 .html-content {
   color: var(--ink);
   font-size: 1.08rem;
-  font-weight: 400;
+  font-weight: var(--fw-normal);
   line-height: 1.75;
 }
 
@@ -418,13 +418,13 @@
   overflow: auto;
   padding: 16px;
   border: 2px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   background: var(--surface);
 }
 
 .exam-passage .html-content {
   font-size: 1.08rem;
-  font-weight: 400;
+  font-weight: var(--fw-normal);
 }
 
 .exam-audio {
@@ -441,7 +441,7 @@
   max-height: 520px;
   object-fit: contain;
   border: 2px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-md);
   background: var(--card);
 }
 
@@ -477,7 +477,7 @@
   gap: 6px;
   padding: 14px;
   border: 2px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   background: var(--card);
 }
 
@@ -494,13 +494,13 @@
 .exam-score-summary span,
 .exam-score-summary small {
   color: var(--muted);
-  font-weight: 700;
+  font-weight: var(--fw-bold);
 }
 
 .exam-score-summary strong {
   color: var(--ink);
   font-size: 1.45rem;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .result-review-layout {
@@ -520,14 +520,14 @@
   scrollbar-gutter: stable;
   padding: 12px;
   border: 2px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   background: var(--card);
 }
 
 .review-jump-title {
   color: var(--muted);
   font-size: 0.82rem;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .review-jump-section {
@@ -538,7 +538,7 @@
 .review-jump-group-title {
   color: var(--ink);
   font-size: 0.82rem;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .review-jump-problem {
@@ -550,7 +550,7 @@
 .review-jump-problem-title {
   color: var(--muted);
   font-size: 0.74rem;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .review-jump-grid {
@@ -567,13 +567,13 @@
   height: 34px;
   box-sizing: border-box;
   border: 2px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--r-sm);
   background: var(--surface);
   color: var(--muted);
   cursor: pointer;
   font-size: 0.78rem;
   font-variant-numeric: tabular-nums;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
   letter-spacing: 0;
   line-height: 1;
   padding: 0;
@@ -616,19 +616,19 @@
   width: 34px;
   height: 28px;
   box-sizing: border-box;
-  border-radius: 9px;
+  border-radius: var(--r-xs);
   color: var(--ink);
   background: var(--surface);
   font-size: 0.82rem;
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
+  font-weight: var(--fw-medium);
   line-height: 1;
 }
 
 .review-title .html-content {
   color: var(--ink);
   font-size: 1.14rem;
-  font-weight: 500;
+  font-weight: var(--fw-normal);
 }
 
 .review-unanswered {
@@ -636,18 +636,18 @@
   align-items: center;
   margin: 2px 0 10px;
   padding: 5px 9px;
-  border-radius: 8px;
+  border-radius: var(--r-xs);
   color: var(--error-dark);
   background: var(--error-soft);
   font-size: 0.82rem;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .analysis-text {
   margin-top: 12px;
   padding: 12px;
   border-left: 4px solid var(--primary);
-  border-radius: 0 12px 12px 0;
+  border-radius: 0 var(--r-md) var(--r-md) 0;
   color: var(--muted);
   background: var(--primary-soft);
   line-height: 1.72;
@@ -656,7 +656,7 @@
 .analysis-text .html-content {
   color: inherit;
   font-size: 1.02rem;
-  font-weight: 400;
+  font-weight: var(--fw-normal);
   line-height: 1.72;
 }
 
@@ -672,5 +672,5 @@
   margin-bottom: 8px;
   color: var(--muted);
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }

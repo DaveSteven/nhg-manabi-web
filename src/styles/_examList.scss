@@ -16,7 +16,7 @@
   display: inline-flex;
   align-items: center;
   padding: 0 18px;
-  border-radius: 14px;
+  border-radius: var(--r-md);
   font-size: 1rem;
 }
 
@@ -32,7 +32,7 @@
   min-height: 52px;
   padding: 0 14px;
   border: 2px solid var(--line);
-  border-radius: 13px;
+  border-radius: var(--r-md);
   color: var(--ink);
   background: var(--card);
   font: inherit;
@@ -62,7 +62,7 @@
   min-height: 112px;
   padding: 17px;
   border: 2px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--r-lg);
   color: var(--ink);
   background: var(--card);
   text-decoration: none;
@@ -101,7 +101,7 @@
   margin: 40px auto;
   padding: 42px 24px;
   border: 2px solid var(--sakura);
-  border-radius: 22px;
+  border-radius: var(--r-xl);
   background: linear-gradient(145deg, var(--correct-soft), var(--card) 72%);
   text-align: center;
 }
@@ -133,7 +133,7 @@
   margin-bottom: 18px;
   padding: 18px;
   border: 2px solid var(--primary-soft);
-  border-radius: 20px;
+  border-radius: var(--r-xl);
   background:
     linear-gradient(135deg, var(--primary-soft), var(--warn-soft)),
     var(--surface);
@@ -151,7 +151,7 @@
 
 .mixed-test-card p {
   color: var(--muted);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .book-card {
@@ -161,9 +161,9 @@
   min-height: 156px;
   padding: 16px;
   border: 2px solid var(--line);
-  border-radius: 20px;
+  border-radius: var(--r-xl);
   background: var(--surface);
-  box-shadow: 0 3px 0 var(--shadow);
+  box-shadow: var(--shadow-rest);
   transition: transform 0.12s ease, border-color 0.12s ease;
 }
 
@@ -224,7 +224,7 @@
   border-radius: 999px;
   background: var(--primary-soft);
   color: var(--primary-dark);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .book-badge {
@@ -255,7 +255,7 @@
   color: var(--ink);
   font-size: 1.65rem;
   font-variant-numeric: tabular-nums;
-  font-weight: 500;
+  font-weight: var(--fw-normal);
   line-height: 1;
 }
 
@@ -267,33 +267,33 @@
 }
 
 .exam-intro-view { max-width: 860px; margin: 0 auto; }
-.exam-intro-card { margin-top: 28px; padding: 32px; border: 1px solid var(--line); border-radius: 24px; background: var(--card); box-shadow: var(--shadow); }
+.exam-intro-card { margin-top: 28px; padding: 32px; border: 1px solid var(--line); border-radius: var(--r-xl); background: var(--card); box-shadow: var(--shadow); }
 .exam-intro-summary { display: flex; align-items: center; gap: 16px; padding-bottom: 24px; border-bottom: 1px solid var(--line); }
 .exam-intro-summary > div { display: grid; gap: 4px; }
 .exam-intro-summary span, .exam-section-schedule small { color: var(--muted); }
 .exam-intro-summary strong { font-size: 1.5rem; }
 .exam-section-schedule { display: grid; gap: 12px; margin: 24px 0; }
-.exam-section-schedule > div { display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 16px; background: var(--surface); }
-.exam-section-schedule > div > span { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: white; background: var(--ink); font-weight: 800; }
+.exam-section-schedule > div { display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: var(--r-lg); background: var(--surface); }
+.exam-section-schedule > div > span { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: white; background: var(--ink); font-weight: var(--fw-bold); }
 .exam-section-schedule > div > div { display: flex; flex: 1; justify-content: space-between; gap: 12px; }
 .exam-rules { display: grid; gap: 10px; padding-left: 22px; color: var(--muted); line-height: 1.65; }
 .exam-break-card { margin-top: 15vh; text-align: center; }
 .exam-break-card h1 { margin: 20px 0 10px; }
 .exam-break-card p { max-width: 560px; margin: 0 auto 28px; color: var(--muted); line-height: 1.7; }
-.exam-timer { display: flex; align-items: center; gap: 7px; min-width: 92px; justify-content: center; padding: 10px 12px; border-radius: 12px; background: var(--surface); font-variant-numeric: tabular-nums; }
+.exam-timer { display: flex; align-items: center; gap: 7px; min-width: 92px; justify-content: center; padding: 10px 12px; border-radius: var(--r-md); background: var(--surface); font-variant-numeric: tabular-nums; }
 .exam-timer.urgent { color: var(--error-dark); background: var(--error-soft); }
-.exam-save-state { padding: 7px 10px; border: 0; border-radius: 999px; color: var(--muted); background: var(--surface); font: inherit; font-size: .78rem; font-weight: 700; }
+.exam-save-state { padding: 7px 10px; border: 0; border-radius: 999px; color: var(--muted); background: var(--surface); font: inherit; font-size: .78rem; font-weight: var(--fw-bold); }
 .exam-save-state.saving { color: var(--primary-dark); }
 .exam-save-state.error { color: var(--error-dark); background: var(--error-soft); cursor: pointer; }
-.exam-time-notice { grid-column: 1 / -1; display: flex; align-items: center; gap: 9px; padding: 12px 16px; border-radius: 12px; color: var(--warn-dark); background: var(--warn-soft); font-weight: 750; }
+.exam-time-notice { grid-column: 1 / -1; display: flex; align-items: center; gap: 9px; padding: 12px 16px; border-radius: var(--r-md); color: var(--warn-dark); background: var(--warn-soft); font-weight: var(--fw-bold); }
 .exam-time-notice button { display: grid; place-items: center; margin-left: auto; border: 0; color: inherit; background: transparent; cursor: pointer; }
-.listening-device-check { display: flex; align-items: center; gap: 14px; max-width: 600px; margin: 24px auto; padding: 18px; border: 1px solid var(--primary-soft); border-radius: 16px; background: var(--primary-soft); text-align: left; }
+.listening-device-check { display: flex; align-items: center; gap: 14px; max-width: 600px; margin: 24px auto; padding: 18px; border: 1px solid var(--primary-soft); border-radius: var(--r-lg); background: var(--primary-soft); text-align: left; }
 .listening-device-check > div { display: grid; flex: 1; gap: 4px; }
 .listening-device-check span { color: var(--muted); font-size: .9rem; }
-.listening-exam-player { display: flex; align-items: center; gap: 16px; margin: 18px 0; padding: 18px; border: 1px solid var(--primary-soft); border-radius: 16px; background: var(--primary-soft); }
+.listening-exam-player { display: flex; align-items: center; gap: 16px; margin: 18px 0; padding: 18px; border: 1px solid var(--primary-soft); border-radius: var(--r-lg); background: var(--primary-soft); }
 .listening-exam-player > div { display: grid; flex: 1; gap: 4px; }
 .listening-exam-player p { margin: 0; color: var(--muted); font-size: .9rem; }
-.listening-exam-player > span { color: var(--primary-dark); font-weight: 750; }
+.listening-exam-player > span { color: var(--primary-dark); font-weight: var(--fw-bold); }
 .listening-exam-player.error { border-color: var(--error); background: var(--error-soft); }
 .listening-exam-player.error > svg { color: var(--error-dark); }
 @media (max-width: $bpMd2) { .exam-intro-card { padding: 22px 18px; } .exam-section-schedule > div > div { display: grid; } .exam-timer { order: -1; width: 100%; } }
@@ -306,15 +306,15 @@
   margin-bottom: 18px;
   padding: 18px;
   border: 2px solid var(--line);
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: var(--card);
-  box-shadow: 0 3px 0 var(--shadow);
+  box-shadow: var(--shadow-rest);
 }
 
 .exam-entry-card p {
   margin-top: 8px;
   color: var(--muted);
-  font-weight: 700;
+  font-weight: var(--fw-bold);
 }
 
 .exam-list-view .exam-list {
@@ -339,9 +339,9 @@
   min-height: 92px;
   padding: 12px 14px;
   border: 2px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--r-lg);
   background: var(--card);
-  box-shadow: 0 3px 0 var(--shadow);
+  box-shadow: var(--shadow-rest);
 }
 
 /* B10: attempted papers are visually dimmed; hover restores full strength. */
@@ -357,7 +357,7 @@
   margin-top: 8px;
   color: var(--muted);
   font-size: 0.9rem;
-  font-weight: 750;
+  font-weight: var(--fw-bold);
 }
 
 .exam-card.active-run {
@@ -370,7 +370,7 @@
   /* B10.5: hardcoded blue stays until the UI redesign (方案一 U1) swaps in new tokens. */
   border-color: var(--primary-soft);
   background: linear-gradient(135deg, var(--card) 0%, var(--primary-soft) 100%);
-  box-shadow: 0 3px 0 var(--shadow);
+  box-shadow: var(--shadow-rest);
 }
 
 /* Banner layout: countdown leads with the strongest visual weight (B10.5 ①). */
@@ -398,7 +398,7 @@
   gap: 5px;
   color: var(--muted);
   font-size: .78rem;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
 }
 
 .active-run-context {
@@ -432,7 +432,7 @@
   color: var(--muted);
   background: transparent;
   font-size: .82rem;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
   text-decoration: underline;
   text-decoration-color: transparent;
   cursor: pointer;
@@ -469,7 +469,7 @@
 
 .exam-card p {
   color: var(--muted);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
   line-height: 1.45;
 }
 
@@ -483,10 +483,10 @@
 .exam-card .review-exam-button {
   min-height: 30px;
   padding: 0 9px;
-  border-radius: 10px;
+  border-radius: var(--r-sm);
   font-size: 0.78rem;
   gap: 0;
-  box-shadow: 0 3px 0 var(--shadow);
+  box-shadow: var(--shadow-rest);
   white-space: nowrap;
 }
 
@@ -495,7 +495,7 @@
   justify-content: space-between;
   gap: 10px;
   font-size: 0.88rem;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
 }
 
 .progress {
@@ -531,6 +531,6 @@
   margin-top: 24px;
   padding: 18px;
   border: 2px solid var(--line);
-  border-radius: 20px;
+  border-radius: var(--r-xl);
   background: var(--surface);
 }

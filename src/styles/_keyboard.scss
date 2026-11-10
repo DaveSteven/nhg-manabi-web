@@ -4,7 +4,7 @@
 .options-grid.keyboard-active .option-letter {
   border: 1.5px solid var(--line);
   border-bottom-width: 3px;
-  border-radius: 9px;
+  border-radius: var(--r-xs);
   background: var(--surface);
 }
 
@@ -17,12 +17,12 @@ kbd,
   padding: 2px 7px;
   border: 1.5px solid var(--line);
   border-bottom-width: 3px;
-  border-radius: 7px;
+  border-radius: var(--r-xs);
   color: var(--muted);
   background: var(--surface);
   font-family: inherit;
   font-size: 0.74rem;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   line-height: 1.4;
   vertical-align: middle;
 }
@@ -34,10 +34,10 @@ kbd,
   height: 40px;
   margin-left: 10px;
   border: 2px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-md);
   color: var(--muted);
   background: var(--surface);
-  box-shadow: 0 3px 0 var(--shadow);
+  box-shadow: var(--shadow-rest);
   cursor: pointer;
 }
 
@@ -71,9 +71,9 @@ kbd,
   width: min(430px, 100%);
   padding: 24px;
   border: 2px solid var(--line);
-  border-radius: 20px;
+  border-radius: var(--r-xl);
   background: var(--surface);
-  box-shadow: 0 12px 32px rgba(20, 30, 45, 0.28);
+  box-shadow: var(--shadow-float);
 }
 
 .modal-card h2 {
@@ -117,7 +117,7 @@ kbd,
   border: none;
   color: var(--error-dark);
   background: transparent;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
   cursor: pointer;
 }
 
@@ -138,7 +138,7 @@ kbd,
   border-radius: 999px;
   color: var(--ink);
   background: var(--surface);
-  box-shadow: 0 8px 24px rgba(20, 30, 45, 0.18);
+  box-shadow: var(--shadow-float);
   font-size: 0.9rem;
   transform: translateX(-50%);
   max-width: calc(100vw - 48px);

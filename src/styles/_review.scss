@@ -7,7 +7,7 @@
   margin-top: 12px;
   padding: 12px;
   border: 2px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   background: var(--primary-soft);
 }
 
@@ -19,7 +19,7 @@
   display: grid;
   gap: 12px;
   padding: 16px 20px 18px;
-  border-radius: 16px;
+  border-radius: var(--r-lg);
   background: var(--card);
 }
 
@@ -61,12 +61,12 @@
   min-height: 30px;
   padding: 0 10px;
   border: 2px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--r-sm);
   color: var(--primary-dark);
   background: var(--card);
   cursor: pointer;
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .bilingual-line {
@@ -83,7 +83,7 @@
 .bilingual-line > .html-content {
   color: var(--ink);
   font-size: 1.03rem;
-  font-weight: 400;
+  font-weight: var(--fw-normal);
   line-height: 1.72;
 }
 
@@ -96,7 +96,7 @@
 .translation-line .html-content {
   color: var(--muted);
   font-size: 0.96rem;
-  font-weight: 400;
+  font-weight: var(--fw-normal);
   line-height: 1.66;
 }
 
@@ -104,13 +104,13 @@
 .translation-block .html-content {
   color: var(--muted);
   font-size: 1.02rem;
-  font-weight: 400;
+  font-weight: var(--fw-normal);
   line-height: 1.7;
 }
 
 .listening-translation .html-content p,
 .translation-block .html-content p {
-  font-weight: 400;
+  font-weight: var(--fw-normal);
 }
 
 .listening-translation,
@@ -121,7 +121,7 @@
   margin-top: 12px;
   padding: 12px;
   border: 2px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   background: var(--card);
 }
 
@@ -138,7 +138,7 @@
   gap: 10px;
   padding: 9px 10px;
   border: 2px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-md);
   color: var(--muted);
   background: var(--card);
 }
@@ -148,17 +148,17 @@
   place-items: center;
   width: 24px;
   height: 24px;
-  border-radius: 8px;
+  border-radius: var(--r-xs);
   color: var(--muted);
   background: var(--line);
   font-size: 0.82rem;
   font-variant-numeric: tabular-nums;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .review-option-text {
   font-size: 1rem;
-  font-weight: 400;
+  font-weight: var(--fw-normal);
   line-height: 1.55;
 }
 
@@ -195,14 +195,14 @@
   min-height: 70px;
   padding: 12px 16px;
   border: 2px solid var(--line);
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   color: var(--ink);
   background: var(--surface);
-  box-shadow: 0 3px 0 var(--shadow);
+  box-shadow: var(--shadow-rest);
   cursor: pointer;
   text-align: left;
   font-size: 1.16rem;
-  font-weight: 550;
+  font-weight: var(--fw-medium);
 }
 
 .option-letter {
@@ -210,11 +210,11 @@
   place-items: center;
   width: 34px;
   height: 34px;
-  border-radius: 12px;
+  border-radius: var(--r-md);
   color: var(--primary-dark);
   background: var(--primary-soft);
   font-size: 0.92rem;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .option-button.selected {
@@ -280,8 +280,8 @@
   gap: 8px;
   min-height: 50px;
   padding: 0 22px;
-  border-radius: 14px;
-  font-weight: 650;
+  border-radius: var(--r-md);
+  font-weight: var(--fw-medium);
 }
 
 .primary-button {
@@ -301,7 +301,7 @@
   color: var(--primary-dark);
   background: var(--surface);
   border: 2px solid var(--line);
-  box-shadow: 0 3px 0 var(--shadow);
+  box-shadow: var(--shadow-rest);
 }
 
 .logout-button {
@@ -337,7 +337,7 @@
 .result-score p {
   color: var(--muted);
   font-size: 1.1rem;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .result-actions {
@@ -364,11 +364,11 @@
   z-index: 1;
   padding: 10px 12px;
   border: 2px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   color: var(--ink);
   background: rgba(255, 255, 255, 0.94);
   font-size: 0.96rem;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .review-problem-heading {
@@ -378,7 +378,7 @@
   color: var(--primary-dark);
   background: var(--primary-soft);
   font-size: 0.84rem;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .review-item {
@@ -387,7 +387,7 @@
   gap: 12px;
   padding: 14px;
   border: 2px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--r-lg);
   background: var(--card);
 }
 

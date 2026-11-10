@@ -54,6 +54,22 @@
   --yellow-dark: var(--warn-dark);
   --yellow-soft: var(--warn-soft);
 
+  /* 「樱与墨」几何与字重 token（方案一 U1.2）。 */
+  // 圆角 5 档（归并原 23 种散值）
+  --r-xs: 8px;    // chip、小标签、内嵌小块
+  --r-sm: 10px;   // 输入框、小卡片、列表行
+  --r-md: 14px;   // 按钮、tab、答题选项
+  --r-lg: 18px;   // 卡片、面板（默认容器）
+  --r-xl: 24px;   // 大区块/主打卡片
+  // 阴影 3 档
+  --shadow-rest: 0 3px 0 var(--shadow);                  // 静置的可交互元素
+  --shadow-press: 0 1px 0 var(--shadow);                 // active 按压态（配 translateY(2px)）
+  --shadow-float: 0 14px 30px rgba(43, 43, 51, 0.12);    // 浮层/下拉/modal
+  // 字重 3 档
+  --fw-normal: 400;
+  --fw-medium: 600;
+  --fw-bold: 700;
+
   font-family:
     Inter, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic",
     "YuGothic", "Noto Sans JP", "Noto Sans CJK JP", "Segoe UI",
@@ -111,7 +127,7 @@ button:disabled {
 .eyebrow {
   color: var(--primary);
   font-size: 0.84rem;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
   text-transform: uppercase;
 }
 
@@ -139,7 +155,7 @@ h1 {
   gap: 8px;
   padding: 6px;
   border: 2px solid var(--line);
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: var(--card);
 }
 
@@ -175,7 +191,7 @@ h1 {
   color: #ffffff;
   background: var(--primary);
   box-shadow: 0 3px 0 var(--primary-dark);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
   font-size: 1.25rem;
 }
 
@@ -208,15 +224,15 @@ h1 {
   color: #ffffff;
   background: var(--error);
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .level-switch button {
   min-height: 42px;
-  border-radius: 12px;
+  border-radius: var(--r-md);
   background: transparent;
   color: var(--muted);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .level-switch .active {
@@ -235,11 +251,11 @@ h1 {
 .subject-tabs button {
   min-height: 52px;
   border: 2px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--r-lg);
   color: var(--muted);
   background: var(--surface);
-  box-shadow: 0 3px 0 var(--shadow);
-  font-weight: 650;
+  box-shadow: var(--shadow-rest);
+  font-weight: var(--fw-medium);
 }
 
 .subject-tabs button:nth-child(1).active {
@@ -277,7 +293,7 @@ h1 {
   min-height: 82px;
   padding: 16px;
   border: 2px solid var(--line);
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: var(--card);
 }
 
@@ -286,7 +302,7 @@ h1 {
   place-items: center;
   width: 42px;
   height: 42px;
-  border-radius: 14px;
+  border-radius: var(--r-md);
   color: var(--primary-dark);
   background: var(--primary-soft);
 }

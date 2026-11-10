@@ -8,20 +8,20 @@
   margin-top: 24px;
   padding: 18px;
   border: 2px solid var(--error-soft);
-  border-radius: 20px;
+  border-radius: var(--r-xl);
   background: var(--card);
 }
 
 .wrong-entry p {
   color: var(--muted);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .wrong-entry .secondary-button:disabled {
   cursor: not-allowed;
   color: var(--muted);
   background: var(--surface);
-  box-shadow: 0 3px 0 var(--shadow);
+  box-shadow: var(--shadow-rest);
 }
 
 .wrong-page {
@@ -49,9 +49,9 @@
   margin-top: 18px;
   padding: 18px;
   border: 2px solid var(--line);
-  border-radius: 20px;
+  border-radius: var(--r-xl);
   background: var(--surface);
-  box-shadow: 0 3px 0 var(--shadow);
+  box-shadow: var(--shadow-rest);
 }
 
 .profile-card {
@@ -71,12 +71,12 @@
 .profile-admin-card .section-title p {
   margin-top: 4px;
   color: var(--muted);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .form-success {
   color: var(--correct-dark);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .profile-avatar {
@@ -89,7 +89,7 @@
   background: var(--primary);
   box-shadow: 0 6px 0 var(--primary-dark);
   font-size: 2rem;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .profile-card h2 {
@@ -99,7 +99,7 @@
 .profile-card p,
 .new-user-form label {
   color: var(--muted);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .new-user-form {
@@ -120,7 +120,7 @@
   display: grid;
   gap: 6px;
   color: var(--muted);
-  font-weight: 700;
+  font-weight: var(--fw-bold);
 }
 
 .new-user-form input {
@@ -129,11 +129,11 @@
   padding: 0 12px;
   border: 0;
   border-bottom: 3px solid var(--shadow);
-  border-radius: 12px 12px 0 0;
+  border-radius: var(--r-md) var(--r-md) 0 0;
   color: var(--ink);
   background: var(--surface);
   font: inherit;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .new-user-form input:focus {
@@ -144,7 +144,7 @@
 
 .form-error {
   color: var(--error-dark);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .wrong-page-title {
@@ -162,7 +162,7 @@
 
 .wrong-page-title p {
   color: var(--muted);
-  font-weight: 700;
+  font-weight: var(--fw-bold);
 }
 
 .wrong-review-card {
@@ -173,7 +173,7 @@
   margin-bottom: 18px;
   padding: 18px;
   border: 2px solid var(--error-soft);
-  border-radius: 20px;
+  border-radius: var(--r-xl);
   background:
     linear-gradient(135deg, var(--sakura-soft), var(--primary-soft)),
     var(--surface);
@@ -191,7 +191,7 @@
 
 .wrong-review-card p {
   color: var(--muted);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .wrong-list {
@@ -205,7 +205,7 @@
   gap: 12px;
   align-items: start;
   padding: 12px;
-  border-radius: 14px;
+  border-radius: var(--r-md);
   background: var(--card);
 }
 
@@ -217,7 +217,7 @@
   border-radius: 50%;
   color: #ffffff;
   background: var(--error);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .wrong-item h3 {
@@ -227,14 +227,14 @@
 
 .wrong-item p {
   color: var(--muted);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .wrong-item small {
   display: block;
   margin-top: 6px;
   color: var(--muted);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .section-title {
@@ -265,9 +265,9 @@
   align-items: center;
   min-height: 42px;
   padding: 8px 10px;
-  border-radius: 12px;
+  border-radius: var(--r-md);
   background: var(--surface);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .history-book {
@@ -278,7 +278,7 @@
 .empty-books,
 .center-state {
   color: var(--muted);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .empty-books {
@@ -288,7 +288,7 @@
   min-height: 180px;
   padding: 24px;
   border: 2px dashed var(--line);
-  border-radius: 20px;
+  border-radius: var(--r-xl);
   background: rgba(255, 255, 255, 0.72);
   text-align: center;
 }

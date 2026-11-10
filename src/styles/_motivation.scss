@@ -14,9 +14,9 @@
   gap: 14px;
   padding: 18px 20px;
   border: 2px solid var(--line);
-  border-radius: 22px;
+  border-radius: var(--r-xl);
   background: var(--surface);
-  box-shadow: 0 3px 0 var(--shadow);
+  box-shadow: var(--shadow-rest);
 }
 
 .home-daily-info {
@@ -27,7 +27,7 @@
 
 .home-daily-info small {
   color: var(--muted);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 .home-daily-info strong {
@@ -52,7 +52,7 @@
 .daily-ring-text {
   fill: var(--ink);
   font-size: 0.85rem;
-  font-weight: 750;
+  font-weight: var(--fw-bold);
 }
 
 @media (max-width: $bpMd) {

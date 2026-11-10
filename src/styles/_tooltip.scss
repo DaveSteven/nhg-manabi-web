@@ -14,12 +14,12 @@
   z-index: 80;
   padding: 6px 10px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--r-xs);
   color: var(--ink);
   background: var(--surface);
-  box-shadow: 0 10px 24px rgba(20, 30, 45, 0.16);
+  box-shadow: var(--shadow-float);
   font-size: 0.82rem;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
   white-space: nowrap;
   opacity: 0;
   transform: translateX(-50%) translateY(2px);
