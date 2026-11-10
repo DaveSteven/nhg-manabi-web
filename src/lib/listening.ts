@@ -25,7 +25,7 @@ const parseHtml = (html = "") => new DOMParser().parseFromString(html || "", "te
 
 /** Plain text of an HTML fragment. */
 export function plain(html = "") {
-  return parseHtml(html).body.textContent?.replace(/<MOJiTest_URL>/g, "").trim() || "";
+  return parseHtml(html).body.textContent?.trim() || "";
 }
 
 export function analysisParagraphs(html: string) {

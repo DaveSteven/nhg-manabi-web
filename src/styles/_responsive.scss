@@ -189,12 +189,10 @@
     align-items: flex-start;
   }
 
-  .history-row {
-    grid-template-columns: 1fr 44px 54px;
-  }
-
-  .history-row span:last-child {
-    display: none;
+  .user-page > .profile-card,
+  .user-page > .history-panel,
+  .profile-stats-card {
+    padding: var(--sp-4);
   }
 
   .question-area {

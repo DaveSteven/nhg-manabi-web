@@ -68,6 +68,13 @@
   --r-md: 14px;   // 按钮、tab、答题选项
   --r-lg: 18px;   // 卡片、面板（默认容器）
   --r-xl: 24px;   // 大区块/主打卡片
+  // 间距：4px 栅格（与 U1.2 设计规范一致）
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
   // 阴影 3 档
   --shadow-rest: 0 3px 0 var(--shadow);                  // 静置的可交互元素
   --shadow-press: 0 1px 0 var(--shadow);                 // active 按压态（配 translateY(2px)）

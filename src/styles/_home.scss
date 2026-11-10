@@ -114,13 +114,6 @@
   box-shadow: var(--shadow-soft); /* 静态容器：弥散浅影，不用按压实投影 */
 }
 
-/* U7.5: featured 回归纯标准卡，featured 地位由推荐标签承担 */
-.home-training-module.featured {
-  border-color: var(--line);
-  background: var(--card);
-  box-shadow: var(--shadow-soft);
-}
-
 .home-module-heading,
 .home-module-heading > div {
   display: flex;
@@ -150,16 +143,6 @@
 .home-exam-summary small,
 .home-module-actions small {
   color: var(--muted);
-}
-
-.home-module-heading em {
-  padding: 4px 9px;
-  border-radius: 999px;
-  color: var(--primary-dark);
-  background: var(--primary-soft);
-  font-size: var(--fs-xs);
-  font-style: normal;
-  font-weight: var(--fw-bold);
 }
 
 .home-module-actions {

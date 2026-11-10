@@ -3,7 +3,7 @@ import DOMPurify from "dompurify";
 
 export function cleanHtml(html) {
   if (!html) return "";
-  const value = String(html).replace(/<\/?MOJiTest_URL>/gi, "");
+  const value = String(html);
   const safe = DOMPurify.sanitize(value, { USE_PROFILES: { html: true } });
   // Legacy plain text stores line breaks without paragraph tags.
   return /<[a-z][\s\S]*>/i.test(value) ? safe : safe.replace(/\r?\n/g, "<br>");

@@ -137,7 +137,7 @@ function App() {
     const key = `${targetLevel}:${targetSubject}`;
     const pending = booksInflight.current.get(key);
     if (pending) return pending;
-    const request = api(`/api/books?level=${targetLevel}&subject=${targetSubject}`)
+    const request = api(`/api/books?level=${targetLevel}&subject=${targetSubject}`, {}, authToken)
       .then((rows) => {
         const mapped = rows.map(mapBook);
         booksCache.current.set(key, mapped);
@@ -190,7 +190,7 @@ function App() {
       }
       try {
         const [examRows, studyData] = await Promise.all([
-          api(`/api/exams?level=${level}`),
+          api(`/api/exams?level=${level}`, {}, authToken),
           fetchStudyData(level, authToken),
         ]);
         const nextData = { exams: examRows.map(mapExam), ...studyData };
@@ -247,24 +247,6 @@ function App() {
     books,
   }), [currentUser?.id, allWrongItems, wrongItems, attempts, books]);
 
-  // B9: weakest practice category by correct rate → dynamic recommendation on the home card.
-  const weakPracticeCategory = useMemo(() => {
-    const sums = new Map();
-    for (const attempt of practiceAttempts) {
-      if (!PRACTICE_CATEGORIES[attempt.subject]) continue;
-      const entry = sums.get(attempt.subject) || { correct: 0, total: 0 };
-      entry.correct += attempt.correct;
-      entry.total += attempt.total;
-      sums.set(attempt.subject, entry);
-    }
-    let weakest = null;
-    for (const [category, entry] of sums) {
-      if (entry.total < 5) continue;
-      const rate = pct(entry.correct, entry.total);
-      if (!weakest || rate < weakest.rate) weakest = { category, rate };
-    }
-    return weakest;
-  }, [practiceAttempts]);
   const todayCount = useMemo(() => countTodayQuestions(learningAttempts), [learningAttempts]);
 
   function changeDailyGoal(goal) {
@@ -597,13 +579,6 @@ function App() {
     await applySession(session);
   }
 
-  async function registerUser(form) {
-    return api("/api/auth/register", {
-      method: "POST",
-      body: JSON.stringify(form),
-    }, authToken);
-  }
-
   async function logout() {
     if (authToken) {
       await api("/api/auth/logout", { method: "POST" }, authToken).catch(() => null);
@@ -671,7 +646,6 @@ function App() {
               bookStats={bookStats}
               currentUser={currentUser}
               continueSuggestions={continueSuggestions}
-              weakPracticeCategory={weakPracticeCategory}
               todayCount={todayCount}
               dailyGoal={dailyGoal}
               onDailyGoal={changeDailyGoal}
@@ -796,7 +770,6 @@ function App() {
               onBack={resetToLibrary}
               onOpenStats={() => navigate("/stats")}
               onLogout={logout}
-              onRegisterUser={registerUser}
             />
           )}
         />

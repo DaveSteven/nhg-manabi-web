@@ -148,8 +148,8 @@ export default function Listening({ userId, token, globalLevel: level }) {
     setDetail(null);
     setQuestions([]);
     const load = examId
-      ? Promise.all([api(`/api/exams/${examId}`), api(`/api/exams/${examId}/questions`)])
-      : api(`/api/exams?level=${level}`);
+      ? Promise.all([api(`/api/exams/${examId}`, {}, token), api(`/api/exams/${examId}/questions`, {}, token)])
+      : api(`/api/exams?level=${level}`, {}, token);
     load
       .then((data: any) => {
         if (!live) return;
@@ -200,7 +200,7 @@ export default function Listening({ userId, token, globalLevel: level }) {
     try {
       const sources = practiceMode === "exam" ? exams.filter((exam) => exam.id === Number(practiceExamId)) : exams;
       const loaded = await Promise.all(sources.map(async (exam) => {
-        const [examDetail, examQuestions] = await Promise.all([api(`/api/exams/${exam.id}`), api(`/api/exams/${exam.id}/questions`)]);
+        const [examDetail, examQuestions] = await Promise.all([api(`/api/exams/${exam.id}`, {}, token), api(`/api/exams/${exam.id}/questions`, {}, token)]);
         return examQuestions
           .filter((question) => practiceTypes.includes(question.question_type))
           .map((question) => ({ ...question, sourceExamId: exam.id, sourceExamTitle: exam.title, sourceLevel: exam.level, sourceDetail: examDetail }));

@@ -12,11 +12,11 @@ import {
   Keyboard,
   Languages,
   Layers3,
+  LogOut,
   NotebookPen,
   RotateCcw,
   Search,
   Target,
-  UserRoundPlus,
   X,
 } from "lucide-react";
 import { LEVELS, SUBJECTS, api, formatDate, pct, subjectLabel } from "../lib/study";
@@ -25,7 +25,6 @@ import { Tooltip } from "../components/Tooltip";
 import { HtmlInline } from "../components/Html";
 import { DailyRing, EmptyState, FieldInput, KeyboardToast, ModalOverlay, OptionButton, PageHeader, PetalFall, Progress, ResultScore, ReviewMark, ReviewOptions, BrandMark, ShortcutHelp, ThemeToggle, TitleBlock } from "../components/CommonUi";
 import { markKeyboardHintSeen, useKeyboardAnswer } from "../hooks/useKeyboardAnswer";
-import { PRACTICE_CATEGORIES } from "./PracticePages";
 
 export * from "./ExamPages";
 export * from "./PracticePages";
@@ -65,7 +64,6 @@ export function LibraryView({
   bookStats,
   currentUser,
   continueSuggestions = [],
-  weakPracticeCategory = null,
   todayCount = 0,
   dailyGoal = 20,
   onDailyGoal,
@@ -230,8 +228,8 @@ export function LibraryView({
           <div><h2>开始练习</h2></div>
         </div>
         <div className="home-module-grid">
-          <article className="home-training-module featured">
-            <div className="home-module-heading"><div><Target size={25} /><span><strong>专项练习</strong></span></div><em>{weakPracticeCategory ? `${PRACTICE_CATEGORIES[weakPracticeCategory.category].label}正确率最低` : "推荐"}</em></div>
+          <article className="home-training-module">
+            <div className="home-module-heading"><div><Target size={25} /><span><strong>专项练习</strong></span></div></div>
             <div className="home-module-actions">
               <button onClick={onOpenVocabularyPractice} disabled={!exams.length} title={exams.length ? undefined : "需先有该级别真题题库"} type="button"><Languages size={22} /><span><strong>文字词汇专项</strong></span><ChevronRight size={19} /></button>
               <button onClick={onOpenGrammarPractice} disabled={!exams.length} title={exams.length ? undefined : "需先有该级别真题题库"} type="button"><BrainCircuit size={22} /><span><strong>文法专项</strong></span><ChevronRight size={19} /></button>
@@ -544,8 +542,12 @@ export function LoginView({ onLogin }) {
     setMessage("");
     try {
       await onLogin({ username: username.trim(), password });
-    } catch {
-      setMessage("登录失败，请检查用户名和密码。");
+    } catch (error) {
+      setMessage(
+        String(error?.message || "").includes("Administrators cannot sign in")
+          ? "管理员账号不能登录学习端，请使用后台登录。"
+          : "登录失败，请检查用户名和密码。",
+      );
     }
   }
 
@@ -567,33 +569,7 @@ export function LoginView({ onLogin }) {
   );
 }
 
-export function UserView({ currentUser, attempts, onBack, onOpenStats, onLogout, onRegisterUser }) {
-  const [form, setForm] = useState({ username: "", displayName: "", password: "" });
-  const [registering, setRegistering] = useState(false);
-  const [registerMessage, setRegisterMessage] = useState("");
-  const [registerError, setRegisterError] = useState("");
-  const field = (key) => (value) => setForm((current) => ({ ...current, [key]: value }));
-
-  async function submitRegistration(event) {
-    event.preventDefault();
-    setRegistering(true);
-    setRegisterMessage("");
-    setRegisterError("");
-    try {
-      const user = await onRegisterUser({
-        username: form.username.trim(),
-        display_name: form.displayName.trim(),
-        password: form.password,
-      });
-      setRegisterMessage(`用户 ${user.display_name}（@${user.username}）已创建。`);
-      setForm({ username: "", displayName: "", password: "" });
-    } catch (error) {
-      setRegisterError(error.message || "创建用户失败，请稍后重试。");
-    } finally {
-      setRegistering(false);
-    }
-  }
-
+export function UserView({ currentUser, attempts, onBack, onOpenStats, onLogout }) {
   return (
     <section className="user-page">
       <PageHeader onBack={onBack}>
@@ -602,10 +578,11 @@ export function UserView({ currentUser, attempts, onBack, onOpenStats, onLogout,
 
       <section className="profile-card">
         <div className="profile-avatar"><span>{currentUser?.display_name?.slice(0, 1) || "D"}</span></div>
-        <div>
+        <div className="profile-identity">
           <h2>{currentUser?.display_name || "David"}</h2>
           <p>@{currentUser?.username || "david"}</p>
         </div>
+        <button className="secondary-button logout-button" onClick={onLogout} type="button"><LogOut size={18} aria-hidden="true" />退出登录</button>
       </section>
 
       <button className="profile-stats-card" onClick={onOpenStats} type="button">
@@ -614,28 +591,9 @@ export function UserView({ currentUser, attempts, onBack, onOpenStats, onLogout,
         <ChevronRight size={20} />
       </button>
 
-      {currentUser?.is_admin ? (
-        <section className="profile-admin-card">
-          <div className="section-title">
-            <UserRoundPlus size={22} />
-            <div><h2>注册用户</h2></div>
-          </div>
-          <form className="new-user-form" onSubmit={submitRegistration}>
-            <FieldInput label="显示名称" value={form.displayName} onChange={field("displayName")} placeholder="例如：小明" />
-            <FieldInput label="用户名" value={form.username} onChange={field("username")} placeholder="例如：xiaoming" autoCapitalize="none" />
-            <FieldInput label="初始密码" value={form.password} onChange={field("password")} placeholder="请输入初始密码" type="password" />
-            {registerError ? <p className="form-error" role="alert">{registerError}</p> : null}
-            {registerMessage ? <p className="form-success" role="status">{registerMessage}</p> : null}
-            <button className="primary-button" type="submit" disabled={registering || !form.username.trim() || !form.displayName.trim() || !form.password}>
-              {registering ? "正在创建…" : "创建用户"}
-            </button>
-          </form>
-        </section>
-      ) : null}
 
       <HistoryPanel attempts={attempts} />
 
-      <button className="secondary-button logout-button" onClick={onLogout} type="button">退出登录</button>
     </section>
   );
 }
@@ -851,10 +809,17 @@ function HistoryPanel({ attempts }) {
         <div className="history-list">
           {recent.map((attempt) => (
             <div className="history-row" key={attempt.id}>
-              <span className="history-book">{attempt.bookName}</span>
-              <span>{attempt.categoryLabel || attempt.level}</span>
-              <span>{pct(attempt.correct, attempt.total)}%</span>
-              <span>{formatDate(attempt.createdAt)}</span>
+              <div className="history-details">
+                <div className="history-book">{attempt.bookName}</div>
+                <div className="history-meta">
+                  <span>{attempt.categoryLabel || attempt.level}</span>
+                  <span>{formatDate(attempt.createdAt)}</span>
+                </div>
+              </div>
+              <div className="history-score">
+                <strong>{pct(attempt.correct, attempt.total)}%</strong>
+                <small>正确率</small>
+              </div>
             </div>
           ))}
         </div>

@@ -2,6 +2,7 @@
 // Imported after component styles so :active wins over their :hover lifts.
 // Floating layers (menus, modals, tooltip) intentionally not pressable.
 
+.profile-stats-card:active,
 .primary-button:active,
 .secondary-button:active,
 .outline-button:active,
@@ -27,6 +28,7 @@
   transform: translateY(1px);
 }
 
+.profile-stats-card:not(:disabled),
 .primary-button:not(:disabled),
 .secondary-button:not(:disabled),
 .outline-button:not(:disabled),

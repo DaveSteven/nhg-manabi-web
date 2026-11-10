@@ -34,6 +34,9 @@ export async function api(path: string, options: RequestInit = {}, token: string
     ...options,
   });
   if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error("操作太频繁，请稍后再试。");
+    }
     const text = await response.text();
     throw new Error(text || `${response.status} ${response.statusText}`);
   }
