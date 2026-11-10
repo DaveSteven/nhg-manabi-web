@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-do
 import {
   DEFAULT_LEVEL,
   SESSION_TOKEN_KEY,
+  SUBJECTS,
   api,
   mapAttempt,
   mapBook,
@@ -74,6 +75,7 @@ function App() {
     chooseExamOption, retryExamSave, moveExamQuestion, submitExam, startNextExamSection, leaveActiveExam,
   } = useExamFlow({ navigate, authToken, currentUser, exams, level, refreshStudyData, setExamRuns, setError, onLeave: () => resetToExamList() });
   const booksCache = useRef(new Map());
+  const booksInflight = useRef(new Map());
   const levelDataCache = useRef(new Map());
 
   function applyStudyData(data) {
@@ -125,24 +127,44 @@ function App() {
     };
   }, []);
 
+  function fetchBooks(targetLevel, targetSubject) {
+    const key = `${targetLevel}:${targetSubject}`;
+    const pending = booksInflight.current.get(key);
+    if (pending) return pending;
+    const request = api(`/api/books?level=${targetLevel}&subject=${targetSubject}`)
+      .then((rows) => {
+        const mapped = rows.map(mapBook);
+        booksCache.current.set(key, mapped);
+        return mapped;
+      })
+      .finally(() => booksInflight.current.delete(key));
+    booksInflight.current.set(key, request);
+    return request;
+  }
+
   useEffect(() => {
     let ignore = false;
     async function loadBooks() {
       if (!authToken || !currentUser) return;
       const cacheKey = `${level}:${subject}`;
       const cached = booksCache.current.get(cacheKey);
-      setBooks(cached || []);
+      // 命中缓存时直接展示，避免清空列表导致页面高度塌陷再撑开（切换 tab 抖动）
+      if (cached) setBooks(cached);
       setBooksLoading(!cached);
       try {
-        const bookRows = await api(`/api/books?level=${level}&subject=${subject}`);
-        const mappedBooks = bookRows.map(mapBook);
-        booksCache.current.set(cacheKey, mappedBooks);
+        const mappedBooks = await fetchBooks(level, subject);
         if (!ignore) setBooks(mappedBooks);
       } catch (err) {
         if (!ignore) setError(`データを読み込めませんでした: ${err.message}`);
       } finally {
         if (!ignore) setBooksLoading(false);
       }
+      // 后台预取同等级的其他科目，让首次切换 tab 也能命中缓存
+      SUBJECTS.forEach((item) => {
+        if (item.id !== subject && !booksCache.current.has(`${level}:${item.id}`)) {
+          fetchBooks(level, item.id).catch(() => {});
+        }
+      });
     }
     loadBooks();
     return () => {

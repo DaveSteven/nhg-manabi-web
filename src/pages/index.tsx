@@ -94,6 +94,8 @@ export function LibraryView({
     return [...books].sort((left, right) => Number(isCleared(left)) - Number(isCleared(right)));
   }, [books, bookStats]);
   const visibleBooks = showAllBooks ? sortedBooks : sortedBooks.slice(0, BOOK_PREVIEW_COUNT);
+  // 加载中骨架数量沿用上一次的卡片数，保持区域高度不变，避免切换科目时页面抖动
+  const skeletonCount = Math.max(3, visibleBooks.length);
 
   return (
     <>
@@ -222,7 +224,7 @@ export function LibraryView({
             <h2>基础题库</h2>
             <p>
               选择知识领域后，按课练习
-              {books.length ? ` · 已练 ${books.filter((book) => attempts.some((attempt) => attempt.bookId === book.id)).length}/${books.length} 课` : ""}
+              {!booksLoading && books.length ? ` · 已练 ${books.filter((book) => attempts.some((attempt) => attempt.bookId === book.id)).length}/${books.length} 课` : ""}
             </p>
           </div>
         </div>
@@ -240,7 +242,7 @@ export function LibraryView({
 
       <section className="book-grid home-book-grid" aria-busy={booksLoading}>
         {booksLoading ? (
-          Array.from({ length: 3 }, (_, index) => (
+          Array.from({ length: skeletonCount }, (_, index) => (
             <article className="book-card book-card-skeleton" key={index} aria-hidden="true">
               <div className="skeleton-line skeleton-badge" />
               <div className="skeleton-line skeleton-title" />
@@ -282,8 +284,8 @@ export function LibraryView({
       </section>
 
       {sortedBooks.length > BOOK_PREVIEW_COUNT ? (
-        <button className="secondary-button show-all-books" onClick={() => setShowAllBooks((value) => !value)} type="button">
-          {showAllBooks ? "收起书目" : `显示全部（${sortedBooks.length} 本）`}
+        <button className="secondary-button show-all-books" onClick={() => setShowAllBooks((value) => !value)} type="button" disabled={booksLoading}>
+          {showAllBooks ? "收起书目" : booksLoading ? "显示全部" : `显示全部（${sortedBooks.length} 本）`}
         </button>
       ) : null}
 
