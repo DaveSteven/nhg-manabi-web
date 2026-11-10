@@ -228,12 +228,10 @@ function App() {
       if (!attempt.bookId) continue;
       const existing = stats.get(attempt.bookId) || {
         tries: 0,
-        best: 0,
         correct: 0,
         total: 0,
       };
       existing.tries += 1;
-      existing.best = Math.max(existing.best, pct(attempt.correct, attempt.total));
       existing.correct += attempt.correct;
       existing.total += attempt.total;
       stats.set(attempt.bookId, existing);

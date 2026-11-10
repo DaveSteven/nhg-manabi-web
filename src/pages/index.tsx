@@ -262,10 +262,10 @@ export function LibraryView({
                   <h2 className="book-display-number">{book.displayName}</h2>
                   <div className="book-meta">
                     <span>{book.question_count} 道题</span>
-                    {stats ? <span>最高 {stats.best}%</span> : <span>未练习</span>}
+                    {stats ? <span>正确率 {pct(stats.correct, stats.total)}%</span> : <span>未练习</span>}
                   </div>
                   <Progress
-                    value={stats ? stats.best : 0}
+                    value={stats ? pct(stats.correct, stats.total) : 0}
                   />
                 </div>
                 <button
