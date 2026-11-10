@@ -36,7 +36,6 @@ import {
   ResultView,
   Shell,
   UserView,
-  VocabularyView,
   WrongBookView,
   PRACTICE_CATEGORIES,
 } from "./pages";
@@ -62,8 +61,6 @@ function App() {
   const [attempts, setAttempts] = useState([]);
   const [wrongItems, setWrongItems] = useState([]);
   const [practiceWrongItems, setPracticeWrongItems] = useState([]);
-  const [vocabulary, setVocabulary] = useState([]);
-  const [vocabularyStats, setVocabularyStats] = useState({ total: 0, new: 0, learning: 0, mastered: 0 });
   const [loading, setLoading] = useState(true);
   const [booksLoading, setBooksLoading] = useState(false);
   const [error, setError] = useState("");
@@ -179,35 +176,6 @@ function App() {
       ignore = true;
     };
   }, [level, currentUser?.id, authToken]);
-
-  useEffect(() => {
-    let ignore = false;
-    async function loadVocabulary() {
-      if (!authToken || !currentUser) return;
-      try {
-        const [entries, stats] = await Promise.all([
-          api("/api/vocabulary?limit=500", {}, authToken),
-          api("/api/vocabulary/stats", {}, authToken),
-        ]);
-        if (!ignore) setVocabulary(entries);
-        if (!ignore) setVocabularyStats(stats);
-      } catch (err) {
-        if (!ignore) setError(`无法加载词汇数据：${err.message}`);
-      }
-    }
-    loadVocabulary();
-    return () => { ignore = true; };
-  }, [currentUser, authToken]);
-
-  async function reviewVocabulary(entryId, remembered) {
-    const updated = await api(`/api/vocabulary/${entryId}/review`, {
-      method: "POST",
-      body: JSON.stringify({ remembered }),
-    }, authToken);
-    setVocabulary((rows) => rows.map((row) => row.id === entryId ? updated : row));
-    const stats = await api("/api/vocabulary/stats", {}, authToken);
-    setVocabularyStats(stats);
-  }
 
   useEffect(() => {
     if (!currentUser || !session) return;
@@ -561,7 +529,6 @@ function App() {
               onOpenReadingPractice={() => openPractice("reading")}
               onOpenListening={() => navigate("/listening")}
               onOpenExamList={() => navigate("/exams")}
-              onOpenVocabulary={() => navigate("/vocabulary")}
               onOpenWrongBook={() => navigate("/wrong")}
               onOpenUser={() => navigate("/user")}
               onSearch={(query) => navigate(`/search?q=${encodeURIComponent(query)}`)}
@@ -612,17 +579,6 @@ function App() {
             )}
           />
         ))}
-        <Route
-          path="/vocabulary"
-          element={(
-            <VocabularyView
-              entries={vocabulary}
-              stats={vocabularyStats}
-              onBack={resetToLibrary}
-              onReview={reviewVocabulary}
-            />
-          )}
-        />
         <Route
           path="/quiz"
           element={

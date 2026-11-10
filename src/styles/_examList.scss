@@ -320,28 +320,6 @@
   font-weight: 700;
 }
 
-.vocabulary-entry-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 18px;
-  padding: 18px;
-  border: 2px solid #cbe8d0;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #f3ffe9, #eaf7ff);
-  box-shadow: 0 4px 0 #bdd7c6;
-}
-
-.vocabulary-entry-card p {
-  color: var(--muted);
-  font-weight: 700;
-}
-
-.vocabulary-open-button {
-  white-space: nowrap;
-}
-
 .exam-list-view .exam-list {
   max-height: none;
   overflow: visible;

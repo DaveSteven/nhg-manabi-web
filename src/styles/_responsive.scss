@@ -113,53 +113,6 @@
     width: 100%;
   }
 
-  .vocabulary-entry-card {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .vocabulary-open-button {
-    width: 100%;
-  }
-
-  .vocabulary-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .vocabulary-filters {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .vocabulary-search {
-    grid-column: 1 / -1;
-  }
-
-  .vocabulary-filters select:last-child {
-    grid-column: 1 / -1;
-  }
-
-  .vocabulary-card {
-    padding: 20px;
-  }
-
-  .vocabulary-card-footer {
-    grid-template-columns: auto 1fr;
-  }
-
-  .vocabulary-card-footer > span {
-    justify-self: end;
-  }
-
-  .vocabulary-card-footer > :last-child {
-    grid-column: 1 / -1;
-    justify-self: stretch;
-  }
-
-  .vocabulary-review-actions > button,
-  .vocabulary-card-footer > .secondary-button:last-child {
-    flex: 1;
-  }
-
   .exam-list {
     grid-template-columns: 1fr;
   }
