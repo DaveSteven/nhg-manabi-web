@@ -210,8 +210,8 @@ export function LibraryView({
           </article>
           <article className="home-training-module exam-module">
             <div className="home-module-heading"><div><ClipboardList size={25} /><span><strong>模拟考试</strong><small>按照正式考试结构完成整套试卷</small></span></div></div>
-            <div className="home-exam-summary"><strong>{exams.length}</strong><span>{level} 历年试卷</span>{latestExamAttempt ? <small>最近成绩 {pct(latestExamAttempt.correct, latestExamAttempt.total)}%</small> : <small>尚未参加考试</small>}</div>
-            <button className="primary-button" onClick={onOpenExamList} type="button">选择模拟试卷 <ArrowRight size={19} /></button>
+            <div className="home-exam-summary"><strong>{exams.length}</strong><span>{level} 历年试卷</span>{latestExamAttempt ? <small>最近成绩 {pct(latestExamAttempt.correct, latestExamAttempt.total)}% · {latestExamAttempt.correct}/{latestExamAttempt.total}</small> : <small>尚未参加考试</small>}</div>
+            <button className="outline-button" onClick={onOpenExamList} type="button">选择模拟试卷 <ArrowRight size={19} /></button>
           </article>
         </div>
       </section>
@@ -230,7 +230,7 @@ export function LibraryView({
           {SUBJECTS.map((item, index) => {
             const Icon = [BrainCircuit, BookOpen, Layers3][index];
             return (
-              <button key={item.id} className={subject === item.id ? `active subject-${item.id}` : ""} onClick={() => onSubject(item.id)} type="button">
+              <button key={item.id} className={subject === item.id ? "active" : ""} onClick={() => onSubject(item.id)} type="button">
                 <Icon size={21} /><strong>{item.label}</strong>{subject === item.id && !booksLoading ? <span>{questionPool}题</span> : null}
               </button>
             );
@@ -252,9 +252,9 @@ export function LibraryView({
           visibleBooks.map((book) => {
             const stats = bookStats.get(book.id);
             return (
-              <article className="book-card" key={book.id}>
+              <article className="book-card" key={book.id} onClick={() => onStart(book)}>
                 <div className="book-card-main">
-                  <div className={`book-badge subject-${book.subject}`}>
+                  <div className={"book-badge"}>
                     {book.categoryLabel}
                   </div>
                   <h2 className="book-display-number">{book.displayName}</h2>
@@ -263,12 +263,11 @@ export function LibraryView({
                     {stats ? <span>最高 {stats.best}%</span> : <span>未练习</span>}
                   </div>
                   <Progress
-                    value={stats ? pct(stats.correct, stats.total) : 0}
+                    value={stats ? stats.best : 0}
                   />
                 </div>
                 <button
                   className="start-button"
-                  onClick={() => onStart(book)}
                   type="button"
                   aria-label={`开始 ${book.book_name}`}
                 >
@@ -445,7 +444,7 @@ export function WrongBookView({ level, items, onBack, onReview, onReviewPractice
     <section className="wrong-page">
       <PageHeader onBack={onBack}>
         <div className="wrong-page-title">
-          <div className="book-pill subject-kanji">错题本</div>
+          <div className="book-pill">错题本</div>
           <p>{level} · {items.length} 道题</p>
         </div>
       </PageHeader>
@@ -454,7 +453,7 @@ export function WrongBookView({ level, items, onBack, onReview, onReviewPractice
         <>
           <section className="wrong-review-card">
             <div>
-              <div className="book-badge subject-kanji">{level} 错题</div>
+              <div className="book-badge">{level} 错题</div>
               <h2>错题复习</h2>
               <p>从错题中随机抽取最多 20 题。答对后会自动移出错题本。</p>
             </div>
@@ -523,7 +522,7 @@ export function LoginView({ onLogin }) {
   );
 }
 
-export function UserView({ currentUser, attempts, onBack, onLogout, onRegisterUser, onOpenAdmin }) {
+export function UserView({ currentUser, attempts, onBack, onLogout, onRegisterUser }) {
   const [form, setForm] = useState({ username: "", displayName: "", password: "" });
   const [registering, setRegistering] = useState(false);
   const [registerMessage, setRegisterMessage] = useState("");
@@ -568,7 +567,7 @@ export function UserView({ currentUser, attempts, onBack, onLogout, onRegisterUs
         <section className="profile-admin-card">
           <div className="section-title">
             <UserRoundPlus size={22} />
-            <div><h2>注册用户</h2><p>管理员可以创建学习账号并维护真题内容。</p></div>
+            <div><h2>注册用户</h2><p>管理员可以创建学习账号。</p></div>
           </div>
           <form className="new-user-form" onSubmit={submitRegistration}>
             <FieldInput label="显示名称" value={form.displayName} onChange={field("displayName")} placeholder="例如：小明" />
@@ -580,7 +579,6 @@ export function UserView({ currentUser, attempts, onBack, onLogout, onRegisterUs
               {registering ? "正在创建…" : "创建用户"}
             </button>
           </form>
-          <button className="secondary-button admin-entry-button" type="button" onClick={onOpenAdmin}>进入真题管理 <ChevronRight size={18} /></button>
         </section>
       ) : null}
 
@@ -649,7 +647,7 @@ export function QuizView({ session, onBack, onPause, onDiscard, onChoose, onChec
       </PageHeader>
 
       <section className="question-area">
-        <div className={`book-pill subject-${session.book.subject}`}>{session.book.categoryLabel} · {session.book.book_name}</div>
+        <div className={"book-pill"}>{session.book.categoryLabel} · {session.book.book_name}</div>
         <h2>{question.stem}</h2>
       </section>
 

@@ -4,13 +4,13 @@
 
 .primary-button:active,
 .secondary-button:active,
+.outline-button:active,
 .start-button:active,
 .icon-button:active,
 .avatar-button:active,
 .wrong-icon-button:active,
 .shortcut-toggle:active,
 .option-button:active,
-.training-action:active,
 .subject-library-tabs button:active,
 .home-module-actions button:active,
 .home-search button:active,
@@ -29,10 +29,10 @@
 
 .primary-button:not(:disabled),
 .secondary-button:not(:disabled),
+.outline-button:not(:disabled),
 .start-button:not(:disabled),
 .icon-button:not(:disabled),
 .option-button:not(:disabled),
-.training-action:not(:disabled),
 .subject-library-tabs button:not(:disabled),
 .shortcut-toggle:not(:disabled) {
   transition: transform 0.12s ease-out, box-shadow 0.12s ease-out;

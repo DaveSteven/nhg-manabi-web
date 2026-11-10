@@ -50,8 +50,8 @@
   padding: 18px;
   border: 2px solid var(--line);
   border-radius: var(--r-xl);
-  background: var(--surface);
-  box-shadow: var(--shadow-rest);
+  background: var(--card);
+  box-shadow: var(--shadow-soft);
 }
 
 .profile-card {
@@ -176,10 +176,8 @@
   padding: 18px;
   border: 2px solid var(--line);
   border-radius: var(--r-xl);
-  background:
-    linear-gradient(135deg, var(--sakura-soft), var(--primary-soft)),
-    var(--surface);
-  box-shadow: var(--shadow-rest);
+  background: var(--card); /* 7.5：容器不做渐变，与全站标准卡同款 */
+  box-shadow: var(--shadow-soft);
 }
 
 .wrong-review-card div:first-child {

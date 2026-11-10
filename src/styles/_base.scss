@@ -11,8 +11,8 @@
   --muted: #7a7580;       // 退墨：辅助文字
   --surface: #faf7f2;     // 和纸白：页面背景
   --card: #ffffff;        // 卡片面
-  --line: #e8e2da;        // 和纸描边
-  --shadow: #e3dcd2;      // 柔和投影
+  --line: #e6e3e0;        // 描边（7.7 去黄：原 #e8e2da）
+  --shadow: #dfdbd7;      // 柔和投影（7.7 去黄：原 #e3dcd2）
 
   // 主题色
   --primary: #b94968;       // 深樱：主按钮、链接、选中态
@@ -24,6 +24,11 @@
   --sakura: #f4a7b9;
   --sakura-dark: #d16d8d;   // 花瓣渐变深端（U1 补充，方案一未列）
   --sakura-soft: #fdeef2;
+  // 进度条专用：固定樱色，不随季节彩蛋变化（季节只换装饰，不换数据元素）
+  --progress-fill: #f4a7b9;
+  --progress-track: #fdeef2;
+  // 静态容器：弥散浅影，与可按压元素的 3px 实投影区分
+  --shadow-soft: 0 1px 3px rgba(43, 43, 51, 0.05);
 
   // 反馈
   --correct: #2f7d4f;       // 松绿
@@ -111,6 +116,9 @@ html[data-theme="dark"] {
   --sakura: #e8a0b4;
   --sakura-dark: #c47a92;
   --sakura-soft: #3a2a31;
+  --progress-fill: #a8667b;  // 夜间压暗一档，让完成态 --primary（#e08aa3）保持最亮
+  --progress-track: #3a2a31;
+  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.3);
 
   --correct: #6fbf8e;
   --correct-dark: #2f7d4f;
@@ -158,6 +166,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background: var(--surface);
 }
 
 button {
@@ -181,7 +190,7 @@ button:disabled {
   height: 44px;
   border-radius: 50%;
   color: var(--muted);
-  background: var(--surface);
+  background: var(--card);
   border: 2px solid var(--line);
   box-shadow: var(--shadow-rest);
 }
@@ -219,6 +228,7 @@ button:disabled {
 /* U2.5 §3.1: canonical button variants — page overrides may only adjust width/margin. */
 .primary-button,
 .secondary-button,
+.outline-button,
 .success-button {
   display: inline-flex;
   align-items: center;
@@ -265,6 +275,26 @@ button:disabled {
   box-shadow: var(--shadow-rest);
 }
 
+/* 按钮权重第二档：主题色描边。同屏只留一个实心 primary，其余主要行动用 outline。 */
+.outline-button {
+  color: var(--primary);
+  background: var(--card);
+  border: 2px solid var(--primary);
+  box-shadow: 0 3px 0 var(--primary-soft);
+}
+
+.outline-button:hover:not(:disabled) {
+  background: var(--primary-soft);
+}
+
+.outline-button:disabled {
+  cursor: not-allowed;
+  color: var(--muted);
+  background: var(--line);
+  border-color: var(--line);
+  box-shadow: none;
+}
+
 .secondary-button:disabled {
   cursor: not-allowed;
   color: var(--muted);
@@ -277,7 +307,6 @@ button:disabled {
   min-height: 100vh;
   background:
     radial-gradient(circle at top left, rgba(185, 73, 104, 0.12), transparent 330px),
-    linear-gradient(180deg, rgba(185, 138, 30, 0.12), transparent 260px),
     var(--surface);
   padding: 24px;
 }
@@ -381,14 +410,19 @@ h1 {
   height: 54px;
   min-height: 54px;
   border-radius: 50%;
-  color: var(--on-accent);
-  background: var(--primary);
-  box-shadow: 0 3px 0 var(--primary-dark);
+  color: var(--primary-dark);  /* 7.7：顶栏去实心，头像改淡樱底深樱字（对比 ≥4.5:1） */
+  background: var(--primary-soft);
+  box-shadow: var(--shadow-rest);
   font-weight: var(--fw-medium);
   font-size: var(--fs-lg);
 }
 
 /* U7.3: 错题入口回归樱系；--error 只留给错误数据本身 */
+/* 夜间 --primary-dark 偏暗，字色换回提亮的夜樱 */
+html[data-theme="dark"] .avatar-button {
+  color: var(--primary);
+}
+
 .wrong-icon-button {
   position: relative;
   display: grid;
@@ -399,9 +433,9 @@ h1 {
   height: 54px;
   min-height: 54px;
   border-radius: 50%;
-  color: var(--primary-dark);
-  background: var(--primary-soft);
-  box-shadow: 0 3px 0 var(--primary-soft);
+  color: var(--ink);  /* 7.7：中性圆钮，颜色只留给角标 */
+  background: var(--card);
+  box-shadow: var(--shadow-rest);
 }
 
 .wrong-badge {
@@ -448,7 +482,7 @@ h1 {
   border: 2px solid var(--line);
   border-radius: var(--r-lg);
   color: var(--muted);
-  background: var(--surface);
+  background: var(--card);
   box-shadow: var(--shadow-rest);
   font-weight: var(--fw-medium);
 }

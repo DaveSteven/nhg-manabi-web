@@ -46,11 +46,9 @@ import {
 } from "./pages";
 
 import Listening from "./pages/Listening";
-import AdminQuestions from "./pages/AdminQuestions";
 
 function App() {
   const navigate = useNavigate();
-  const isAdminHost = window.location.hostname.toLowerCase() === "admin.manabi.cc";
   const [books, setBooks] = useState([]);
   const [exams, setExams] = useState([]);
   const [examAttempts, setExamAttempts] = useState([]);
@@ -578,7 +576,6 @@ function App() {
 
   const gate = loading ? <div className="center-state">正在加载课程…</div>
     : !authToken || !currentUser ? <LoginView onLogin={login} />
-    : isAdminHost && !currentUser.is_admin ? <div className="center-state error">该账号没有管理权限。<button className="secondary-button" type="button" onClick={logout}>退出登录</button></div>
     : error ? <div className="center-state error">{error}</div>
     : null;
   if (gate) return <Shell>{gate}</Shell>;
@@ -590,7 +587,7 @@ function App() {
         <Route
           path="/"
           element={(
-            isAdminHost ? <Navigate to="/admin/questions" replace /> : <LibraryView
+            <LibraryView
               books={books}
               exams={exams}
               booksLoading={booksLoading}
@@ -720,13 +717,8 @@ function App() {
               onBack={resetToLibrary}
               onLogout={logout}
               onRegisterUser={registerUser}
-              onOpenAdmin={() => navigate("/admin/questions")}
             />
           )}
-        />
-        <Route
-          path="/admin/questions"
-          element={currentUser.is_admin ? <AdminQuestions token={authToken} onBack={() => navigate("/")} /> : <Navigate to="/" replace />}
         />
         <Route
           path="/exams"

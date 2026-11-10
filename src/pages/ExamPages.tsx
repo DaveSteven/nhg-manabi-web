@@ -114,7 +114,7 @@ export function ExamListView({ exams, level, examAttempts, examRuns = [], onBack
     return (
       <article className={`exam-card ${last ? "done" : ""}`.trim()} key={exam.id}>
         <div>
-          <div className="book-badge subject-reading">{exam.level}</div>
+          <div className="book-badge">{exam.level}</div>
           <h3>{exam.title}</h3>
           {last ? <p>最近成绩 {pct(last.correct, last.total)}% · {last.correct}/{last.total}</p> : null}
         </div>
@@ -199,7 +199,7 @@ export function ExamSectionBreakView({ session, onStartNext, starting = false })
   return (
     <section className="exam-intro-view">
       <div className="exam-intro-card exam-break-card">
-        <div className="book-badge subject-reading">上一科已提交</div>
+        <div className="book-badge">上一科已提交</div>
         <h1>准备开始：{section.label}</h1>
         <p>本部分考试时间为 {section.duration_minutes} 分钟。点击后立即开始计时，之后不能返回上一科。</p>
         {section.key === "listening" ? (
@@ -250,7 +250,7 @@ export function RandomPracticeSessionView({ session, onBack, onChoose, onMove, o
         </button>
       </PageHeader>
       <article className="random-practice-question">
-        <div className="random-practice-meta"><span className="book-pill subject-reading">{session.exam.level} · {examQuestionCategoryLabel(question)}</span><small>{question.source_exam_title}</small></div>
+        <div className="random-practice-meta"><span className="book-pill">{session.exam.level} · {examQuestionCategoryLabel(question)}</span><small>{question.source_exam_title}</small></div>
         <div className="random-practice-number">第 {question.practice_order || session.index + 1} 题</div>
         {hasVisibleHtml(question.passage) ? <section className="exam-passage"><HtmlContent html={question.passage} /></section> : null}
         <div className="random-practice-title"><HtmlContent html={question.title} /></div>
@@ -439,7 +439,7 @@ export function ExamSessionView({ session, onBack, onChoose, onMove, onSubmit, s
         ) : null}
 
         <section className="exam-question-panel">
-          <div className="book-badge subject-reading">{currentProblem?.partLabel}</div>
+          <div className="book-badge">{currentProblem?.partLabel}</div>
           <div className="exam-question-head">
             <span>{currentProblem?.problemLabel.replace("問題", "")}</span>
             <p>{currentProblem?.layer.title}</p>

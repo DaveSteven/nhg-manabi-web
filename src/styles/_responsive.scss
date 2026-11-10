@@ -24,10 +24,6 @@
     width: 100%;
   }
 
-  .training-action-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .home-module-grid {
     grid-template-columns: 1fr;
   }
@@ -88,11 +84,6 @@
     grid-template-columns: 1fr;
   }
 
-  .mixed-test-card {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
   .wrong-entry {
     align-items: stretch;
     flex-direction: column;
@@ -101,15 +92,6 @@
   .wrong-review-card {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .exam-entry-card {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .exam-entry-card .primary-button {
-    width: 100%;
   }
 
   .exam-list {
@@ -223,14 +205,6 @@
 }
 
 @media (max-width: $bpXs) {
-  .training-action-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .training-action {
-    min-height: 118px;
-  }
-
   .home-module-actions {
     grid-template-columns: 1fr;
   }

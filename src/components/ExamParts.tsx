@@ -28,7 +28,7 @@ function groupByPart(problemSections) {
 export function AnswerSheet({ exam, problemSections, currentProblem, answers, questionIndexById, onJump, onJumpProblem }) {
   return (
     <aside className="answer-sheet">
-      <div className="book-pill subject-reading">{exam.level} · {exam.title}</div>
+      <div className="book-pill">{exam.level} · {exam.title}</div>
       <div className="answer-section-list">
         {groupByPart(problemSections).map((part) => (
           <section className="answer-part" key={part.label}>

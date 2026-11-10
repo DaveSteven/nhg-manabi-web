@@ -16,7 +16,7 @@
   border: 1px solid var(--line);
   border-radius: var(--r-xs);
   color: var(--ink);
-  background: var(--surface);
+  background: var(--card);
   box-shadow: var(--shadow-float);
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
@@ -37,7 +37,7 @@
   height: 10px;
   border-right: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
-  background: var(--surface);
+  background: var(--card);
   opacity: 0;
   transform: translateX(-50%) rotate(45deg);
   pointer-events: none;
