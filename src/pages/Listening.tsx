@@ -137,7 +137,7 @@ function ExamQuestionGroups({ groups, detail, questions, progress, onOpen }) {
       <div className="listening-tools"><strong>已完成 {questions.filter((q) => progress[q.id]?.done).length} / {questions.length} 题</strong></div>
       {groups.map((g) => (
         <section className="listening-card" key={g.id}>
-          <h2>{plain(g.title).match(/問題\s*\d+/)?.[0] || "聴解"} · {listeningGroupLabel(g.question_type, detail.level)}</h2>
+          <h2>{plain(g.title).match(/問題\s*\d+/)?.[0] || "聴解"} · {listeningGroupLabel(g.question_type)}</h2>
           <p>{plain(g.title)}</p>
           <div className="listening-grid">
             {g.questions.map((q, i) => (

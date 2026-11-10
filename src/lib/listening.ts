@@ -16,8 +16,7 @@ const GROUP_LABELS = {
   46: "統合理解 · 综合理解",
 };
 
-export function listeningGroupLabel(questionType: number, level: string) {
-  if (questionType === 44 && level === "N2") return GROUP_LABELS[45];
+export function listeningGroupLabel(questionType: number) {
   return GROUP_LABELS[questionType];
 }
 
