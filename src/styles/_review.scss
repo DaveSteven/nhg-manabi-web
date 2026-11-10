@@ -168,7 +168,7 @@
 }
 
 .review-option.correct .review-option-number {
-  color: #ffffff;
+  color: var(--on-accent);
   background: var(--correct);
 }
 
@@ -178,7 +178,7 @@
 }
 
 .review-option.chosen-wrong .review-option-number {
-  color: #ffffff;
+  color: var(--on-accent);
   background: var(--error);
 }
 
@@ -279,7 +279,7 @@
   gap: 18px;
   padding: 18px 24px;
   border-top: 2px solid var(--line);
-  background: rgba(255, 255, 255, 0.96);
+  background: color-mix(in srgb, var(--card) 96%, transparent);
   backdrop-filter: blur(12px);
 }
 
@@ -307,7 +307,7 @@
 }
 
 .logout-button {
-  color: #ffffff;
+  color: var(--on-accent);
   background: var(--error);
   border-color: var(--error);
   box-shadow: 0 3px 0 var(--error-dark);
@@ -368,7 +368,7 @@
   border: 2px solid var(--line);
   border-radius: var(--r-md);
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.94);
+  background: color-mix(in srgb, var(--card) 94%, transparent);
   font-size: var(--fs-base);
   font-weight: var(--fw-medium);
 }

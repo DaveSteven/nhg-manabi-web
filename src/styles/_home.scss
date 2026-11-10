@@ -248,7 +248,7 @@
   border: 2px solid var(--line);
   border-radius: var(--r-lg);
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.84);
+  background: color-mix(in srgb, var(--card) 84%, transparent);
   text-align: left;
   cursor: pointer;
 }
@@ -325,7 +325,7 @@
 }
 
 .subject-library-tabs button.active {
-  color: #ffffff;
+  color: var(--on-accent);
 }
 
 .subject-library-tabs button.subject-grammar {
@@ -474,7 +474,7 @@
   height: 34px;
   flex: 0 0 34px;
   border-radius: var(--r-sm);
-  color: #ffffff;
+  color: var(--on-accent);
   background: var(--primary);
   font-weight: var(--fw-bold);
 }
@@ -574,7 +574,7 @@
 }
 
 .practice-count-options > button.selected {
-  color: #ffffff;
+  color: var(--on-accent);
   border-color: var(--correct);
   background: var(--correct);
   box-shadow: 0 3px 0 var(--correct-dark);

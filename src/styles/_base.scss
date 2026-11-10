@@ -2,6 +2,7 @@
 
 :root {
   /* 「樱与墨」 palette (方案一 U1) — old variable names kept as aliases below. */
+  color-scheme: light;
   color: var(--ink);
   background: var(--surface);
 
@@ -17,6 +18,7 @@
   --primary: #b94968;       // 深樱：主按钮、链接、选中态
   --primary-dark: #93354f;
   --primary-soft: #fbe3ea;  // 淡樱：选中背景、标签底
+  --on-accent: #ffffff;     // 强调色上的文字（夜间换深墨，保对比度 ≥ 4.5:1）
 
   // 点缀（情绪场景专用）
   --sakura: #f4a7b9;
@@ -90,20 +92,57 @@
   text-rendering: optimizeLegibility;
 }
 
+/* U6: 「夜樱」 dark palette — warm blacks, lifted accents; shadows become recessed layers. */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #e6e2da;
+  --muted: #9b958f;
+  --surface: #1f1d23;
+  --card: #28262e;
+  --line: #3a3740;
+  --shadow: #141317;
+
+  --primary: #e08aa3;
+  --primary-dark: #b94968;
+  --primary-soft: #3d2430;
+  --on-accent: #241a20;
+
+  --sakura: #e8a0b4;
+  --sakura-dark: #c47a92;
+  --sakura-soft: #3a2a31;
+
+  --correct: #6fbf8e;
+  --correct-dark: #2f7d4f;
+  --correct-soft: #243329;
+  --error: #e07a76;
+  --error-dark: #c73e3a;
+  --error-soft: #3d2827;
+  --warn: #d9b45e;
+  --warn-dark: #8d6b00;
+  --warn-soft: #35301f;
+
+  --chart-vocabulary: #7db3dd;
+  --chart-grammar: #a3c26b;
+  --chart-reading: #ab97cd;
+  --chart-listening: #ecc56a;
+
+  --shadow-float: 0 14px 30px rgba(0, 0, 0, 0.45);
+}
+
 /* U5: seasonal accent — spring sakura is the default; only点缀色 shifts. */
-html[data-season="summer"] {
+html[data-theme="light"][data-season="summer"] {
   --sakura: #9fb761;      // 抹茶
   --sakura-soft: #f0f4e6;
   --sakura-dark: #7a9440;
 }
 
-html[data-season="autumn"] {
+html[data-theme="light"][data-season="autumn"] {
   --sakura: #d98d4f;      // 红叶
   --sakura-soft: #f8efe4;
   --sakura-dark: #b06a2e;
 }
 
-html[data-season="winter"] {
+html[data-theme="light"][data-season="winter"] {
   --sakura: #9db8cc;      // 雪青
   --sakura-soft: #eef2f6;
   --sakura-dark: #7292ab;
@@ -150,7 +189,7 @@ button:disabled {
 }
 
 .primary-button {
-  color: #ffffff;
+  color: var(--on-accent);
   background: var(--primary);
   box-shadow: 0 3px 0 var(--primary-dark);
 }
@@ -169,7 +208,7 @@ button:disabled {
 }
 
 .success-button {
-  color: #ffffff;
+  color: var(--on-accent);
   background: var(--correct);
   box-shadow: 0 3px 0 var(--correct-dark);
 }
@@ -243,7 +282,7 @@ h1 {
   display: grid;
   place-items: center;
   border-radius: var(--r-md);
-  color: #ffffff;
+  color: var(--on-accent);
   background: var(--primary);
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4), var(--shadow-rest);
   font-family: var(--font-serif);
@@ -297,7 +336,7 @@ h1 {
   height: 54px;
   min-height: 54px;
   border-radius: 50%;
-  color: #ffffff;
+  color: var(--on-accent);
   background: var(--primary);
   box-shadow: 0 3px 0 var(--primary-dark);
   font-weight: var(--fw-medium);
@@ -330,7 +369,7 @@ h1 {
   padding: 0 6px;
   border: 2px solid var(--card);
   border-radius: 999px;
-  color: #ffffff;
+  color: var(--on-accent);
   background: var(--error);
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
@@ -345,7 +384,7 @@ h1 {
 }
 
 .level-switch .active {
-  color: #ffffff;
+  color: var(--on-accent);
   background: var(--correct);
   box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.12);
 }
@@ -368,7 +407,7 @@ h1 {
 }
 
 .subject-tabs button:nth-child(1).active {
-  color: #ffffff;
+  color: var(--on-accent);
   border-color: var(--primary);
   background: var(--primary);
   box-shadow: 0 3px 0 var(--primary-dark);
@@ -382,7 +421,7 @@ h1 {
 }
 
 .subject-tabs button:nth-child(3).active {
-  color: #ffffff;
+  color: var(--on-accent);
   border-color: var(--error);
   background: var(--error);
   box-shadow: 0 3px 0 var(--error-dark);

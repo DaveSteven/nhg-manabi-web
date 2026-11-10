@@ -49,7 +49,7 @@ kbd,
 
 // Current question in the exam review ← / → navigation.
 .review-jump-dot.focused {
-  color: #ffffff;
+  color: var(--on-accent);
   border-color: var(--primary);
   background: var(--primary);
   box-shadow: 0 0 0 2px var(--primary-soft);

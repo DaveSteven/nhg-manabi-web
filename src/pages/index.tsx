@@ -22,7 +22,7 @@ import {
 import { LEVELS, SUBJECTS, api, formatDate, pct, subjectLabel } from "../lib/study";
 import UiSelect from "../components/UiSelect";
 import { HtmlInline } from "../components/Html";
-import { DailyRing, EmptyState, FieldInput, KeyboardToast, ModalOverlay, OptionButton, PageHeader, PetalFall, Progress, ResultScore, ReviewMark, ReviewOptions, SealMark, ShortcutHelp, TitleBlock } from "../components/CommonUi";
+import { DailyRing, EmptyState, FieldInput, KeyboardToast, ModalOverlay, OptionButton, PageHeader, PetalFall, Progress, ResultScore, ReviewMark, ReviewOptions, SealMark, ShortcutHelp, ThemeToggle, TitleBlock } from "../components/CommonUi";
 import { markKeyboardHintSeen, useKeyboardAnswer } from "../hooks/useKeyboardAnswer";
 import { PRACTICE_CATEGORIES } from "./PracticePages";
 
@@ -114,6 +114,7 @@ export function LibraryView({
           <h1 className="brand-title">JLPT <span>GO!</span></h1>
         </div>
         <div className="top-actions">
+          <ThemeToggle />
           <form
             className="home-search compact"
             onSubmit={(event) => {

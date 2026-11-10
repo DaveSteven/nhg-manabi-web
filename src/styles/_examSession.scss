@@ -6,7 +6,7 @@
   padding: 0 18px;
   border: 0;
   border-radius: var(--r-md);
-  color: #ffffff;
+  color: var(--on-accent);
   cursor: pointer;
   font-weight: var(--fw-bold);
 }
@@ -82,7 +82,7 @@
 }
 
 .auth-tabs .active {
-  color: #ffffff;
+  color: var(--on-accent);
   background: var(--primary);
   box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.14);
 }
@@ -216,7 +216,7 @@
 }
 
 .answer-sheet-toggle.active {
-  color: #ffffff;
+  color: var(--on-accent);
   border-color: var(--primary-dark);
   background: var(--primary-dark);
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.18);
@@ -306,7 +306,7 @@
 }
 
 .answer-dot.active {
-  color: #ffffff;
+  color: var(--on-accent);
   background: var(--primary);
   border-color: var(--primary);
 }
@@ -442,7 +442,9 @@
   object-fit: contain;
   border: 2px solid var(--line);
   border-radius: var(--r-md);
-  background: var(--card);
+  /* U6: scans keep a literal white liner in both themes — never invert or tint exam media. */
+  background: #ffffff;
+  padding: 8px;
 }
 
 .exam-shared-image {

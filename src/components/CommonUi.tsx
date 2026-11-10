@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Check, Keyboard, RotateCcw, Trophy, X } from "lucide-react";
+import { ArrowLeft, Check, Keyboard, Monitor, Moon, RotateCcw, Sun, Trophy, X } from "lucide-react";
 import { HtmlInline } from "./Html";
 import { useKeyboardHintToast } from "../hooks/useKeyboardAnswer";
+import { applyTheme, cycleTheme, readThemePref, writeThemePref, type ThemePref } from "../lib/theme";
 
 export function Progress({ value }) {
   return (
@@ -242,6 +243,34 @@ export function SakuraBadge({ size = 18, title = "连续学习" }: { size?: numb
       ))}
       <circle cx="12" cy="12" r="2.2" fill="var(--sakura-dark)" />
     </svg>
+  );
+}
+
+const THEME_META: Record<ThemePref, { label: string; Icon: typeof Sun }> = {
+  system: { label: "跟随系统", Icon: Monitor },
+  light: { label: "日间", Icon: Sun },
+  dark: { label: "夜间", Icon: Moon },
+};
+
+/** Three-state theme switch (方案一 U6): system → light → dark, persisted. */
+export function ThemeToggle() {
+  const [pref, setPref] = useState<ThemePref>(() => readThemePref());
+  const { label, Icon } = THEME_META[pref];
+  return (
+    <button
+      className="icon-button theme-toggle"
+      onClick={() => {
+        const next = cycleTheme(pref);
+        writeThemePref(next);
+        applyTheme(next);
+        setPref(next);
+      }}
+      type="button"
+      aria-label={`配色：${label}，点击切换`}
+      title={`配色：${label}`}
+    >
+      <Icon size={20} />
+    </button>
   );
 }
 
