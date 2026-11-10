@@ -79,6 +79,7 @@ export function LibraryView({
   onOpenExamList,
   onOpenListening,
   onOpenWrongBook,
+  onOpenStats,
   onOpenUser,
   onSearch,
 }) {
@@ -161,6 +162,14 @@ export function LibraryView({
             {wrongItems.length ? (
               <span className="wrong-badge">{wrongItems.length}</span>
             ) : null}
+          </button>
+          <button
+            className="wrong-icon-button"
+            onClick={onOpenStats}
+            type="button"
+            aria-label="数据中心"
+          >
+            <BarChart3 size={23} />
           </button>
           <button
             className="avatar-button"
@@ -291,6 +300,7 @@ export function LibraryView({
           <EmptyState title={`${level} ${currentSubjectLabel}`} text="该分类暂时没有题目。" />
         )}
       </section>
+
     </>
   );
 }
@@ -526,7 +536,7 @@ export function LoginView({ onLogin }) {
   );
 }
 
-export function UserView({ currentUser, attempts, onBack, onLogout, onRegisterUser }) {
+export function UserView({ currentUser, attempts, onBack, onOpenStats, onLogout, onRegisterUser }) {
   const [form, setForm] = useState({ username: "", displayName: "", password: "" });
   const [registering, setRegistering] = useState(false);
   const [registerMessage, setRegisterMessage] = useState("");
@@ -566,6 +576,12 @@ export function UserView({ currentUser, attempts, onBack, onLogout, onRegisterUs
           <p>@{currentUser?.username || "david"}</p>
         </div>
       </section>
+
+      <button className="profile-stats-card" onClick={onOpenStats} type="button">
+        <span><BarChart3 size={22} /></span>
+        <div><strong>查看学习数据</strong><small>正确率趋势、连续学习与科目掌握度</small></div>
+        <ChevronRight size={20} />
+      </button>
 
       {currentUser?.is_admin ? (
         <section className="profile-admin-card">

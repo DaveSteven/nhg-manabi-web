@@ -47,6 +47,7 @@ import {
 } from "./pages";
 
 import Listening from "./pages/Listening";
+import { StatsView } from "./pages/StatsPages";
 
 function App() {
   const navigate = useNavigate();
@@ -635,6 +636,7 @@ function App() {
               onOpenListening={() => navigate("/listening")}
               onOpenExamList={() => navigate("/exams")}
               onOpenWrongBook={() => navigate("/wrong")}
+              onOpenStats={() => navigate("/stats")}
               onOpenUser={() => navigate("/user")}
               onSearch={(query) => navigate(`/search?q=${encodeURIComponent(query)}`)}
             />
@@ -730,12 +732,25 @@ function App() {
           )}
         />
         <Route
+          path="/stats"
+          element={(
+            <StatsView
+              level={level}
+              token={authToken}
+              onBack={resetToLibrary}
+              onAction={(category) => navigate(category === "listening" ? "/listening" : `/${category}-practice`)}
+              onExams={() => navigate("/exams")}
+            />
+          )}
+        />
+        <Route
           path="/user"
           element={(
             <UserView
               currentUser={currentUser}
               attempts={learningAttempts}
               onBack={resetToLibrary}
+              onOpenStats={() => navigate("/stats")}
               onLogout={logout}
               onRegisterUser={registerUser}
             />

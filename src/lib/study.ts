@@ -40,6 +40,20 @@ export async function api(path: string, options: RequestInit = {}, token: string
   return response.json();
 }
 
+export function fetchStatsOverview(level: string, token: string) {
+  const params = new URLSearchParams({ level });
+  return api(`/api/stats/overview?${params}`, {}, token);
+}
+
+export function fetchStatsTrend(
+  { metric = "accuracy", granularity = "day", days = 90, level }:
+  { metric?: "accuracy" | "volume"; granularity?: "day" | "week" | "month"; days?: number; level: string },
+  token: string,
+) {
+  const params = new URLSearchParams({ metric, granularity, days: String(days), level });
+  return api(`/api/stats/trend?${params}`, {}, token);
+}
+
 export function pct(value, total) {
   if (!total) return 0;
   return Math.round((value / total) * 100);
