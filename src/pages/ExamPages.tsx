@@ -157,7 +157,7 @@ export function UnifiedPracticeSessionView({ session, onBack, onChoose, onMove, 
               <strong>{sharedMaterialGroup ? `第 ${groupIndex + 1} 篇 · 本篇已答 ${groupAnswered}/${group.questions.length}` : `第 ${session.index + 1} 题`}</strong>
               <div><span className="book-pill">{session.exam.level} · {examQuestionCategoryLabel(group.questions[0])}</span><small>{group.sourceExamTitle}</small></div>
             </header>
-            {group.groupImage ? <ZoomImage className="exam-image exam-shared-image" src={assetSrc(group.groupImage)} /> : null}
+            {group.groupImage ? <ZoomImage className="exam-image" src={assetSrc(group.groupImage)} /> : null}
             {hasVisibleHtml(group.passage) ? <section className="exam-passage practice-shared-passage" id="practice-passage"><HtmlContent html={group.passage} /></section> : null}
             {group.questions.map((question, questionIndex) => {
               const chosen = session.answers[question.id] || null;
@@ -592,7 +592,7 @@ export function ExamSessionView({ session, onBack, onChoose, onMove, onSubmit, s
             {currentProblem?.partLabel === "阅读" && currentProblemPages.length > 1 ? <small>第 {currentProblemPageIndex + 1} / {currentProblemPages.length} 页</small> : null}
           </div>
 
-          {currentProblem?.layer?.image_url ? <ZoomImage className="exam-image exam-shared-image" src={assetSrc(currentProblem.layer.image_url)} /> : null}
+          {currentProblem?.layer?.image_url ? <ZoomImage className="exam-image" src={assetSrc(currentProblem.layer.image_url)} /> : null}
 
           {isTimedListening ? (
             <ListeningExamPlayer
