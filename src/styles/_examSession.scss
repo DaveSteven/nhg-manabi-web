@@ -35,9 +35,9 @@
 
 .login-card {
   display: grid;
-  gap: 20px;
+  gap: 32px;
   width: min(460px, 100%);
-  padding: 28px;
+  padding: 36px 28px;
   border: 2px solid var(--line);
   border-radius: var(--r-xl);
   background: var(--card);

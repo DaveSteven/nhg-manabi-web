@@ -560,8 +560,8 @@ export function LoginView({ onLogin }) {
           <div className="brand-title">JLPT <span>GO!</span></div>
         </div>
         <form className="new-user-form" onSubmit={submit}>
-          <FieldInput label="Username" value={username} onChange={setUsername} placeholder="例：david" />
-          <FieldInput label="Password" value={password} onChange={setPassword} placeholder="请输入密码" type="password" />
+          <FieldInput value={username} onChange={setUsername} placeholder="请输入用户名" />
+          <FieldInput value={password} onChange={setPassword} placeholder="请输入密码" type="password" />
           {message ? <p className="form-error">{message}</p> : null}
           <button className="primary-button" type="submit" disabled={!username.trim() || !password}>登录</button>
         </form>

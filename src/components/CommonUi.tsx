@@ -277,7 +277,7 @@ export function FieldInput({ label, value, onChange, ...rest }: any) {
   return (
     <label>
       {label}
-      <input value={value} onChange={(event) => onChange(event.target.value)} {...rest} />
+      <input aria-label={label || rest.placeholder} value={value} onChange={(event) => onChange(event.target.value)} {...rest} />
     </label>
   );
 }
