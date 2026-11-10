@@ -116,8 +116,7 @@
 }
 
 .training-action:hover,
-.subject-library-tabs button:hover,
-.home-review-grid button:hover {
+.subject-library-tabs button:hover {
   transform: translateY(-1px);
 }
 
@@ -363,65 +362,6 @@
 
 .home-library-heading h2 {
   font-size: var(--fs-lg);
-}
-
-.home-review-grid {
-  display: grid;
-  grid-template-columns: 0.8fr 1.2fr;
-  gap: 13px;
-  margin-top: 26px;
-}
-
-.home-study-summary,
-.home-review-grid button {
-  min-height: 86px;
-  padding: 16px;
-  border: 2px solid var(--line);
-  border-radius: var(--r-lg);
-  color: var(--ink);
-  background: var(--surface);
-}
-
-.home-study-summary {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-}
-
-.home-study-summary small,
-.home-study-summary span,
-.home-review-grid button small {
-  color: var(--muted);
-}
-
-.home-study-summary strong {
-  grid-row: 1 / 3;
-  grid-column: 2;
-  font-size: var(--fs-xl);
-}
-
-.home-review-grid button {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 12px;
-  text-align: left;
-  cursor: pointer;
-}
-
-.home-review-grid button > svg:first-child {
-  color: var(--error-dark);
-}
-
-// B9: collapsed book grid — centered "show all" toggle under the grid.
-.show-all-books {
-  display: block;
-  margin: 14px auto 0;
-}
-
-.home-review-grid button span {
-  display: grid;
-  gap: 4px;
 }
 
 .grammar-practice-setup {

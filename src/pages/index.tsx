@@ -77,17 +77,6 @@ export function LibraryView({
     else if (item.key === "wrong") (item.useWrongReview ? onReviewWrong : onOpenWrongBook)?.();
     else onStart?.(books.find((book) => book.id === item.bookId));
   };
-  const currentAttempts = attempts.filter(
-    (item) => item.level === level && item.subject === subject,
-  );
-  const totalCorrect = currentAttempts.reduce(
-    (sum, item) => sum + item.correct,
-    0,
-  );
-  const totalQuestions = currentAttempts.reduce(
-    (sum, item) => sum + item.total,
-    0,
-  );
   const currentSubjectLabel = subjectLabel(subject);
   const questionPool = books.reduce(
     (sum, book) => sum + book.question_count,
@@ -299,12 +288,6 @@ export function LibraryView({
         </button>
       ) : null}
 
-      <section className="home-review-grid">
-        <div className="home-study-summary">
-          <small>当前分类</small><strong>{pct(totalCorrect, totalQuestions)}%</strong><span>{currentAttempts.length} 次练习</span>
-        </div>
-        <button onClick={onOpenWrongBook} type="button"><RotateCcw size={22} /><span><strong>错题复习</strong><small>{wrongItems.length ? `${wrongItems.length} 题待复习` : "暂无错题"}</small></span><ChevronRight size={20} /></button>
-      </section>
     </>
   );
 }
