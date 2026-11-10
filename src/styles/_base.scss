@@ -399,17 +399,20 @@ h1 {
   justify-content: flex-end;
 }
 
+/* secondary-button 不在此列：它的 2px --line 描边是规范的一部分，放在卡片上也要靠它分层。 */
 .level-switch button,
 .subject-tabs button,
 .primary-button,
-.secondary-button,
 .start-button,
 .icon-button,
 .avatar-button,
-.wrong-icon-button,
-.secondary-button {
+.wrong-icon-button {
   cursor: pointer;
   border: 0;
+}
+
+.secondary-button {
+  cursor: pointer;
 }
 
 .avatar-button {
