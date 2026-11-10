@@ -3,6 +3,7 @@ import {
   calculateExamScore,
   countAnsweredQuestions,
   latestExamAttemptByExam,
+  parseApiDate,
 } from "./study";
 
 describe("exam helpers", () => {
@@ -66,5 +67,16 @@ describe("JLPT score estimation", () => {
     expect(score.totalScore).toBe(120);
     expect(score.readingScore).toBe(0);
     expect(score.passed).toBe(false);
+  });
+});
+
+describe("parseApiDate", () => {
+  it("treats timezone-less timestamps as UTC", () => {
+    expect(parseApiDate("2026-11-10T08:00:00").getTime()).toBe(Date.UTC(2026, 10, 10, 8, 0, 0));
+  });
+
+  it("keeps explicit timezone designators intact", () => {
+    expect(parseApiDate("2026-11-10T08:00:00Z").getTime()).toBe(Date.UTC(2026, 10, 10, 8, 0, 0));
+    expect(parseApiDate("2026-11-10T17:00:00+09:00").getTime()).toBe(Date.UTC(2026, 10, 10, 8, 0, 0));
   });
 });

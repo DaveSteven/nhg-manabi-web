@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from "vitest";
-import { PRACTICE_MODE_KEY, practiceQuestionGroups, readPracticeMode, writePracticeMode } from "./appHelpers";
+import { countTodayQuestions, PRACTICE_MODE_KEY, practiceQuestionGroups, readPracticeMode, writePracticeMode } from "./appHelpers";
 
 describe("practice mode preference", () => {
   beforeEach(() => localStorage.clear());
@@ -28,5 +28,21 @@ describe("practiceQuestionGroups", () => {
     ];
     const groups = practiceQuestionGroups(questions);
     expect(groups.map((group) => group.questions.map((question) => question.id))).toEqual([[1, 2], [3], [4]]);
+  });
+});
+
+describe("countTodayQuestions", () => {
+  /** Naive UTC string, matching what the backend serializes. */
+  function naiveUtc(ts) {
+    return new Date(ts).toISOString().slice(0, 19);
+  }
+
+  it("counts attempts made just now and skips older ones", () => {
+    const now = Date.UTC(2026, 11, 10, 12, 7, 30);
+    const attempts = [
+      { createdAt: naiveUtc(now - 60_000), total: 5 },
+      { createdAt: naiveUtc(now - 25 * 3_600_000), total: 9 },
+    ];
+    expect(countTodayQuestions(attempts, new Date(now))).toBe(5);
   });
 });

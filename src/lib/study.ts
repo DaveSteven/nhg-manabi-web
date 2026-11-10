@@ -84,13 +84,31 @@ export function countAnsweredQuestions(questions, answers) {
   return questions.filter((question) => answers[question.id]).length;
 }
 
+/**
+ * Parse a timestamp returned by the API.
+ *
+ * The backend stores naive UTC datetimes (`datetime.utcnow`) and Pydantic
+ * serializes them without a timezone designator, e.g. `"2026-11-10T08:00:00"`.
+ * `new Date()` treats such strings as local time, which shifts every derived
+ * value (displayed times, "today" buckets) by the UTC offset. Append "Z" so
+ * it parses as UTC; formatters then convert to the viewer's local timezone.
+ *
+ * Strings that already carry a timezone designator and date-only strings
+ * (no "T") are parsed as-is.
+ */
+export function parseApiDate(value) {
+  if (/[zZ]$/.test(value) || /[+-]\d{2}:?\d{2}$/.test(value)) return new Date(value);
+  if (value.includes("T")) return new Date(`${value}Z`);
+  return new Date(value);
+}
+
 export function formatDate(value) {
   return new Intl.DateTimeFormat("ja-JP", {
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(value));
+  }).format(parseApiDate(value));
 }
 
 export function subjectLabel(subject) {

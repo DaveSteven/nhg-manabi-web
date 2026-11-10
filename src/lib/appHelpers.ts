@@ -6,6 +6,7 @@ import {
   mapPracticeAttempt,
   mapPracticeWrong,
   mapWrong,
+  parseApiDate,
   writeExamCache,
 } from "./study";
 
@@ -49,7 +50,7 @@ export function countTodayQuestions(attempts, now = new Date()) {
   const today = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
   return attempts
     .filter((attempt) => {
-      const date = new Date(attempt.createdAt);
+      const date = parseApiDate(attempt.createdAt);
       return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}` === today;
     })
     .reduce((sum, attempt) => sum + (attempt.total || 0), 0);
