@@ -213,6 +213,45 @@
   .result-actions {
     flex-direction: column;
   }
+
+  .practice-progress-summary {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+
+  .practice-nav-toggle span {
+    display: none;
+  }
+
+  .practice-workspace.nav-open {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-question-panel {
+    position: static;
+    max-height: none;
+  }
+
+  .practice-question-nav {
+    grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+    max-height: 142px;
+  }
+
+  .practice-group-heading,
+  .practice-group-heading > div,
+  .practice-action-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .practice-result-counts {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .practice-basic-actions,
+  .practice-basic-actions button {
+    width: 100%;
+  }
 }
 
 @media (max-width: $bpXs) {

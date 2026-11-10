@@ -8,6 +8,7 @@ const MODE_FULL = "整题练习";
 const MODE_FOCUS = "逐段精听";
 const RATES = [0.6, 0.8, 1, 1.2, 1.5];
 const PLAY_ERROR = "音频未能播放，请重试或检查网络。";
+const audioTime = (value: number) => `${Math.floor((Number.isFinite(value) ? value : 0) / 60)}:${Math.floor((Number.isFinite(value) ? value : 0) % 60).toString().padStart(2, "0")}`;
 
 function EyeToggle({ visible, ...rest }: any) {
   return (
@@ -39,8 +40,8 @@ function PlayerControls({ audioRef, src, mode, index, playing, position, duratio
       </button>
       <div className="listening-progress">
         <div className="listening-progress-label">
-          <strong>{mode === MODE_FOCUS ? `第 ${index + 1} 段` : "听力音频"}</strong>
-          <span>{playing ? "正在播放" : "点击播放，专注聆听"}</span>
+          {mode === MODE_FOCUS ? <strong>{`第 ${index + 1} 段`}</strong> : null}
+          <span>{audioTime(position)} / {audioTime(duration)}</span>
         </div>
         <input
           type="range"
@@ -109,7 +110,7 @@ function FullTranscript({ question, rows, listRef, visible, onToggle, playing, a
   );
 }
 
-function AnswerFeedback({ result, question, choice, onRetry, onFocusMode }: any) {
+function AnswerFeedback({ result, question, choice, onFocusMode }: any) {
   const ok = result.is_correct;
   return (
     <section className={`listening-feedback ${ok ? "is-correct" : "is-incorrect"}`} aria-label="答题结果">
@@ -126,14 +127,13 @@ function AnswerFeedback({ result, question, choice, onRetry, onFocusMode }: any)
       </div>
       {plain(result.analysis) && <div className="listening-explanation"><h4>答案解析</h4>{analysisParagraphs(result.analysis).map((p, i) => <p key={i}>{p}</p>)}</div>}
       <div className="listening-feedback-actions">
-        <button className="secondary-button" onClick={onRetry}><RotateCcw size={17} />重新作答</button>
         <button className="secondary-button" onClick={onFocusMode}><Play size={17} />进入逐段精听</button>
       </div>
     </section>
   );
 }
 
-export default function ListeningTrainer({ question: q, examId, token, saved, onSave, onNext }) {
+export default function ListeningTrainer({ question: q, examId, token, saved, feedbackMode = "instant", onSave, onNext }) {
   const audio = useRef<HTMLAudioElement>(null);
   const range = useRef<any>(null);
   const transcriptList = useRef<HTMLDivElement>(null);
@@ -141,7 +141,7 @@ export default function ListeningTrainer({ question: q, examId, token, saved, on
   const rows = useMemo(() => segments(q.subtitle), [q.subtitle]);
   const translations = useMemo(() => translationLines(q.translation), [q.translation]);
   const [mode, setMode] = useState(MODE_FULL);
-  const [showFullTranscript, setShowFullTranscript] = useState(true);
+  const [showFullTranscript, setShowFullTranscript] = useState(Boolean(saved.result));
   const [index, setIndex] = useState(() => Math.max(0, Math.min(rows.length - 1, saved.segment || 0)));
   const [revealed, setRevealed] = useState<number[]>([]);
   const [translated, setTranslated] = useState(false);
@@ -241,6 +241,8 @@ export default function ListeningTrainer({ question: q, examId, token, saved, on
     }
   }
 
+  const continuePractice = () => { onSave({ choice, done: true }); onNext(choice); };
+
   const setRatePlayback = (next: number) => { setRate(next); if (audio.current) audio.current.playbackRate = next; };
   const toggleMute = () => { if (audio.current) audio.current.muted = !muted; setMuted(!muted); };
   const retry = () => { setResult(null); setChoice(null); onSave({ result: null, choice: null }); };
@@ -294,10 +296,7 @@ export default function ListeningTrainer({ question: q, examId, token, saved, on
   return (
     <section className="trainer listening-workspace">
       <aside className="listening-card listening-sidebar">
-        <div className="listening-panel-heading"><div className="eyebrow">聴解</div><h2>训练控制</h2></div>
-        <nav className="subject-tabs listening-mode-tabs" aria-label="训练模式">
-          {[MODE_FULL, MODE_FOCUS].map((m) => <button className={mode === m ? "active" : ""} key={m} onClick={() => changeMode(m)}>{m}</button>)}
-        </nav>
+        <div className="listening-panel-heading"><div className="eyebrow">聴解</div><h2>听力播放器</h2></div>
         <PlayerControls
           audioRef={audio}
           src={assetSrc(q.media_url)}
@@ -312,16 +311,13 @@ export default function ListeningTrainer({ question: q, examId, token, saved, on
           handlers={handlers}
         />
         {error && <p role="alert">{error}</p>}
-        <footer className="listening-tools">
-          <button className="primary-button" onClick={() => { onSave({ done: true }); onNext(); }}>完成本题，继续下一题</button>
-          <span>{saved.done ? "本题已完成" : "听懂后再标记完成"}</span>
-        </footer>
       </aside>
 
       <div className="listening-card listening-content">
         <div className="listening-content-heading">
           <h2>{mode === MODE_FOCUS ? "逐段精听" : "听力题目"}</h2>
           <span>{mode === MODE_FOCUS ? `${rows.length} 个片段 · 按需展开原文` : "听完音频后选择答案"}</span>
+          {mode === MODE_FOCUS ? <button className="secondary-button listening-return-full" onClick={() => changeMode(MODE_FULL)} type="button">返回整题</button> : null}
         </div>
         {mode === MODE_FOCUS ? (
           <>
@@ -345,8 +341,8 @@ export default function ListeningTrainer({ question: q, examId, token, saved, on
           </>
         ) : (
           <>
-            <p>原文随播放高亮，可以边听边看，再选择答案。</p>
-            <FullTranscript question={q} rows={rows} listRef={transcriptList} visible={showFullTranscript} onToggle={() => setShowFullTranscript((v) => !v)} playing={playing} active={activeTranscript} />
+            <p>{result ? "答案已开放，可以结合原文和译文复习。" : "作答阶段可反复播放；检查前不显示原文和译文。"}</p>
+            {result ? <FullTranscript question={q} rows={rows} listRef={transcriptList} visible={showFullTranscript} onToggle={() => setShowFullTranscript((v) => !v)} playing={playing} active={activeTranscript} /> : null}
             {q.image_url && <img className="listening-image" src={assetSrc(q.image_url)} alt="听力题目配图" />}
             <div className="listening-grid">
               {q.options.map((o, i) => (
@@ -355,8 +351,9 @@ export default function ListeningTrainer({ question: q, examId, token, saved, on
                 </button>
               ))}
             </div>
-            <button className="primary-button" disabled={!choice || busy || !!result} onClick={check}>{busy ? "检查中…" : "检查答案"}</button>
-            {result && <AnswerFeedback result={result} question={q} choice={choice} onRetry={retry} onFocusMode={() => changeMode(MODE_FOCUS)} />}
+            {feedbackMode === "instant" && !result ? <div className="listening-feedback-actions"><button className="secondary-button" onClick={() => onNext(null)}>跳过</button><button className="primary-button" disabled={!choice || busy} onClick={check}>{busy ? "检查中…" : "检查答案"}</button></div> : null}
+            {feedbackMode === "immersive" && !result ? <div className="listening-feedback-actions"><button className="secondary-button" onClick={() => onNext(null)}>跳过</button><button className="primary-button" disabled={!choice} onClick={continuePractice}>下一题</button></div> : null}
+            {result && <><AnswerFeedback result={result} question={q} choice={choice} onFocusMode={() => changeMode(MODE_FOCUS)} /><button className="primary-button" onClick={continuePractice}>继续下一题</button></>}
           </>
         )}
       </div>

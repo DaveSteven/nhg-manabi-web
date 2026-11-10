@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ChevronRight, ClipboardList, Clock3, Headphones, Keyboard, X } from "lucide-react";
+import { ChevronRight, ClipboardList, Clock3, Headphones, Keyboard, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import {
   assetSrc,
   buildExamProblemSections,
@@ -15,6 +15,7 @@ import {
   pct,
   secondsUntil,
 } from "../lib/study";
+import { practiceQuestionGroups } from "../lib/appHelpers";
 import { HtmlContent, hasVisibleHtml } from "../components/Html";
 import {
   EmptyState,
@@ -51,6 +52,151 @@ const PRACTICE_SHORTCUT_ROWS: Array<[string, string]> = [
 const scrollTop = () => requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
 const enterFullscreen = () => document.documentElement.requestFullscreen?.();
 const TIMER_NOTICES = [[600, "本科剩余 10 分钟"], [300, "本科剩余 5 分钟"], [60, "本科只剩 1 分钟"]] as const;
+
+function PracticeExitModal({ onStay, onLeave }) {
+  return (
+    <ModalOverlay title="退出本次练习？" onClose={onStay}>
+      <p className="modal-footnote">退出后，本次作答和练习进度将不保存，也不会计入练习记录。</p>
+      <div className="modal-actions">
+        <button className="secondary-button" onClick={onLeave} type="button">退出练习</button>
+        <button className="primary-button" onClick={onStay} type="button">继续练习</button>
+      </div>
+    </ModalOverlay>
+  );
+}
+
+export function UnifiedPracticeSessionView({ session, onBack, onChoose, onMove, onCheck, onSubmit, submitting = false }) {
+  const groups = practiceQuestionGroups(session.questions);
+  const currentQuestion = session.questions[session.index] || session.questions[0];
+  const groupIndex = Math.max(0, groups.findIndex((group) => group.questions.some((question) => question.id === currentQuestion?.id)));
+  const group = groups[groupIndex] || { questions: [] };
+  const feedbackMode = session.config.feedbackMode || "immersive";
+  const instant = feedbackMode === "instant";
+  const groupChecked = group.questions.length > 0 && group.questions.every((question) => session.checked?.[question.id]);
+  const answered = session.questions.filter((question) => session.answers[question.id]).length;
+  const unanswered = session.questions.length - answered;
+  const groupAnswered = group.questions.filter((question) => session.answers[question.id]).length;
+  const groupType = Number(group.questions[0]?.question_type || 0);
+  const sharedMaterialGroup = groupType === 23 || (groupType >= 31 && groupType <= 36);
+  const [showExit, setShowExit] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showIncomplete, setShowIncomplete] = useState(false);
+  const [showQuestionNav, setShowQuestionNav] = useState(true);
+  const isLast = groupIndex === groups.length - 1;
+  const firstEditable = group.questions.find((question) => !session.checked?.[question.id]);
+
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, []);
+
+  const moveGroup = (nextIndex) => {
+    const target = groups[Math.max(0, Math.min(groups.length - 1, nextIndex))];
+    const question = target?.questions[0];
+    if (question) { onMove(session.questions.findIndex((item) => item.id === question.id)); scrollTop(); }
+  };
+  const complete = () => {
+    if (unanswered > 0) setShowIncomplete(true);
+    else onSubmit();
+  };
+  const checkGroup = () => {
+    const missing = group.questions.filter((question) => !session.answers[question.id]).length;
+    if (missing) { setShowIncomplete(true); return; }
+    onCheck(group.questions);
+  };
+  const primary = () => {
+    if (instant && !groupChecked) { checkGroup(); return; }
+    if (isLast) complete();
+    else moveGroup(groupIndex + 1);
+  };
+  const activeQuestion = firstEditable || group.questions[0];
+  useKeyboardAnswer({
+    active: !showExit && !showIncomplete && !showShortcuts,
+    optionCount: activeQuestion?.options?.length || 0,
+    onNumber: (index) => activeQuestion && onChoose(activeQuestion.id, activeQuestion.options[index].id),
+    onAdvance: primary,
+    onExit: () => setShowExit(true),
+    onHelp: () => { markKeyboardHintSeen(); setShowShortcuts(true); },
+  });
+
+  return (
+    <section className="unified-practice-view">
+      <PageHeader onBack={() => setShowExit(true)}>
+        <div className="practice-progress-summary">
+          <Progress value={pct(answered, session.questions.length)} />
+          <span>当前位置 {groupIndex + 1}/{groups.length}</span><span>已答 {answered}</span><span>未答 {unanswered}</span>
+        </div>
+        <button className="secondary-button practice-nav-toggle" onClick={() => setShowQuestionNav((value) => !value)} type="button" aria-expanded={showQuestionNav} aria-controls="practice-question-navigation">
+          {showQuestionNav ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
+          <span>{showQuestionNav ? "收起题号" : "展开题号"}</span>
+        </button>
+        <button className="shortcut-toggle" onClick={() => setShowShortcuts(true)} type="button" aria-label="快捷键速查"><Keyboard size={18} /></button>
+      </PageHeader>
+
+      <section className={`practice-workspace ${showQuestionNav ? "nav-open" : ""}`.trim()}>
+        {showQuestionNav ? (
+          <aside className="practice-question-panel" id="practice-question-navigation">
+            <div className="practice-question-panel-heading"><ClipboardList size={18} /><strong>题目导航</strong><small>{answered}/{session.questions.length}</small></div>
+            <nav className="practice-question-nav" aria-label="题目导航">
+              {groups.map((item, index) => {
+                const itemAnswered = item.questions.filter((question) => session.answers[question.id]).length;
+                const complete = itemAnswered === item.questions.length;
+                const stateLabel = complete ? "已作答" : itemAnswered ? "部分作答" : "未作答";
+                const itemType = Number(item.questions[0]?.question_type || 0);
+                const itemUnit = itemType === 23 || (itemType >= 31 && itemType <= 36) ? "篇" : "题";
+                return <button aria-label={`第 ${index + 1} ${itemUnit}，${stateLabel}`} className={`${index === groupIndex ? "active" : ""} ${complete ? "answered" : itemAnswered ? "partial" : ""}`.trim()} onClick={() => moveGroup(index)} type="button" key={item.key}>{index + 1}</button>;
+              })}
+            </nav>
+          </aside>
+        ) : null}
+
+        <div className="practice-main-column">
+          <article className="practice-group-card">
+            <header className="practice-group-heading">
+              <strong>{sharedMaterialGroup ? `第 ${groupIndex + 1} 篇 · 本篇已答 ${groupAnswered}/${group.questions.length}` : `第 ${session.index + 1} 题`}</strong>
+              <div><span className="book-pill">{session.exam.level} · {examQuestionCategoryLabel(group.questions[0])}</span><small>{group.sourceExamTitle}</small></div>
+            </header>
+            {hasVisibleHtml(group.passage) ? <section className="exam-passage practice-shared-passage" id="practice-passage"><HtmlContent html={group.passage} /></section> : null}
+            {group.questions.map((question, questionIndex) => {
+              const chosen = session.answers[question.id] || null;
+              const feedback = session.feedback?.[question.id];
+              const locked = Boolean(session.checked?.[question.id]);
+              return (
+                <section className="practice-sub-question" id={`practice-question-${question.id}`} key={question.id}>
+                  <div className="random-practice-title">{group.questions.length > 1 ? <span>{questionIndex + 1}.</span> : null}<HtmlContent html={question.title} /></div>
+                  {question.image_url ? <img className="exam-image" src={assetSrc(question.image_url)} alt="" /> : null}
+                  <section className="options-grid exam-options">
+                    {question.options.map((option, optionIndex) => {
+                      const state = feedback ? (option.id === feedback.correct_option_id ? "correct" : option.id === chosen ? "wrong" : "") : option.id === chosen ? "selected" : "";
+                      return <OptionButton key={option.id} index={optionIndex} option={option} className={state} disabled={locked || submitting} onClick={() => onChoose(question.id, option.id)} />;
+                    })}
+                  </section>
+                  {feedback ? <section className={`practice-inline-feedback ${feedback.is_correct ? "correct" : "wrong"}`}><strong>{feedback.is_correct ? "回答正确" : "回答有误"}</strong><p>正确答案：<HtmlContent inline html={feedback.answer_text} /></p>{feedback.analysis ? <div className="analysis-text"><HtmlContent inline html={feedback.analysis} /></div> : null}</section> : null}
+                </section>
+              );
+            })}
+            {sharedMaterialGroup && hasVisibleHtml(group.passage) ? <div className="practice-reading-jumps"><a href="#practice-passage">回到文章</a><a href={`#practice-question-${group.questions[0]?.id}`}>回到作答位置</a></div> : null}
+          </article>
+
+          {session.saveError ? <div className="exam-save-state error" role="alert">{session.saveError}。当前页面的作答仍保留，请点击“完成练习”重试。</div> : null}
+
+          <footer className="practice-action-bar">
+            <button className="secondary-button" disabled={groupIndex === 0 || submitting} onClick={() => moveGroup(groupIndex - 1)} type="button">上一{sharedMaterialGroup ? "篇" : "题"}</button>
+            {!groupChecked && instant ? <button className="secondary-button" disabled={submitting} onClick={() => { if (isLast) complete(); else moveGroup(groupIndex + 1); }} type="button">跳过</button> : null}
+            <button className="primary-button" disabled={(instant && !groupChecked && groupAnswered === 0) || submitting} onClick={primary} type="button">
+              {submitting ? "正在保存…" : instant && !groupChecked ? (sharedMaterialGroup ? "检查本篇" : "检查答案") : isLast ? "完成练习" : `下一${sharedMaterialGroup ? "篇" : "题"}`}
+            </button>
+          </footer>
+        </div>
+      </section>
+
+      {showExit ? <PracticeExitModal onStay={() => setShowExit(false)} onLeave={onBack} /> : null}
+      {showIncomplete ? <ModalOverlay title={instant && !groupChecked ? "本组还有未答题" : `还有 ${unanswered} 题未作答`} onClose={() => setShowIncomplete(false)}><p className="modal-footnote">可以返回补答，也可以将未答题记为跳过并查看结果。</p><div className="modal-actions"><button className="secondary-button" onClick={() => setShowIncomplete(false)} type="button">返回补答</button><button className="primary-button" onClick={() => { setShowIncomplete(false); instant && !groupChecked ? onCheck(group.questions) : onSubmit(); }} type="button">{instant && !groupChecked ? "明确跳过并检查" : "结束并查看结果"}</button></div></ModalOverlay> : null}
+      {showShortcuts ? <ModalOverlay title="键盘快捷键" onClose={() => setShowShortcuts(false)}><ShortcutHelp rows={[["1 ~ 4", "选择对应选项"], ["Enter / Space", instant ? "检查答案 / 进入下一题" : "进入下一题"], ["Esc", "退出练习"], ["?", "显示快捷键速查"]]} /><div className="modal-actions"><button className="primary-button" onClick={() => setShowShortcuts(false)} type="button">知道了</button></div></ModalOverlay> : null}
+    </section>
+  );
+}
 
 /** Exam date as a comparable number; titles already carry the date, so it is only used for ordering. */
 function examDateTime(exam) {
@@ -543,7 +689,8 @@ function EstimatedScore({ est }) {
   );
 }
 
-export function ExamResultView({ exam, attempt, questions, onRepeat, onLibrary, practice = false, practiceCategory = "grammar" }) {
+export function ExamResultView({ exam, attempt, questions, onRepeat, onLibrary, onReviewWrong = null, practice = false, practiceCategory = "grammar" }) {
+  const [onlyWrong, setOnlyWrong] = useState(false);
   const answerByQuestion = new Map<number, any>(attempt.answers.map((answer) => [answer.questionId, answer]));
   const answerForQuestion = (question) =>
     answerByQuestion.get(question.id) || {
@@ -565,6 +712,12 @@ export function ExamResultView({ exam, attempt, questions, onRepeat, onLibrary, 
       return { ...type, correct, total: typeQuestions.length };
     })
     .filter((type) => type.total);
+  const skipped = attempt.answers.filter((answer) => !answer.chosenOptionId).length;
+  const wrong = attempt.total - attempt.correct - skipped;
+  const visibleAnswerByQuestion = onlyWrong
+    ? new Map([...answerByQuestion].filter(([, answer]) => !answer.isCorrect))
+    : answerByQuestion;
+  const visibleQuestions = onlyWrong ? questions.filter((question) => !answerByQuestion.get(question.id)?.isCorrect) : questions;
 
   return (
     <section className="result-view exam-result-view">
@@ -573,21 +726,22 @@ export function ExamResultView({ exam, attempt, questions, onRepeat, onLibrary, 
       <ResultScore score={pct(attempt.correct, attempt.total)}>答对 {attempt.correct} / {attempt.total} · {attempt.title}</ResultScore>
 
       {practice ? (
-        <section className="grammar-type-summary">
-          {typeStats.map((type) => <div key={type.id}><span>{type.label}</span><strong>{pct(type.correct, type.total)}%</strong><small>{type.correct} / {type.total} 正确</small></div>)}
-        </section>
+        <>
+          <section className="practice-result-counts">
+            <div><span>本次题量</span><strong>{attempt.total}</strong></div><div><span>已答</span><strong>{attempt.total - skipped}</strong></div><div><span>答对</span><strong>{attempt.correct}</strong></div><div><span>答错</span><strong>{wrong}</strong></div><div><span>跳过</span><strong>{skipped}</strong></div>
+          </section>
+          <p className="practice-score-note">正确率 {pct(attempt.correct, attempt.total)}%（答对题数 ÷ 本次全部题目，跳过计入总题量）</p>
+          <section className="grammar-type-summary">
+            {typeStats.map((type) => <div key={type.id}><span>{type.label}</span><strong>{pct(type.correct, type.total)}%</strong><small>{type.correct} / {type.total} 正确</small></div>)}
+          </section>
+        </>
       ) : <EstimatedScore est={calculateExamScore(attempt, questions)} />}
 
-      <ResultActions
-        onRepeat={onRepeat}
-        repeatLabel={practice ? "重新设置" : "再做一次"}
-        onLibrary={onLibrary}
-        libraryLabel={practice ? "返回首页" : "试卷列表"}
-      />
+      {practice ? <div className="result-actions">{wrong > 0 && onReviewWrong ? <button className="primary-button" onClick={onReviewWrong} type="button">重练错题</button> : null}<button className={wrong > 0 ? "secondary-button" : "primary-button"} onClick={onRepeat} type="button">再练一组</button><button className="secondary-button" onClick={onLibrary} type="button">返回首页</button><button className="secondary-button" aria-pressed={onlyWrong} onClick={() => setOnlyWrong((value) => !value)} type="button">{onlyWrong ? "查看全部解析" : "只看错题"}</button></div> : <ResultActions onRepeat={onRepeat} repeatLabel="再做一次" onLibrary={onLibrary} libraryLabel="试卷列表" />}
 
       <ExamReview
-        reviewProblemGroups={buildReviewProblemGroups(exam, questions)}
-        answerByQuestion={answerByQuestion}
+        reviewProblemGroups={buildReviewProblemGroups(exam, visibleQuestions)}
+        answerByQuestion={visibleAnswerByQuestion}
         answerForQuestion={answerForQuestion}
       />
     </section>

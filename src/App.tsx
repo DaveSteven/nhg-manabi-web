@@ -23,9 +23,9 @@ import {
   mapPracticeQuestions,
   practiceLayers,
   readDailyGoal,
-  readStoredQuizSession,
+  readPracticeMode,
   writeDailyGoal,
-  writeStoredQuizSession,
+  writePracticeMode,
 } from "./lib/appHelpers";
 import { useExamFlow } from "./hooks/useExamFlow";
 import { ExamIntroRoute, ExamReviewRoute, ExamRoute } from "./routes/ExamRoutes";
@@ -34,8 +34,10 @@ import {
   ExamResultView,
   ExamSessionView,
   RandomPracticeSessionView,
+  UnifiedPracticeSessionView,
   SearchView,
   GrammarPracticeSetupView,
+  BasicPracticeSetupView,
   LibraryView,
   LoginView,
   QuizView,
@@ -61,8 +63,11 @@ function App() {
   const [level, setLevel] = useState(DEFAULT_LEVEL);
   const [subject, setSubject] = useState("grammar");
   const [selectedBook, setSelectedBook] = useState(null);
-  const [session, setSession] = useState(() => readStoredQuizSession());
+  const [session, setSession] = useState(null);
+  const [practiceMode, setPracticeMode] = useState(readPracticeMode);
+  const [pendingPractice, setPendingPractice] = useState(null);
   const [grammarPractice, setGrammarPractice] = useState(null);
+  const [practiceSubmitting, setPracticeSubmitting] = useState(false);
   const [attempts, setAttempts] = useState([]);
   const [wrongItems, setWrongItems] = useState([]);
   const [practiceWrongItems, setPracticeWrongItems] = useState([]);
@@ -204,24 +209,7 @@ function App() {
     };
   }, [level, currentUser?.id, authToken]);
 
-  useEffect(() => {
-    if (!currentUser) return;
-    if (session) {
-      if (session.userId && session.userId !== currentUser.id) {
-        setSession(null);
-        return;
-      }
-      if (!session.finishedAttempt && isQuizSessionExpired(session)) {
-        writeStoredQuizSession(null);
-        setSession(null);
-        return;
-      }
-      // B4: clear storage once the session finishes; the in-memory result view stays until navigation.
-      writeStoredQuizSession(session.finishedAttempt ? null : session);
-      return;
-    }
-    writeStoredQuizSession(null);
-  }, [currentUser, session]);
+  const changePracticeMode = (mode) => { writePracticeMode(mode); setPracticeMode(mode); };
 
   const bookStats = useMemo(() => {
     const stats = new Map();
@@ -251,18 +239,19 @@ function App() {
     [attempts, practiceAttempts],
   );
   const continueSuggestions = useMemo(() => buildContinueSuggestions({
-    session,
+    session: null,
     userId: currentUser?.id,
     wrongCount: allWrongItems.length,
     libraryWrongCount: wrongItems.length,
     attempts,
     books,
-  }), [session, currentUser?.id, allWrongItems, wrongItems, attempts, books]);
+  }), [currentUser?.id, allWrongItems, wrongItems, attempts, books]);
 
   // B9: weakest practice category by correct rate → dynamic recommendation on the home card.
   const weakPracticeCategory = useMemo(() => {
     const sums = new Map();
     for (const attempt of practiceAttempts) {
+      if (!PRACTICE_CATEGORIES[attempt.subject]) continue;
       const entry = sums.get(attempt.subject) || { correct: 0, total: 0 };
       entry.correct += attempt.correct;
       entry.total += attempt.total;
@@ -291,7 +280,7 @@ function App() {
     const wrongAnswers = attempt.answers.filter((answer) => !answer.isCorrect);
     const reviewable = wrongAnswers.filter((answer) => answer.options?.length >= 2);
     if (reviewable.length && reviewable.length === wrongAnswers.length) {
-      startSession({
+      preparePractice({
         id: null,
         book_id: null,
         book_name: "错题重练",
@@ -311,7 +300,7 @@ function App() {
   async function startBook(book) {
     setError("");
     const quiz = await api(`/api/books/${book.id}/quiz?limit=10`, {}, authToken);
-    startSession(book, quiz, "book");
+    preparePractice(book, quiz, "book");
   }
 
   async function startMixedTest() {
@@ -326,11 +315,12 @@ function App() {
       subjectLabel: quiz.subject_label,
       categoryLabel: `${level} ${quiz.subject_label}`,
     };
-    startSession(source, quiz, "mixed");
+    preparePractice(source, quiz, "mixed");
   }
 
   async function startGrammarPractice(config) {
     setError("");
+    changePracticeMode(config.feedbackMode || readPracticeMode());
     const label = (PRACTICE_CATEGORIES[config.category] || PRACTICE_CATEGORIES.grammar).label;
     const title = `${level} ${label}专项`;
     if (config.mode === "random") {
@@ -366,9 +356,30 @@ function App() {
 
   function chooseGrammarOption(questionId, optionId) {
     setGrammarPractice((current) => ({
-      ...current,
-      answers: { ...current.answers, [questionId]: optionId },
+      ...(current || {}),
+      ...(current?.checked?.[questionId] ? {} : {
+        answers: { ...current.answers, [questionId]: optionId },
+      }),
     }));
+  }
+
+  async function checkGrammarQuestions(questions) {
+    if (!grammarPractice) return;
+    const answerable = questions.filter((question) => grammarPractice.answers[question.id] && !grammarPractice.checked?.[question.id]);
+    setPracticeSubmitting(true);
+    try {
+      const results = await Promise.all(answerable.map((question) => api("/api/exam-practice/check", {
+        method: "POST",
+        body: JSON.stringify({ question_id: question.id, chosen_option_id: grammarPractice.answers[question.id] }),
+      }, authToken)));
+      setGrammarPractice((current) => ({
+        ...current,
+        checked: { ...current.checked, ...Object.fromEntries(questions.map((question) => [question.id, true])) },
+        feedback: { ...current.feedback, ...Object.fromEntries(results.map((result) => [result.question_id, result])) },
+      }));
+    } finally {
+      setPracticeSubmitting(false);
+    }
   }
 
   function moveGrammarQuestion(index) {
@@ -379,26 +390,29 @@ function App() {
   }
 
   async function submitGrammarPractice() {
+    if (!grammarPractice || practiceSubmitting) return;
+    setPracticeSubmitting(true);
     const category = grammarPractice.config.category;
     const categoryLabel = (PRACTICE_CATEGORIES[category] || PRACTICE_CATEGORIES.grammar).label;
-    const savedAttempt = mapPracticeAttempt(await api("/api/practice-attempts", {
-      method: "POST",
-      body: JSON.stringify({
-        level,
-        category,
-        mode: grammarPractice.config.wrongReview ? "wrong_review" : "practice",
-        title: `${level} ${categoryLabel}${grammarPractice.config.wrongReview ? "错题复习" : "专项练习"}`,
-        answers: grammarPractice.questions.map((question) => ({
-          question_id: question.id,
-          chosen_option_id: grammarPractice.answers[question.id] || null,
-        })),
-      }),
-    }, authToken));
-    setGrammarPractice((current) => ({
-      ...current,
-      finishedAttempt: savedAttempt,
-    }));
-    await refreshStudyData(level, authToken);
+    try {
+      const savedAttempt = mapPracticeAttempt(await api("/api/practice-attempts", {
+        method: "POST",
+        body: JSON.stringify({
+          level,
+          category,
+          mode: grammarPractice.config.wrongReview ? "wrong_review" : "practice",
+          title: `${level} ${categoryLabel}${grammarPractice.config.wrongReview ? "错题复习" : "专项练习"}`,
+          answers: grammarPractice.questions.map((question) => ({ question_id: question.id, chosen_option_id: grammarPractice.answers[question.id] || null })),
+        }),
+      }, authToken));
+      setGrammarPractice((current) => ({ ...current, finishedAttempt: savedAttempt }));
+      await refreshStudyData(level, authToken);
+    } catch (error) {
+      setError("");
+      setGrammarPractice((current) => ({ ...current, saveError: error.message || "保存失败，请重试" }));
+    } finally {
+      setPracticeSubmitting(false);
+    }
   }
 
   async function startPracticeWrongReview(category) {
@@ -407,7 +421,7 @@ function App() {
     const questions = mapPracticeQuestions(rows, "practice-wrong");
     const categoryLabel = (PRACTICE_CATEGORIES[category] || PRACTICE_CATEGORIES.grammar).label;
     setGrammarPractice(makePracticeSession({
-      config: { mode: "random", category, count: questions.length, wrongReview: true },
+      config: { mode: "random", feedbackMode: readPracticeMode(), category, count: questions.length, wrongReview: true },
       level,
       title: `${level} ${categoryLabel}错题复习`,
       layers: practiceLayers(questions, `${categoryLabel}错题`),
@@ -428,10 +442,22 @@ function App() {
       subjectLabel: "错题",
       categoryLabel: `${level} 错题`,
     };
-    startSession(source, quiz, "wrong_review");
+    preparePractice(source, quiz, "wrong_review");
   }
 
-  function startSession(source, quiz, mode) {
+  function preparePractice(source, quiz, mode) {
+    setPendingPractice({ source, quiz, mode });
+    navigate("/practice-setup");
+  }
+
+  function startPreparedPractice(feedbackMode) {
+    if (!pendingPractice) return;
+    changePracticeMode(feedbackMode);
+    startSession(pendingPractice.source, pendingPractice.quiz, pendingPractice.mode, feedbackMode);
+    setPendingPractice(null);
+  }
+
+  function startSession(source, quiz, mode, feedbackMode = practiceMode) {
     setSelectedBook(source);
     setSession({
       userId: currentUser.id,
@@ -443,6 +469,8 @@ function App() {
       chosen: null,
       checked: false,
       checkResult: null,
+      feedbackMode,
+      draftAnswers: {},
       mode,
       startedAt: new Date().toISOString(),
     });
@@ -457,7 +485,6 @@ function App() {
 
   // B4: explicit discard — drop the stored session entirely instead of pausing it.
   function discardQuizSession() {
-    writeStoredQuizSession(null);
     setSession(null);
     navigate("/");
   }
@@ -465,7 +492,22 @@ function App() {
 
   function chooseOption(optionIndex) {
     if (!session || session.checked) return;
-    setSession((current) => ({ ...current, chosen: optionIndex }));
+    const question = session.questions[session.index];
+    setSession((current) => ({ ...current, chosen: optionIndex, draftAnswers: { ...current.draftAnswers, [question.id]: question.options[optionIndex].id } }));
+  }
+
+  function moveQuizQuestion(index) {
+    setSession((current) => {
+      const nextIndex = Math.max(0, Math.min(current.questions.length - 1, index));
+      const question = current.questions[nextIndex];
+      const chosenId = current.draftAnswers?.[question.id];
+      return { ...current, index: nextIndex, chosen: chosenId ? question.options.findIndex((option) => option.id === chosenId) : null, checked: false, checkResult: null };
+    });
+  }
+
+  function completeImmersiveQuiz() {
+    const finalAnswers = session.questions.map((question) => ({ questionId: question.id, chosenOptionId: session.draftAnswers?.[question.id] || null }));
+    finishSession(finalAnswers);
   }
 
   async function checkAnswer() {
@@ -487,6 +529,8 @@ function App() {
   }
 
   async function finishSession(finalAnswers) {
+    if (session?.saving) return;
+    setSession((current) => ({ ...current, saving: true, saveError: "" }));
     const payload = {
       mode: session.mode,
       level: session.book.level,
@@ -500,14 +544,13 @@ function App() {
         chosen_option_id: answer.chosenOptionId,
       })),
     };
-    const saved = mapAttempt(
-      await api("/api/attempts", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      }, authToken),
-    );
-    await refreshStudyData(level, authToken);
-    setSession((current) => ({ ...current, finishedAttempt: saved }));
+    try {
+      const saved = mapAttempt(await api("/api/attempts", { method: "POST", body: JSON.stringify(payload) }, authToken));
+      await refreshStudyData(level, authToken);
+      setSession((current) => ({ ...current, saving: false, finishedAttempt: saved }));
+    } catch (error) {
+      setSession((current) => ({ ...current, saving: false, saveError: error.message || "保存失败，请重试" }));
+    }
   }
 
   async function applySession(session) {
@@ -596,6 +639,13 @@ function App() {
     }));
   }
 
+  function skipQuizQuestion() {
+    const question = session.questions[session.index];
+    const finalAnswers = [...session.answers, { questionId: question.id, stem: question.stem, chosenOptionId: null, chosenText: null, isCorrect: false }];
+    if (session.index === session.questions.length - 1) { finishSession(finalAnswers); return; }
+    setSession((current) => ({ ...current, index: current.index + 1, answers: finalAnswers, chosen: null, checked: false, checkResult: null }));
+  }
+
   const gate = loading ? <div className="center-state">正在加载题库…</div>
     : !authToken || !currentUser ? <LoginView onLogin={login} />
     : error ? <div className="center-state error">{error}</div>
@@ -643,6 +693,7 @@ function App() {
           )}
         />
         <Route path="/search" element={<SearchView token={authToken} currentLevel={level} onBack={() => navigate("/")} />} />
+        <Route path="/practice-setup" element={pendingPractice ? <BasicPracticeSetupView source={pendingPractice.source} questionCount={pendingPractice.quiz.questions.length} initialMode={readPracticeMode()} onBack={() => { setPendingPractice(null); navigate(-1); }} onStart={startPreparedPractice} /> : <Navigate to="/" replace />} />
         {Object.keys(PRACTICE_CATEGORIES).map((category) => (
           <Route
             key={category}
@@ -655,26 +706,19 @@ function App() {
                 practice
                 practiceCategory={grammarPractice.config.category}
                 onRepeat={() => setGrammarPractice(null)}
+                onReviewWrong={() => startPracticeWrongReview(grammarPractice.config.category)}
                 onLibrary={resetToLibrary}
               />
             ) : grammarPractice ? (
-              grammarPractice.config.mode === "random" ? (
-                <RandomPracticeSessionView
-                  session={grammarPractice}
-                  onBack={() => setGrammarPractice(null)}
-                  onChoose={chooseGrammarOption}
-                  onMove={moveGrammarQuestion}
-                  onSubmit={submitGrammarPractice}
-                />
-              ) : (
-                <ExamSessionView
-                  session={grammarPractice}
-                  onBack={() => setGrammarPractice(null)}
-                  onChoose={chooseGrammarOption}
-                  onMove={moveGrammarQuestion}
-                  onSubmit={submitGrammarPractice}
-                />
-              )
+              <UnifiedPracticeSessionView
+                session={grammarPractice}
+                onBack={() => setGrammarPractice(null)}
+                onChoose={chooseGrammarOption}
+                onMove={moveGrammarQuestion}
+                onCheck={checkGrammarQuestions}
+                onSubmit={submitGrammarPractice}
+                submitting={practiceSubmitting}
+              />
             ) : (
               <GrammarPracticeSetupView
                 exams={exams}
@@ -708,11 +752,13 @@ function App() {
               <QuizView
                 session={session}
                 onBack={resetToLibrary}
-                onPause={() => navigate("/")}
                 onDiscard={discardQuizSession}
                 onChoose={chooseOption}
                 onCheck={checkAnswer}
                 onNext={nextQuestion}
+                onSkip={skipQuizQuestion}
+                onMove={moveQuizQuestion}
+                onComplete={completeImmersiveQuiz}
               />
             ) : (
               <Navigate to="/" replace />

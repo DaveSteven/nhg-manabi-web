@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CheckCircle2, ClipboardList, Play, RotateCcw } from "lucide-react";
-import { api } from "../lib/study";
+import { api, mapPracticeAttempt, pct } from "../lib/study";
 import { LISTENING_TYPES, listeningGroupLabel, plain, readProgress, segments } from "../lib/listening";
 import UiSelect from "../components/UiSelect";
 import ListeningTrainer from "../components/ListeningTrainer";
-import { PageHeader, TitleBlock } from "../components/CommonUi";
+import { ModalOverlay, PageHeader, ReviewMark, ReviewOptions, TitleBlock } from "../components/CommonUi";
+import { HtmlContent } from "../components/Html";
 import { ChoiceCard, ConfigSection } from "./PracticePages";
+import { readPracticeMode, writePracticeMode } from "../lib/appHelpers";
 
 const COUNT_OPTIONS = [5, 10, 20, 30];
 const isListeningType = (type: number) => type >= 41 && type <= 46;
 
-function PracticeSetup({ level, exams, mode, setMode, examId, setExamId, types, toggleType, count, setCount, starting, onSubmit }: any) {
+function PracticeSetup({ level, exams, mode, setMode, examId, setExamId, types, toggleType, count, setCount, feedbackMode, setFeedbackMode, starting, onSubmit }: any) {
   const random = mode === "random";
   return (
     <form className="listening-setup-form" onSubmit={onSubmit}>
@@ -40,9 +42,16 @@ function PracticeSetup({ level, exams, mode, setMode, examId, setExamId, types, 
         </ConfigSection>
       ) : null}
 
+      <ConfigSection step={random ? 4 : 3} title="选择练习模式" hint="本次练习开始后不可切换，下次会记住你的选择">
+        <div className="practice-source-grid">
+          <ChoiceCard name="listening-feedback-mode" type="radio" checked={feedbackMode === "instant"} onChange={() => setFeedbackMode("instant")} icon={<Play size={23} />} title="即时反馈" description="检查后开放解析、原文、译文和逐段精听" />
+          <ChoiceCard name="listening-feedback-mode" type="radio" checked={feedbackMode === "immersive"} onChange={() => setFeedbackMode("immersive")} icon={<ClipboardList size={23} />} title="沉浸练习" description="完成整次练习后统一开放复习内容" />
+        </div>
+      </ConfigSection>
+
       <div className="practice-start-bar">
         <div>
-          <strong>{types.length} 种题型 · {random ? `${count} 题` : "全部匹配题目"}</strong>
+          <strong>{types.length} 种题型 · {random ? `${count} 题` : "全部匹配题目"} · {feedbackMode === "instant" ? "即时反馈" : "沉浸练习"}</strong>
           <span>{random ? `${level} 全部试卷随机` : exams.find((exam) => String(exam.id) === examId)?.title}</span>
         </div>
         <button className="primary-button" disabled={!types.length || !exams.length || starting} type="submit">
@@ -53,17 +62,30 @@ function PracticeSetup({ level, exams, mode, setMode, examId, setExamId, types, 
   );
 }
 
-function PracticeResult({ total, onReset, onHome }) {
+function PracticeResult({ attempt, questions, onReviewWrong, onReset, onHome }) {
+  const [onlyWrong, setOnlyWrong] = useState(false);
+  const skipped = attempt.answers.filter((answer) => !answer.chosenOptionId).length;
+  const wrong = attempt.total - attempt.correct - skipped;
+  const questionById = new Map(questions.map((question) => [question.id, question]));
   return (
     <section className="listening-practice-result">
       <CheckCircle2 size={58} />
       <h2>听力专项完成</h2>
-      <strong>{total} 题</strong>
-      <p>本次选择的听力题目已全部练习完成。</p>
+      <strong>{pct(attempt.correct, attempt.total)}%</strong>
+      <section className="practice-result-counts"><div><span>本次题量</span><strong>{attempt.total}</strong></div><div><span>已答</span><strong>{attempt.total - skipped}</strong></div><div><span>答对</span><strong>{attempt.correct}</strong></div><div><span>答错</span><strong>{wrong}</strong></div><div><span>跳过</span><strong>{skipped}</strong></div></section>
+      <p>正确率按“答对题数 ÷ 本次全部题目”计算，跳过计入总题量。</p>
       <div>
-        <button className="primary-button" onClick={onReset} type="button"><RotateCcw size={19} />重新设置</button>
+        {wrong ? <button className="primary-button" onClick={onReviewWrong} type="button">重练错题</button> : null}
+        <button className="secondary-button" onClick={onReset} type="button"><RotateCcw size={19} />再练一组</button>
         <button className="secondary-button" onClick={onHome} type="button">返回首页</button>
+        <button className="secondary-button" onClick={() => setOnlyWrong((value) => !value)} type="button">{onlyWrong ? "查看全部解析" : "只看错题"}</button>
       </div>
+      <section className="review-list listening-result-review">
+        {attempt.answers.filter((answer) => !onlyWrong || !answer.isCorrect).map((answer, index) => {
+          const question: any = questionById.get(answer.questionId);
+          return <article className="review-item" key={answer.questionId}><ReviewMark ok={answer.isCorrect} /><div><h3>{index + 1}. <HtmlContent inline html={answer.title} /></h3><ReviewOptions options={question?.options || []} questionId={answer.questionId} chosenOptionId={answer.chosenOptionId} correctOptionId={answer.correctOptionId} label={`第${index + 1}题选项`} />{answer.analysis ? <section className="analysis-text"><HtmlContent inline html={answer.analysis} /></section> : null}{question?.subtitle ? <details><summary>听力原文</summary><p>{plain(question.subtitle)}</p>{question.translation ? <p>{plain(question.translation)}</p> : null}</details> : null}</div></article>;
+        })}
+      </section>
     </section>
   );
 }
@@ -106,8 +128,10 @@ export default function Listening({ userId, token, globalLevel: level }) {
   const [practiceExamId, setPracticeExamId] = useState("");
   const [practiceTypes, setPracticeTypes] = useState(LISTENING_TYPES.map((item) => item.id));
   const [practiceCount, setPracticeCount] = useState(10);
+  const [feedbackMode, setFeedbackMode] = useState(readPracticeMode);
   const [practiceSession, setPracticeSession] = useState<any>(null);
   const [starting, setStarting] = useState(false);
+  const [showExit, setShowExit] = useState(false);
 
   function save(patch) {
     setProgress((p) => {
@@ -145,6 +169,13 @@ export default function Listening({ userId, token, globalLevel: level }) {
     if (exams.length && !exams.some((exam) => String(exam.id) === practiceExamId)) setPracticeExamId(String(exams[0].id));
   }, [exams, practiceExamId]);
 
+  useEffect(() => {
+    if (!practiceSession || practiceSession.finishedAttempt) return undefined;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [practiceSession]);
+
   const q = questions.find((item) => item.id === Number(questionId));
   const groups = (detail?.layers || [])
     .map((l) => ({ ...l, questions: questions.filter((item) => item.layer_id === l.id) }))
@@ -177,7 +208,8 @@ export default function Listening({ userId, token, globalLevel: level }) {
       const pool = loaded.flat();
       if (!pool.length) throw new Error("所选条件下没有可用的听力题目");
       const selected = practiceMode === "random" ? [...pool].sort(() => Math.random() - 0.5).slice(0, Math.min(practiceCount, pool.length)) : pool;
-      setPracticeSession({ questions: selected, index: 0, finished: false });
+      writePracticeMode(feedbackMode);
+      setPracticeSession({ questions: selected, index: 0, answers: {}, feedbackMode, saving: false, finishedAttempt: null });
     } catch (e) {
       setError(`组题失败：${e.message}`);
     } finally {
@@ -185,8 +217,23 @@ export default function Listening({ userId, token, globalLevel: level }) {
     }
   }
 
-  const advancePractice = () =>
-    setPracticeSession((current) => (current.index >= current.questions.length - 1 ? { ...current, finished: true } : { ...current, index: current.index + 1 }));
+  const advancePractice = async (choice) => {
+    const answers = { ...practiceSession.answers, [practiceQuestion.id]: choice || null };
+    if (practiceSession.index < practiceSession.questions.length - 1) {
+      setPracticeSession((current) => ({ ...current, answers, index: current.index + 1 }));
+      return;
+    }
+    setPracticeSession((current) => ({ ...current, answers, saving: true, saveError: "" }));
+    try {
+      const saved = mapPracticeAttempt(await api("/api/practice-attempts", {
+        method: "POST",
+        body: JSON.stringify({ level, category: "listening", mode: "practice", title: `${level} 听力专项练习`, answers: practiceSession.questions.map((question) => ({ question_id: question.id, chosen_option_id: answers[question.id] || null })) }),
+      }, token));
+      setPracticeSession((current) => ({ ...current, saving: false, finishedAttempt: saved }));
+    } catch (e) {
+      setPracticeSession((current) => ({ ...current, saving: false, saveError: e.message || "保存失败，请重试" }));
+    }
+  };
   const savePractice = (patch) => save({
     last: { examId: practiceQuestion.sourceExamId, questionId: practiceQuestion.id, title: `${practiceQuestion.sourceLevel} · ${practiceQuestion.sourceExamTitle}` },
     [practiceQuestion.id]: { ...progress[practiceQuestion.id], examId: practiceQuestion.sourceExamId, started: true, ...patch },
@@ -201,18 +248,21 @@ export default function Listening({ userId, token, globalLevel: level }) {
     ? `${practiceQuestion.sourceLevel} · ${practiceQuestion.sourceExamTitle} · ${practiceSession.index + 1}/${practiceSession.questions.length}`
     : detail ? `${detail.level} · ${detail.title}` : "按来源、题型和题量组合听力练习";
   const backProps = practiceSession
-    ? { onBack: () => setPracticeSession(null), label: "返回设置" }
+    ? { onBack: () => setShowExit(true), label: "返回设置" }
     : { to: questionId ? `/listening/${examId}` : examId ? "/listening" : "/" };
 
   let body;
-  if (practiceSession?.finished) {
-    body = <PracticeResult total={practiceSession.questions.length} onReset={() => setPracticeSession(null)} onHome={() => navigate("/")} />;
+  if (practiceSession?.finishedAttempt) {
+    body = <PracticeResult attempt={practiceSession.finishedAttempt} questions={practiceSession.questions} onReviewWrong={() => {
+      const wrongIds = new Set(practiceSession.finishedAttempt.answers.filter((answer) => !answer.isCorrect).map((answer) => answer.questionId));
+      setPracticeSession((current) => ({ ...current, questions: current.questions.filter((question) => wrongIds.has(question.id)), index: 0, answers: {}, saving: false, finishedAttempt: null }));
+    }} onReset={() => setPracticeSession(null)} onHome={() => navigate("/")} />;
   } else if (practiceQuestion) {
-    body = <ListeningTrainer key={`practice:${practiceQuestion.id}`} question={practiceQuestion} examId={practiceQuestion.sourceExamId} token={token} saved={progress[practiceQuestion.id] || {}} onSave={savePractice} onNext={advancePractice} />;
+    body = <ListeningTrainer key={`practice:${practiceQuestion.id}`} question={practiceQuestion} examId={practiceQuestion.sourceExamId} token={token} saved={progress[practiceQuestion.id] || {}} feedbackMode={practiceSession.feedbackMode} onSave={savePractice} onNext={advancePractice} />;
   } else if (loading) {
     body = <p role="status">正在加载听力题目…</p>;
   } else if (!examId) {
-    body = <PracticeSetup level={level} exams={exams} mode={practiceMode} setMode={setPracticeMode} examId={practiceExamId} setExamId={setPracticeExamId} types={practiceTypes} toggleType={togglePracticeType} count={practiceCount} setCount={setPracticeCount} starting={starting} onSubmit={startListeningPractice} />;
+    body = <PracticeSetup level={level} exams={exams} mode={practiceMode} setMode={setPracticeMode} examId={practiceExamId} setExamId={setPracticeExamId} types={practiceTypes} toggleType={togglePracticeType} count={practiceCount} setCount={setPracticeCount} feedbackMode={feedbackMode} setFeedbackMode={setFeedbackMode} starting={starting} onSubmit={startListeningPractice} />;
   } else if (questionId) {
     body = q
       ? <ListeningTrainer key={`${userId}:${q.id}`} question={q} examId={detail.id} token={token} saved={progress[q.id] || {}} onSave={(patch) => save({ [q.id]: { ...progress[q.id], examId: detail.id, ...patch } })} onNext={nextExamQuestion} />
@@ -228,7 +278,9 @@ export default function Listening({ userId, token, globalLevel: level }) {
       </PageHeader>
       {examId ? <p className="listening-note">训练进度保存在当前浏览器，按登录账号分别记录。</p> : null}
       {error && <div role="alert" className="listening-card">{error}<button className="secondary-button" onClick={() => setRetry((r) => r + 1)}>重试</button></div>}
+      {practiceSession?.saveError ? <div role="alert" className="listening-card">{practiceSession.saveError}。当前作答仍保留，请重试完成练习。</div> : null}
       {body}
+      {showExit ? <ModalOverlay title="退出本次练习？" onClose={() => setShowExit(false)}><p className="modal-footnote">退出后，本次作答和练习进度将不保存，也不会计入练习记录。</p><div className="modal-actions"><button className="secondary-button" onClick={() => { setShowExit(false); setPracticeSession(null); }} type="button">退出练习</button><button className="primary-button" onClick={() => setShowExit(false)} type="button">继续练习</button></div></ModalOverlay> : null}
     </div>
   );
 }

@@ -12,6 +12,18 @@ import {
 const QUIZ_SESSION_KEY = "manabi_quiz_session";
 /** Pre-rename key; read once for migration, then always written under QUIZ_SESSION_KEY. */
 const LEGACY_QUIZ_SESSION_KEY = "japanese-study-quiz-session";
+export const PRACTICE_MODE_KEY = "manabi_practice_mode";
+export const PRACTICE_MODES = ["instant", "immersive"] as const;
+export type PracticeMode = typeof PRACTICE_MODES[number];
+
+export function readPracticeMode(): PracticeMode {
+  const stored = localStorage.getItem(PRACTICE_MODE_KEY);
+  return PRACTICE_MODES.includes(stored as PracticeMode) ? stored as PracticeMode : "instant";
+}
+
+export function writePracticeMode(mode: PracticeMode) {
+  localStorage.setItem(PRACTICE_MODE_KEY, mode);
+}
 
 /** Unfinished quiz sessions older than this are discarded on load (ux plan §七). */
 export const QUIZ_SESSION_MAX_AGE_MS = 72 * 60 * 60 * 1000;
@@ -130,6 +142,7 @@ export function mapPracticeQuestions(rows, layerPrefix) {
     ...question,
     source_exam_id: question.exam_id,
     source_exam_title: question.exam_title,
+    source_layer_id: question.layer_id,
     layer_id: `${layerPrefix}-${question.id}`,
     order_index: question.practice_order,
   }));
@@ -152,8 +165,28 @@ export function makePracticeSession({ config, level, title, layers, questions })
     questions,
     index: 0,
     answers: {},
+    checked: {},
+    feedback: {},
     finishedAttempt: null,
   };
+}
+
+/** Reading and shared-material questions move as a group; ordinary questions remain one item. */
+export function practiceQuestionGroups(questions) {
+  const groups: any[] = [];
+  const byKey = new Map<string, any>();
+  questions.forEach((question, index) => {
+    const shared = question.question_type === 23 || (question.question_type >= 31 && question.question_type <= 36);
+    const key = shared ? `${question.source_exam_id || "exam"}:${question.source_layer_id || question.layer_id || question.passage || index}` : `question:${question.id}`;
+    let group = byKey.get(key);
+    if (!group) {
+      group = { key, questions: [], passage: question.passage || "", sourceExamTitle: question.source_exam_title || "" };
+      byKey.set(key, group);
+      groups.push(group);
+    }
+    group.questions.push(question);
+  });
+  return groups;
 }
 
 export function persistExamProgress(userId, examId, runId, index, answers) {

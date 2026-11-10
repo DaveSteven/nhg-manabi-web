@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { ArrowRight, Check, ClipboardList, Target } from "lucide-react";
+import { ArrowRight, Check, ClipboardList, Eye, Focus, Target } from "lucide-react";
 import UiSelect from "../components/UiSelect";
 import { PageHeader, TitleBlock } from "../components/CommonUi";
+import { readPracticeMode, writePracticeMode } from "../lib/appHelpers";
 
 const T = (id, label, description) => ({ id, label, description });
 
@@ -50,10 +51,10 @@ export function ConfigSection({ step, title, hint, className = "", children }) {
   );
 }
 
-export function ChoiceCard({ type, checked, onChange, icon, title, description, selected = checked }: any) {
+export function ChoiceCard({ type, checked, onChange, icon, title, description, selected = checked, name }: any) {
   return (
     <label className={selected ? "selected" : ""}>
-      <input type={type} name={type === "radio" ? "source" : undefined} checked={checked} onChange={onChange} />
+      <input type={type} name={type === "radio" ? (name || "source") : undefined} checked={checked} onChange={onChange} />
       {icon}
       <span><strong>{title}</strong><small>{description}</small></span>
     </label>
@@ -62,7 +63,9 @@ export function ChoiceCard({ type, checked, onChange, icon, title, description, 
 
 export function GrammarPracticeSetupView({ exams, level, category = "grammar", onBack, onStart }) {
   const practiceCategory = PRACTICE_CATEGORIES[category] || PRACTICE_CATEGORIES.grammar;
+  const countUnit = category === "reading" ? "篇" : "题";
   const [mode, setMode] = useState("random");
+  const [feedbackMode, setFeedbackMode] = useState(readPracticeMode);
   const [examId, setExamId] = useState(exams[0]?.id ? String(exams[0].id) : "");
   const [types, setTypes] = useState(practiceCategory.types.map((type) => type.id));
   const [count, setCount] = useState(20);
@@ -78,7 +81,8 @@ export function GrammarPracticeSetupView({ exams, level, category = "grammar", o
     setStarting(true);
     setMessage("");
     try {
-      await onStart({ mode, examId, types, category, count: Math.max(1, Math.min(100, Number(count) || 20)) });
+      writePracticeMode(feedbackMode);
+      await onStart({ mode, feedbackMode, examId, types, category, count: Math.max(1, Math.min(100, Number(count) || 20)) });
     } catch (error) {
       setMessage(error.message || "专项题目加载失败，请稍后重试");
     } finally {
@@ -118,18 +122,25 @@ export function GrammarPracticeSetupView({ exams, level, category = "grammar", o
         </ConfigSection>
 
         {mode === "random" ? (
-          <ConfigSection step={3} className="practice-count-section" title="设置题目数量" hint="实际题量不会超过所选范围内的可用题目">
+          <ConfigSection step={3} className="practice-count-section" title={category === "reading" ? "设置文章数量" : "设置题目数量"} hint={category === "reading" ? "文章及其关联小题会作为完整题组抽取，不会拆散" : "实际题量不会超过所选范围内的可用题目"}>
             <div className="practice-count-options">
-              {[5, 10, 20, 30].map((value) => <button className={count === value ? "selected" : ""} onClick={() => setCount(value)} type="button" key={value}>{value}题</button>)}
-              <label><input type="number" min="1" max="100" value={count} onChange={(event) => setCount(Number(event.target.value))} /><span>题</span></label>
+              {[5, 10, 20, 30].map((value) => <button className={count === value ? "selected" : ""} onClick={() => setCount(value)} type="button" key={value}>{value}{countUnit}</button>)}
+              <label><input type="number" min="1" max="100" value={count} onChange={(event) => setCount(Number(event.target.value))} /><span>{countUnit}</span></label>
             </div>
           </ConfigSection>
         ) : null}
 
+        <ConfigSection step={mode === "random" ? 4 : 3} title="选择练习模式" hint="本次练习开始后不可切换，下次会记住你的选择">
+          <div className="practice-source-grid practice-feedback-modes">
+            <ChoiceCard name="feedback-mode" type="radio" checked={feedbackMode === "instant"} onChange={() => setFeedbackMode("instant")} icon={<Eye size={23} />} title="即时反馈" description="检查当前题（阅读按篇检查），查看解析后继续" />
+            <ChoiceCard name="feedback-mode" type="radio" checked={feedbackMode === "immersive"} onChange={() => setFeedbackMode("immersive")} icon={<Focus size={23} />} title="沉浸练习" description="自由跳题和修改，完成整次练习后统一看解析" />
+          </div>
+        </ConfigSection>
+
         {message ? <p className="form-error" role="alert">{message}</p> : null}
         <div className="practice-start-bar">
           <div>
-            <strong>{types.length} 种题型 · {mode === "random" ? `${count || 0} 题` : "全部匹配题目"}</strong>
+            <strong>{types.length} 种题型 · {mode === "random" ? `${count || 0} ${countUnit}` : "全部匹配题目"} · {feedbackMode === "instant" ? "即时反馈" : "沉浸练习"}</strong>
             <span>{mode === "random" ? `${level} 全部试卷随机` : exams.find((exam) => String(exam.id) === examId)?.title}</span>
           </div>
           <button className="primary-button" disabled={!types.length || !exams.length || starting} type="submit">
@@ -137,6 +148,28 @@ export function GrammarPracticeSetupView({ exams, level, category = "grammar", o
           </button>
         </div>
       </form>
+    </section>
+  );
+}
+
+export function BasicPracticeSetupView({ source, questionCount, initialMode, onBack, onStart }) {
+  const [feedbackMode, setFeedbackMode] = useState(initialMode || readPracticeMode());
+  const start = () => { writePracticeMode(feedbackMode); onStart(feedbackMode); };
+  return (
+    <section className="grammar-practice-setup basic-practice-setup">
+      <PageHeader onBack={onBack}>
+        <TitleBlock className="grammar-practice-title" eyebrow="练习设置" title={source?.book_name || source?.title || "开始练习"} subtitle={`${source?.categoryLabel || source?.level || ""} · 共 ${questionCount} 题`} />
+      </PageHeader>
+      <ConfigSection step={1} title="选择练习模式" hint="本次练习开始后不可切换，下次会记住你的选择">
+        <div className="practice-source-grid practice-feedback-modes">
+          <ChoiceCard name="basic-feedback-mode" type="radio" checked={feedbackMode === "instant"} onChange={() => setFeedbackMode("instant")} icon={<Eye size={23} />} title="即时反馈" description="逐题检查，查看答案和解析后继续" />
+          <ChoiceCard name="basic-feedback-mode" type="radio" checked={feedbackMode === "immersive"} onChange={() => setFeedbackMode("immersive")} icon={<Focus size={23} />} title="沉浸练习" description="自由跳题和修改，完成后统一查看结果" />
+        </div>
+      </ConfigSection>
+      <div className="practice-start-bar">
+        <div><strong>{feedbackMode === "instant" ? "即时反馈" : "沉浸练习"} · {questionCount} 题</strong><span>中途退出不会保存本次进度</span></div>
+        <button className="primary-button" onClick={start} type="button">开始练习 <ArrowRight size={19} /></button>
+      </div>
     </section>
   );
 }

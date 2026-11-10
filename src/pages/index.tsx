@@ -651,7 +651,7 @@ export function UserView({ currentUser, attempts, onBack, onOpenStats, onLogout,
   );
 }
 
-function ExitConfirmOverlay({ onStay, onLeave, onDiscard }) {
+function ExitConfirmOverlay({ onStay, onLeave }) {
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       if (event.key === "Escape") { event.preventDefault(); onStay(); }
@@ -661,29 +661,45 @@ function ExitConfirmOverlay({ onStay, onLeave, onDiscard }) {
     return () => window.removeEventListener("keydown", handler);
   }, [onStay, onLeave]);
   return (
-    <ModalOverlay title="暂停练习？">
-      <p className="modal-footnote">退出后进度会保存，下次打开可从首页「继续学习」接着做。</p>
+    <ModalOverlay title="退出本次练习？" onClose={onStay}>
+      <p className="modal-footnote">退出后，本次作答和练习进度将不保存，也不会计入练习记录。</p>
       <div className="modal-actions">
-        {onDiscard ? <button className="discard-button" onClick={onDiscard} type="button">放弃本次练习</button> : null}
-        <button className="secondary-button" onClick={onLeave} type="button">保存并退出</button>
+        <button className="secondary-button" onClick={onLeave} type="button">退出练习</button>
         <button className="primary-button" onClick={onStay} type="button">继续练习</button>
       </div>
     </ModalOverlay>
   );
 }
 
-export function QuizView({ session, onBack, onPause, onDiscard, onChoose, onCheck, onNext }) {
+export function QuizView({ session, onBack, onDiscard, onChoose, onCheck, onNext, onSkip, onMove, onComplete }) {
   const question = session.questions[session.index];
   const { checked, checkResult } = session;
   const isCorrect = Boolean(checkResult?.is_correct);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showIncomplete, setShowIncomplete] = useState(false);
+  const immersive = session.feedbackMode === "immersive";
+  const answered = immersive ? Object.keys(session.draftAnswers || {}).length : session.answers.length + (session.chosen !== null ? 1 : 0);
+  const unanswered = session.questions.length - answered;
+  const isLast = session.index === session.questions.length - 1;
+
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, []);
+
+  const advanceImmersive = () => {
+    if (!isLast) onMove(session.index + 1);
+    else if (unanswered) setShowIncomplete(true);
+    else onComplete();
+  };
 
   useKeyboardAnswer({
     active: !showExitConfirm && !showShortcuts,
     optionCount: question.options.length,
     onNumber: (index) => onChoose(index),
-    onAdvance: () => (checked ? onNext() : onCheck()),
+    onAdvance: () => immersive ? advanceImmersive() : (checked ? onNext() : onCheck()),
     onExit: () => setShowExitConfirm((value) => !value),
     onHelp: () => {
       markKeyboardHintSeen();
@@ -696,7 +712,7 @@ export function QuizView({ session, onBack, onPause, onDiscard, onChoose, onChec
       <PageHeader onBack={() => setShowExitConfirm(true)}>
         <div className="quiz-progress">
           <Progress value={pct(session.index + (checked ? 1 : 0), session.questions.length)} />
-          <span>{session.index + 1} / {session.questions.length}</span>
+          <span>当前位置 {session.index + 1}/{session.questions.length} · 已答 {answered} · 未答 {unanswered}</span>
         </div>
         <button
           className="shortcut-toggle"
@@ -717,9 +733,9 @@ export function QuizView({ session, onBack, onPause, onDiscard, onChoose, onChec
         {question.options.map((option, index) => {
           const selected = session.chosen === index;
           const answer = checkResult?.correct_option_id === option.id;
-          const state = checked ? (answer ? "correct" : selected ? "wrong" : "") : selected ? "selected" : "";
+          const state = !immersive && checked ? (answer ? "correct" : selected ? "wrong" : "") : selected ? "selected" : "";
           return (
-            <OptionButton key={`${question.id}-${option.id}`} index={index} option={option} className={state} onClick={() => onChoose(index)}>
+            <OptionButton key={`${question.id}-${option.id}`} index={index} option={option} className={state} disabled={!immersive && checked} onClick={() => onChoose(index)}>
               {checked && answer ? <Check size={20} /> : null}
               {checked && selected && !answer ? <X size={20} /> : null}
             </OptionButton>
@@ -727,26 +743,34 @@ export function QuizView({ session, onBack, onPause, onDiscard, onChoose, onChec
         })}
       </section>
 
-      <footer className={`answer-dock ${checked ? (isCorrect ? "yes" : "no") : ""}`}>
-        {checked ? (
+      {session.saveError ? <div className="exam-save-state error" role="alert">{session.saveError}。当前作答仍保留，请重试完成练习。</div> : null}
+
+      <footer className={`answer-dock ${!immersive && checked ? (isCorrect ? "yes" : "no") : ""}`}>
+        {!immersive && checked ? (
           <div className="feedback">
             <strong>{isCorrect ? "回答正确！" : "正确答案"}</strong>
             <span><HtmlInline html={checkResult.answer_text} /></span>
           </div>
         ) : (
           <div className="feedback muted">
-            <strong>请选择一个答案</strong>
-            <span>{session.mode === "mixed" ? "综合测试，共 20 题" : "基础练习，共 10 题"}</span>
+            <strong>{session.chosen === null ? "可选择答案，也可以跳过" : "答案已记录"}</strong>
+            <span>{immersive ? "完成练习后统一查看答案和解析" : "检查后将锁定本题答案"}</span>
           </div>
         )}
-        {checked ? (
+        {immersive ? (
+          <div className="practice-basic-actions">
+            <button className="secondary-button" disabled={session.index === 0} onClick={() => onMove(session.index - 1)} type="button">上一题</button>
+            <button className="primary-button" disabled={session.saving} onClick={advanceImmersive} type="button">{session.saving ? "正在保存…" : isLast ? "完成练习" : "下一题"} <kbd className="kbd-hint">↵</kbd></button>
+          </div>
+        ) : checked ? (
           <button className={`primary-button ${isCorrect ? "success-button" : ""}`.trim()} onClick={onNext} type="button">
             {session.index === session.questions.length - 1 ? "完成" : "下一题"} <kbd className="kbd-hint">↵</kbd>
           </button>
         ) : (
-          <button className="primary-button" disabled={session.chosen === null} onClick={onCheck} type="button">
-            检查答案 <kbd className="kbd-hint">↵</kbd>
-          </button>
+          <div className="practice-basic-actions">
+            <button className="secondary-button" onClick={onSkip} type="button">跳过</button>
+            <button className="primary-button" disabled={session.chosen === null} onClick={onCheck} type="button">检查答案 <kbd className="kbd-hint">↵</kbd></button>
+          </div>
         )}
       </footer>
 
@@ -762,17 +786,19 @@ export function QuizView({ session, onBack, onPause, onDiscard, onChoose, onChec
       {showExitConfirm ? (
         <ExitConfirmOverlay
           onStay={() => setShowExitConfirm(false)}
-          onLeave={onPause || onBack}
-          onDiscard={onDiscard}
+          onLeave={onDiscard || onBack}
         />
       ) : null}
+      {showIncomplete ? <ModalOverlay title={`还有 ${unanswered} 题未作答`} onClose={() => setShowIncomplete(false)}><p className="modal-footnote">可以返回补答，也可以将未答题记为跳过并查看结果。</p><div className="modal-actions"><button className="secondary-button" onClick={() => setShowIncomplete(false)} type="button">返回补答</button><button className="primary-button" onClick={onComplete} type="button">结束并查看结果</button></div></ModalOverlay> : null}
     </div>
   );
 }
 
 export function ResultView({ attempt, todayCount = 0, dailyGoal = 0, onRepeat, onLibrary, onReviewWrong }) {
+  const [onlyWrong, setOnlyWrong] = useState(false);
   const wrongAnswers = attempt.answers.filter((answer) => !answer.isCorrect);
-  const wrongCount = wrongAnswers.length;
+  const skipped = attempt.answers.filter((answer) => !answer.chosenOptionId).length;
+  const wrongCount = wrongAnswers.length - skipped;
   const wrongReview = attempt.mode === "wrong_review";
   const clearedAll = wrongReview && wrongCount === 0;
   const reviewWrongFirst = !wrongReview && wrongCount > 0;
@@ -785,6 +811,8 @@ export function ResultView({ attempt, todayCount = 0, dailyGoal = 0, onRepeat, o
       <ResultScore score={pct(attempt.correct, attempt.total)}>
         {clearedAll ? <>全部清完 🌸 · 答对 {attempt.correct} / {attempt.total}</> : <>答对 {attempt.correct} / {attempt.total}</>}
       </ResultScore>
+      <section className="practice-result-counts"><div><span>本次题量</span><strong>{attempt.total}</strong></div><div><span>已答</span><strong>{attempt.total - skipped}</strong></div><div><span>答对</span><strong>{attempt.correct}</strong></div><div><span>答错</span><strong>{wrongCount}</strong></div><div><span>跳过</span><strong>{skipped}</strong></div></section>
+      <p className="practice-score-note">正确率 {pct(attempt.correct, attempt.total)}%（答对题数 ÷ 本次全部题目，跳过计入总题量）</p>
       <div className="result-actions">
         {reviewWrongFirst ? (
           <button className="primary-button" onClick={onReviewWrong} type="button"><RotateCcw size={20} />复习本次错题（{wrongCount} 题）</button>
@@ -793,10 +821,11 @@ export function ResultView({ attempt, todayCount = 0, dailyGoal = 0, onRepeat, o
           <RotateCcw size={20} />{wrongReview ? "再来一轮错题" : "再来一组"}
         </button>
         <button className="secondary-button" onClick={onLibrary} type="button">返回书目</button>
+        <button className="secondary-button" aria-pressed={onlyWrong} onClick={() => setOnlyWrong((value) => !value)} type="button">{onlyWrong ? "查看全部解析" : "只看错题"}</button>
       </div>
 
       <section className="review-list">
-        {attempt.answers.map((answer, index) => (
+        {attempt.answers.filter((answer) => !onlyWrong || !answer.isCorrect).map((answer, index) => (
           <article className="review-item" key={`${answer.questionId}-${index}`}>
             <ReviewMark ok={answer.isCorrect} />
             <div>
