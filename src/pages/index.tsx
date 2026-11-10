@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { LEVELS, SUBJECTS, api, formatDate, pct, subjectLabel } from "../lib/study";
 import UiSelect from "../components/UiSelect";
+import { Tooltip } from "../components/Tooltip";
 import { HtmlInline } from "../components/Html";
 import { DailyRing, EmptyState, FieldInput, KeyboardToast, ModalOverlay, OptionButton, PageHeader, PetalFall, Progress, ResultScore, ReviewMark, ReviewOptions, SealMark, ShortcutHelp, ThemeToggle, TitleBlock } from "../components/CommonUi";
 import { markKeyboardHintSeen, useKeyboardAnswer } from "../hooks/useKeyboardAnswer";
@@ -28,6 +29,20 @@ import { PRACTICE_CATEGORIES } from "./PracticePages";
 
 export * from "./ExamPages";
 export * from "./PracticePages";
+
+// 汇总里"待加强"与方块打勾的正确率阈值
+const WEAK_ACCURACY = 60;
+const MASTERED_ACCURACY = 85;
+
+// 靠近网格左右边缘的方块，tooltip 改为贴边对齐，避免气泡超出页面
+function alignLessonTip(event) {
+  const tip = event.target.closest?.(".lesson-tile-tip");
+  if (!tip) return;
+  const grid = event.currentTarget.getBoundingClientRect();
+  const rect = tip.getBoundingClientRect();
+  const edge = 130;
+  tip.dataset.tipAlign = rect.right > grid.right - edge ? "end" : rect.left < grid.left + edge ? "start" : "center";
+}
 
 export function Shell({ children }) {
   return (
@@ -69,7 +84,6 @@ export function LibraryView({
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestionIndex, setSuggestionIndex] = useState(0);
-  const [showAllBooks, setShowAllBooks] = useState(false);
   const safeIndex = Math.min(suggestionIndex, Math.max(0, continueSuggestions.length - 1));
   const suggestion = continueSuggestions[safeIndex];
   const startSuggestion = (item) => {
@@ -84,18 +98,23 @@ export function LibraryView({
   );
   const latestExamAttempt = examAttempts[0];
 
-  // B9: books the user has fully cleared sink below the rest (stable sort keeps lesson order).
-  const BOOK_PREVIEW_COUNT = 6;
-  const sortedBooks = useMemo(() => {
-    const isCleared = (book) => {
-      const stats = bookStats.get(book.id);
-      return stats ? pct(stats.correct, stats.total) >= 100 : false;
-    };
-    return [...books].sort((left, right) => Number(isCleared(left)) - Number(isCleared(right)));
-  }, [books, bookStats]);
-  const visibleBooks = showAllBooks ? sortedBooks : sortedBooks.slice(0, BOOK_PREVIEW_COUNT);
-  // 加载中骨架数量沿用上一次的卡片数，保持区域高度不变，避免切换科目时页面抖动
-  const skeletonCount = Math.max(3, visibleBooks.length);
+  // 练习地图：编号顺序固定，一次展示全部练习；正确率用统一进度条表达
+  const bookTiles = books.map((book) => {
+    const stats = bookStats.get(book.id);
+    const accuracy = stats && stats.total ? pct(stats.correct, stats.total) : null;
+    return { book, stats, accuracy, label: book.book_name, mastered: accuracy !== null && accuracy >= MASTERED_ACCURACY };
+  });
+  const practicedTiles = bookTiles.filter((tile) => tile.accuracy !== null);
+  const practicedCorrect = practicedTiles.reduce((sum, tile) => sum + tile.stats.correct, 0);
+  const practicedTotal = practicedTiles.reduce((sum, tile) => sum + tile.stats.total, 0);
+  const weakCount = bookTiles.filter((tile) => tile.accuracy !== null && tile.accuracy < WEAK_ACCURACY).length;
+  const librarySummary = [
+    `已完成 ${practicedTiles.length}/${books.length} 个练习`,
+    practicedTotal ? `平均正确率 ${pct(practicedCorrect, practicedTotal)}%` : null,
+    weakCount ? `待加强 ${weakCount} 个` : null,
+  ].filter(Boolean).join(" · ");
+  // 加载中骨架数量沿用上一次的练习数，保持区域高度不变，避免切换科目时页面抖动
+  const skeletonCount = Math.max(12, books.length);
 
   return (
     <>
@@ -223,8 +242,7 @@ export function LibraryView({
           <div>
             <h2>基础题库</h2>
             <p>
-              选择知识领域后，按课练习
-              {!booksLoading && books.length ? ` · 已练 ${books.filter((book) => attempts.some((attempt) => attempt.bookId === book.id)).length}/${books.length} 课` : ""}
+              {!booksLoading && books.length ? librarySummary : "选择知识领域后，按组练习"}
             </p>
           </div>
         </div>
@@ -240,55 +258,39 @@ export function LibraryView({
         </div>
       </section>
 
-      <section className="book-grid home-book-grid" aria-busy={booksLoading}>
+      <section className="lesson-map" aria-busy={booksLoading} aria-label={`${level} ${currentSubjectLabel}练习`}>
         {booksLoading ? (
-          Array.from({ length: skeletonCount }, (_, index) => (
-            <article className="book-card book-card-skeleton" key={index} aria-hidden="true">
-              <div className="skeleton-line skeleton-badge" />
-              <div className="skeleton-line skeleton-title" />
-              <div className="skeleton-line skeleton-meta" />
-              <div className="skeleton-line skeleton-progress" />
-            </article>
-          ))
+          <div className="lesson-map-grid" aria-hidden="true">
+            {Array.from({ length: skeletonCount }, (_, index) => (
+              <div className="lesson-tile lesson-tile-skeleton" key={index} />
+            ))}
+          </div>
         ) : books.length ? (
-          visibleBooks.map((book) => {
-            const stats = bookStats.get(book.id);
-            return (
-              <article className="book-card" key={book.id} onClick={() => onStart(book)}>
-                <div className="book-card-main">
-                  <div className={"book-badge"}>
-                    {book.categoryLabel}
-                  </div>
-                  <h2 className="book-display-number">{book.displayName}</h2>
-                  <div className="book-meta">
-                    <span>{book.question_count} 道题</span>
-                    {stats ? <span>正确率 {pct(stats.correct, stats.total)}%</span> : <span>未练习</span>}
-                  </div>
-                  <Progress
-                    value={stats ? pct(stats.correct, stats.total) : 0}
-                  />
-                </div>
-                <button
-                  className="start-button"
-                  type="button"
-                  aria-label={`开始 ${book.book_name}`}
-                >
-                  <ChevronRight size={24} />
-                </button>
-              </article>
-            );
-          })
+          <>
+            <div className="lesson-map-grid" onMouseOver={alignLessonTip} onFocus={alignLessonTip}>
+              {bookTiles.map(({ book, stats, accuracy, label, mastered }) => {
+                const detail = stats
+                  ? `${label} · ${book.question_count} 道题 · 正确率 ${accuracy}% · 做过 ${stats.tries} 次`
+                  : `${label} · ${book.question_count} 道题 · 未练习`;
+                return (
+                  <Tooltip key={book.id} tip={detail} className="lesson-tile-tip">
+                    <button className="lesson-tile" type="button" onClick={() => onStart(book)} aria-label={`开始 ${detail}`}>
+                      <span className="lesson-tile-head">
+                        <strong><small>练习</small>{book.displayName}</strong>
+                        {mastered ? <Check className="lesson-tile-check" size={14} strokeWidth={3} aria-hidden="true" /> : null}
+                      </span>
+                      <span className="lesson-tile-meta">{accuracy === null ? "未练" : `${accuracy}%`}</span>
+                      <Progress value={accuracy ?? 0} />
+                    </button>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          </>
         ) : (
           <EmptyState title={`${level} ${currentSubjectLabel}`} text="该分类暂时没有题目。" />
         )}
       </section>
-
-      {sortedBooks.length > BOOK_PREVIEW_COUNT ? (
-        <button className="secondary-button show-all-books" onClick={() => setShowAllBooks((value) => !value)} type="button" disabled={booksLoading}>
-          {showAllBooks ? "收起书目" : booksLoading ? "显示全部" : `显示全部（${sortedBooks.length} 本）`}
-        </button>
-      ) : null}
-
     </>
   );
 }
@@ -676,7 +678,7 @@ export function QuizView({ session, onBack, onPause, onDiscard, onChoose, onChec
         ) : (
           <div className="feedback muted">
             <strong>请选择一个答案</strong>
-            <span>{session.mode === "mixed" ? "综合测试，共 20 题" : "课程练习，共 10 题"}</span>
+            <span>{session.mode === "mixed" ? "综合测试，共 20 题" : "基础练习，共 10 题"}</span>
           </div>
         )}
         {checked ? (

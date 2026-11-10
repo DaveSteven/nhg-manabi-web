@@ -100,18 +100,28 @@ export function normalizeJapaneseUiText(value) {
   return String(value || "").replaceAll("课", "課");
 }
 
+const LESSON_NAME_PATTERN = /第\s*(\d+)\s*[课課]/;
+
+// 基础题库每组只是 10 道题，没有讲解内容，界面统一叫"练习 N"（序号不补零）
 export function bookDisplayNumber(value) {
   const normalized = normalizeJapaneseUiText(value);
-  const lessonNumber = normalized.match(/第\s*(\d+)\s*課/);
-  if (lessonNumber) return lessonNumber[1].padStart(2, "0");
+  const lessonNumber = normalized.match(LESSON_NAME_PATTERN);
+  if (lessonNumber) return String(Number(lessonNumber[1]));
   return normalized;
+}
+
+// "第 01 课" / "第 01 課" → "练习 1"；其他标题（错题重练、综合测试等）原样返回
+export function practiceName(value) {
+  const lessonNumber = String(value || "").match(LESSON_NAME_PATTERN);
+  if (lessonNumber) return `练习 ${Number(lessonNumber[1])}`;
+  return normalizeJapaneseUiText(value);
 }
 
 export function mapBook(book) {
   return {
     ...book,
     book_id: book.id,
-    book_name: normalizeJapaneseUiText(book.name),
+    book_name: practiceName(book.name),
     displayName: bookDisplayNumber(book.name),
     subjectLabel: book.subject_label,
     categoryLabel: `${book.level} ${book.subject_label}`,
@@ -127,7 +137,7 @@ export function mapAttempt(attempt) {
     subjectLabel: attempt.subject_label,
     categoryLabel: `${attempt.level} ${attempt.subject_label}`,
     bookId: attempt.book_id,
-    bookName: normalizeJapaneseUiText(attempt.title),
+    bookName: practiceName(attempt.title),
     correct: attempt.correct,
     total: attempt.total,
     createdAt: attempt.created_at,
@@ -158,7 +168,7 @@ export function mapWrong(item) {
     subjectLabel: item.subject_label,
     categoryLabel: `${item.level} ${item.subject_label}`,
     bookId: item.book_id,
-    bookName: normalizeJapaneseUiText(item.book_name),
+    bookName: practiceName(item.book_name),
     answerText: item.answer_text,
     wrongCount: item.wrong_count,
     lastChosenText: item.last_chosen_text,

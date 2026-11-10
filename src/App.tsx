@@ -492,7 +492,8 @@ function App() {
       subject: session.book.subject,
       subject_label: session.book.subjectLabel,
       book_id: session.mode === "book" ? session.book.id : null,
-      title: session.mode === "book" ? session.book.book_name : session.title,
+      // 保存原始名称（如"第 01 课"），界面显示时再由 practiceName 统一转换
+      title: session.mode === "book" ? session.book.name || session.book.book_name : session.title,
       answers: finalAnswers.map((answer) => ({
         question_id: answer.questionId,
         chosen_option_id: answer.chosenOptionId,
@@ -594,7 +595,7 @@ function App() {
     }));
   }
 
-  const gate = loading ? <div className="center-state">正在加载课程…</div>
+  const gate = loading ? <div className="center-state">正在加载题库…</div>
     : !authToken || !currentUser ? <LoginView onLogin={login} />
     : error ? <div className="center-state error">{error}</div>
     : null;

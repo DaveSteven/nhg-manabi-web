@@ -215,8 +215,8 @@ export function buildContinueSuggestions({
     suggestions.push({
       key: "next-book",
       badge: "上次练到",
-      title: `继续《${lastBook.book_name}》的下一课`,
-      detail: `下一课：${nextBook.book_name} · ${nextBook.question_count} 道题`,
+      title: `上次做到「${lastBook.book_name}」，继续下一组`,
+      detail: `下一组：${nextBook.book_name} · ${nextBook.question_count} 道题`,
       bookId: nextBook.id,
     });
   }
@@ -226,7 +226,7 @@ export function buildContinueSuggestions({
     suggestions.push({
       key: "first-book",
       badge: "今日推荐",
-      title: `从《${firstBook.book_name}》开始`,
+      title: `从「${firstBook.book_name}」开始`,
       detail: `${firstBook.categoryLabel} · ${firstBook.question_count} 道题`,
       bookId: firstBook.id,
     });
