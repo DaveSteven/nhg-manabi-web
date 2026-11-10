@@ -448,7 +448,7 @@ export function SearchView({ token, currentLevel, onBack }) {
   );
 }
 
-export function WrongBookView({ level, items, onBack, onReview, onReviewPractice }) {
+export function WrongBookView({ level, items, onBack, onReview }) {
   const [page, setPage] = useState(1);
   const sortedItems = useMemo(
     () => [...items].sort((left, right) => new Date(right.lastWrongAt).getTime() - new Date(left.lastWrongAt).getTime()),
@@ -456,9 +456,6 @@ export function WrongBookView({ level, items, onBack, onReview, onReviewPractice
   );
   const libraryItems = sortedItems.filter((item) => item.source === "library");
   const practiceItems = sortedItems.filter((item) => item.source === "practice");
-  const practiceCategories = Object.keys(PRACTICE_CATEGORIES).filter((category) =>
-    practiceItems.some((item) => item.subject === category),
-  );
   const totalPages = Math.max(1, Math.ceil(sortedItems.length / WRONG_BOOK_PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const pageStart = (currentPage - 1) * WRONG_BOOK_PAGE_SIZE;
@@ -487,15 +484,10 @@ export function WrongBookView({ level, items, onBack, onReview, onReviewPractice
             <div>
               <div className="book-badge">{level} 错题</div>
               <h2>错题复习</h2>
-              <p>从错题中随机抽取最多 20 题。答对后会自动移出错题本。</p>
+              <p>自动选择一组错题，每次最多复习 20 题。答对后会自动移出错题本。</p>
             </div>
             <div className="wrong-review-actions">
-              {libraryItems.length ? <button className="primary-button" onClick={onReview} type="button">复习</button> : null}
-              {practiceCategories.map((category) => (
-                <button className="secondary-button" onClick={() => onReviewPractice(category)} type="button" key={category}>
-                  复习{PRACTICE_CATEGORIES[category].label}（{practiceItems.filter((item) => item.subject === category).length} 题）
-                </button>
-              ))}
+              <button className="primary-button" onClick={onReview} type="button">复习</button>
             </div>
           </section>
 

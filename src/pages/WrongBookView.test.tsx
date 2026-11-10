@@ -24,7 +24,7 @@ function makeItem(index, source = "library") {
 describe("WrongBookView", () => {
   it("shows ten wrong questions per page and navigates to the remainder", () => {
     const items = Array.from({ length: 12 }, (_, index) => makeItem(index + 1));
-    render(<WrongBookView level="N3" items={items} onBack={() => {}} onReview={() => {}} onReviewPractice={() => {}} />);
+    render(<WrongBookView level="N3" items={items} onBack={() => {}} onReview={() => {}} />);
 
     expect(screen.getAllByRole("article")).toHaveLength(10);
     expect(screen.getByText("第 1 / 2 页")).toBeTruthy();
@@ -36,9 +36,18 @@ describe("WrongBookView", () => {
   });
 
   it("makes the included and excluded sources explicit", () => {
-    render(<WrongBookView level="N3" items={[makeItem(1), makeItem(2, "practice")]} onBack={() => {}} onReview={() => {}} onReviewPractice={vi.fn()} />);
+    render(<WrongBookView level="N3" items={[makeItem(1), makeItem(2, "practice")]} onBack={() => {}} onReview={() => {}} />);
 
     expect(screen.getByText("基础题库 1 题 · 专项练习 1 题")).toBeTruthy();
     expect(screen.getByText("专项练习包括文字词汇、文法和读解；整套真题与听力训练暂未收录。")).toBeTruthy();
   });
+});
+
+it.each(["library", "practice"])("uses one review action for %s questions", (source) => {
+  const onReview = vi.fn();
+  render(<WrongBookView level="N3" items={[makeItem(1, source), makeItem(2, "practice")]} onBack={() => {}} onReview={onReview} />);
+  const reviewButtons = screen.getAllByRole("button", { name: /复习/ });
+  expect(reviewButtons).toHaveLength(1);
+  fireEvent.click(reviewButtons[0]);
+  expect(onReview).toHaveBeenCalledTimes(1);
 });

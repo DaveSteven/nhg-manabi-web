@@ -431,6 +431,13 @@ function App() {
   }
 
   async function startWrongReview() {
+    if (!allWrongItems.length) return;
+    // Select across all sources so practice-only books can use the same entry.
+    const selected = allWrongItems[Math.floor(Math.random() * allWrongItems.length)];
+    if (selected.source === "practice") {
+      await startPracticeWrongReview(selected.subject);
+      return;
+    }
     setError("");
     const quiz = await api(`/api/wrong-questions/quiz?level=${level}&limit=20`, {}, authToken);
     const source = {
@@ -765,7 +772,6 @@ function App() {
               items={allWrongItems}
               onBack={resetToLibrary}
               onReview={startWrongReview}
-              onReviewPractice={startPracticeWrongReview}
             />
           )}
         />
