@@ -312,6 +312,7 @@ export default function ListeningTrainer({ question: q, examId, token, saved, fe
         {error && <p role="alert">{error}</p>}
       </aside>
 
+      <div className="listening-main-column">
       <div className="listening-card listening-content">
         <div className="listening-content-heading">
           <h2>{mode === MODE_FOCUS ? "逐段精听" : "听力题目"}</h2>
@@ -350,11 +351,18 @@ export default function ListeningTrainer({ question: q, examId, token, saved, fe
                 </button>
               ))}
             </div>
-            {feedbackMode === "instant" && !result ? <div className="listening-feedback-actions"><button className="primary-button" disabled={!choice || busy} onClick={check}>{busy ? "检查中…" : "检查答案"}</button></div> : null}
-            {feedbackMode === "immersive" && !result ? <div className="listening-feedback-actions"><button className="primary-button" disabled={!choice} onClick={continuePractice}>下一题</button></div> : null}
-            {result && <><AnswerFeedback result={result} question={q} choice={choice} onFocusMode={() => changeMode(MODE_FOCUS)} /><button className="primary-button" onClick={continuePractice}>继续下一题</button></>}
+            {result ? <AnswerFeedback result={result} question={q} choice={choice} onFocusMode={() => changeMode(MODE_FOCUS)} /> : null}
           </>
         )}
+      </div>
+      {/* Same action bar as the other 专项 sessions: below the card, right-aligned, one primary button whose label changes in place. */}
+      {mode !== MODE_FOCUS ? (
+        <footer className="practice-action-bar">
+          {result || feedbackMode === "immersive"
+            ? <button className="primary-button" disabled={!result && !choice} onClick={continuePractice} type="button">下一题</button>
+            : <button className="primary-button" disabled={!choice || busy} onClick={check} type="button">{busy ? "检查中…" : "检查答案"}</button>}
+        </footer>
+      ) : null}
       </div>
     </section>
   );

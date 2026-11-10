@@ -86,6 +86,7 @@
 .listening-explanation { margin: 0 24px; padding: 20px 0 4px; border-top: 1px solid var(--line); }
 .listening-explanation h4 { margin: 0 0 12px; font-size: var(--fs-md); color: var(--muted); font-weight: var(--fw-medium); }
 .listening .listening-explanation p { margin: 0 0 14px; font-size: var(--fs-base); line-height: 1.95; overflow-wrap: anywhere; white-space: pre-wrap; max-width: 72ch; }
+.listening-main-column { display: grid; min-width: 0; gap: 18px; }
 .listening-feedback-actions { display: flex; flex-wrap: wrap; gap: 12px; padding: 20px 24px 26px; }
 .listening-feedback-actions .secondary-button { min-height: 44px; font-size: var(--fs-md); }
 @media (max-width: $bpSm) { .listening-feedback-heading, .listening-answer-summary { padding: 16px; } .listening-answer-summary { grid-template-columns: 1fr; } .listening-explanation { margin: 0 16px; } .listening-feedback-actions { padding: 16px 16px 22px; } }
