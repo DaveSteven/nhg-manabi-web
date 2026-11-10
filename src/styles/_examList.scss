@@ -503,15 +503,20 @@
   height: 12px;
   overflow: hidden;
   border-radius: 999px;
-  background: var(--surface);
+  background: var(--sakura-soft);
 }
 
 .progress span {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--primary), var(--correct));
+  background: var(--sakura);
   transition: width 180ms ease;
+}
+
+/* U4: a fully cleared book turns deep sakura. */
+.progress span.complete {
+  background: var(--primary);
 }
 
 .start-button {

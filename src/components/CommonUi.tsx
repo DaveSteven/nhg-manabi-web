@@ -7,7 +7,10 @@ import { useKeyboardHintToast } from "../hooks/useKeyboardAnswer";
 export function Progress({ value }) {
   return (
     <div className="progress">
-      <span style={{ width: `${value > 0 ? Math.max(4, value) : 0}%` }} />
+      <span
+        className={value >= 100 ? "complete" : ""}
+        style={{ width: `${value > 0 ? Math.max(4, value) : 0}%` }}
+      />
     </div>
   );
 }
@@ -204,6 +207,40 @@ export function DailyRing({ value, goal }: { value: number; goal: number }) {
         transform="rotate(-90 32 32)"
       />
       <text className="daily-ring-text" x="32" y="37" textAnchor="middle">{Math.round(ratio * 100)}%</text>
+    </svg>
+  );
+}
+
+/** Square seal mark (方案一 U3): sakura-red rounded square with a serif character. */
+export function SealMark({ char = "学", size = 44 }: { char?: string; size?: number }) {
+  return (
+    <span
+      className="seal-mark"
+      style={{ width: size, height: size, fontSize: Math.round(size * 0.5) }}
+      aria-hidden="true"
+    >
+      {char}
+    </span>
+  );
+}
+
+/** Small sakura blossom SVG (方案一 U4 material); page integration lands with 方案二 streak data. */
+export function SakuraBadge({ size = 18, title = "连续学习" }: { size?: number; title?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" role="img" aria-label={title} className="sakura-badge">
+      <title>{title}</title>
+      {[0, 72, 144, 216, 288].map((angle) => (
+        <ellipse
+          key={angle}
+          cx="12"
+          cy="6.4"
+          rx="3.4"
+          ry="5"
+          fill="var(--sakura)"
+          transform={`rotate(${angle} 12 12)`}
+        />
+      ))}
+      <circle cx="12" cy="12" r="2.2" fill="var(--sakura-dark)" />
     </svg>
   );
 }

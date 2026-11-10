@@ -79,17 +79,20 @@
   font-weight: var(--fw-medium);
 }
 
+/* U3: profile avatar as a seal impression — user's first character in the print. */
 .profile-avatar {
   display: grid;
   place-items: center;
   width: 76px;
   height: 76px;
-  border-radius: 50%;
+  border-radius: var(--r-md);
   color: #ffffff;
   background: var(--primary);
-  box-shadow: 0 6px 0 var(--primary-dark);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4), var(--shadow-rest);
+  font-family: var(--font-serif);
   font-size: var(--fs-2xl);
-  font-weight: var(--fw-medium);
+  font-weight: var(--fw-bold);
+  user-select: none;
 }
 
 .profile-card h2 {
