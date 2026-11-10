@@ -1,7 +1,6 @@
 @use "variables" as *;
 
 .listening { width: 100%; margin-bottom: 18px; }
-.listening .quiz-header { justify-content: flex-start; }
 .listening .quiz-header p { margin-top: 12px; color: var(--muted); }
 .listening-note { color: var(--muted); font-size: var(--fs-sm); margin-bottom: 20px; }
 .listening-card { display: block; padding: 24px; margin-bottom: 20px; border: 2px solid var(--line); border-radius: var(--r-lg); background: var(--card); box-shadow: var(--shadow-soft); color: var(--ink); text-decoration: none; }

@@ -325,6 +325,12 @@ button:disabled {
   margin-bottom: 20px;
 }
 
+/* 页头统一左对齐：返回按钮后紧跟标题；需要靠右的操作由占满剩余空间的
+   元素（如 .quiz-progress，flex: 1）推到右侧。 */
+.quiz-header {
+  justify-content: flex-start;
+}
+
 .eyebrow {
   color: var(--primary);
   font-size: var(--fs-xs);
