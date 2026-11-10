@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Check, Keyboard, RotateCcw, Trophy, X } from "lucide-react";
 import { HtmlInline } from "./Html";
@@ -148,6 +148,63 @@ export function KeyboardToast({ suppress = false }: { suppress?: boolean }) {
       <Keyboard size={18} />
       <span>支持键盘操作，按 <kbd className="kbd-hint">?</kbd> 查看速查</span>
     </div>
+  );
+}
+
+/** Sakura petal rain for reward moments (ux plan B5). "light" = subtle result-page drift, "full" = celebration. */
+export function PetalFall({ variant = "full", seconds = 6 }: { variant?: "light" | "full"; seconds?: number }) {
+  const [expired, setExpired] = useState(false);
+  const petals = useMemo(() => Array.from({ length: variant === "full" ? 26 : 8 }, () => ({
+    left: Math.random() * 100,
+    delay: Math.random() * 2.2,
+    duration: 3.8 + Math.random() * 3.6,
+    size: 9 + Math.random() * 9,
+    drift: -60 + Math.random() * 120,
+  })), [variant]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setExpired(true), seconds * 1000 + 2500);
+    return () => window.clearTimeout(timer);
+  }, [seconds]);
+
+  if (expired) return null;
+  return (
+    <div className={`petal-fall ${variant}`.trim()} aria-hidden="true">
+      {petals.map((petal, index) => (
+        <span
+          key={index}
+          style={{
+            left: `${petal.left}%`,
+            width: petal.size,
+            height: petal.size,
+            animationDelay: `${petal.delay}s`,
+            animationDuration: `${petal.duration}s`,
+            "--drift": `${petal.drift}px`,
+          } as React.CSSProperties}
+        />
+      ))}
+    </div>
+  );
+}
+
+/** Today's practice progress ring (ux plan B5); goal comes from localStorage. */
+export function DailyRing({ value, goal }: { value: number; goal: number }) {
+  const radius = 26;
+  const circumference = 2 * Math.PI * radius;
+  const ratio = goal > 0 ? Math.min(1, value / goal) : 0;
+  return (
+    <svg className="daily-ring" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label={`今日 ${value} / ${goal} 题`}>
+      <circle className="daily-ring-track" cx="32" cy="32" r={radius} />
+      <circle
+        className="daily-ring-value"
+        cx="32"
+        cy="32"
+        r={radius}
+        strokeDasharray={`${(circumference * ratio).toFixed(1)} ${circumference.toFixed(1)}`}
+        transform="rotate(-90 32 32)"
+      />
+      <text className="daily-ring-text" x="32" y="37" textAnchor="middle">{Math.round(ratio * 100)}%</text>
+    </svg>
   );
 }
 

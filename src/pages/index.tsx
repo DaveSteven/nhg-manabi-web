@@ -22,7 +22,7 @@ import {
 import { LEVELS, SUBJECTS, api, formatDate, pct, subjectLabel } from "../lib/study";
 import UiSelect from "../components/UiSelect";
 import { HtmlInline } from "../components/Html";
-import { EmptyState, FieldInput, KeyboardToast, ModalOverlay, OptionButton, PageHeader, Progress, ResultScore, ReviewMark, ReviewOptions, ShortcutHelp, TitleBlock } from "../components/CommonUi";
+import { DailyRing, EmptyState, FieldInput, KeyboardToast, ModalOverlay, OptionButton, PageHeader, PetalFall, Progress, ResultScore, ReviewMark, ReviewOptions, ShortcutHelp, TitleBlock } from "../components/CommonUi";
 import { markKeyboardHintSeen, useKeyboardAnswer } from "../hooks/useKeyboardAnswer";
 import { PRACTICE_CATEGORIES } from "./PracticePages";
 
@@ -50,6 +50,9 @@ export function LibraryView({
   currentUser,
   continueSuggestions = [],
   weakPracticeCategory = null,
+  todayCount = 0,
+  dailyGoal = 20,
+  onDailyGoal,
   onResume,
   onReviewWrong,
   onLevel,
@@ -158,29 +161,47 @@ export function LibraryView({
         </div>
       </header>
 
-      {suggestion ? (
-        <section className="home-continue-card" aria-label="继续学习推荐">
-          <div>
-            <em className="home-continue-badge">{suggestion.badge}</em>
-            <h2>{suggestion.title}</h2>
-            <p>{suggestion.detail}</p>
-          </div>
-          <div className="home-continue-actions">
-            <button className="primary-button" onClick={() => startSuggestion(suggestion)} type="button">
-              {suggestion.key === "resume" ? "继续练习" : suggestion.key === "wrong" ? "开始复习" : "开始练习"}
-            </button>
-            {continueSuggestions.length > 1 ? (
-              <button
-                className="secondary-button continue-swap-button"
-                onClick={() => setSuggestionIndex((safeIndex + 1) % continueSuggestions.length)}
-                type="button"
-              >
-                换一个
+      <div className="home-top-row">
+        {suggestion ? (
+          <section className="home-continue-card" aria-label="继续学习推荐">
+            <div>
+              <em className="home-continue-badge">{suggestion.badge}</em>
+              <h2>{suggestion.title}</h2>
+              <p>{suggestion.detail}</p>
+            </div>
+            <div className="home-continue-actions">
+              <button className="primary-button" onClick={() => startSuggestion(suggestion)} type="button">
+                {suggestion.key === "resume" ? "继续练习" : suggestion.key === "wrong" ? "开始复习" : "开始练习"}
               </button>
-            ) : null}
+              {continueSuggestions.length > 1 ? (
+                <button
+                  className="secondary-button continue-swap-button"
+                  onClick={() => setSuggestionIndex((safeIndex + 1) % continueSuggestions.length)}
+                  type="button"
+                >
+                  换一个
+                </button>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
+        <section className="home-daily-card" aria-label="今日目标">
+          <DailyRing value={todayCount} goal={dailyGoal} />
+          <div className="home-daily-info">
+            <small>今日目标</small>
+            <strong>{todayCount} / {dailyGoal} 题</strong>
           </div>
+          <UiSelect
+            className="home-daily-goal-select"
+            label="目标"
+            ariaLabel="每日目标题数"
+            compact
+            value={String(dailyGoal)}
+            options={[10, 20, 50].map((value) => ({ value: String(value), label: `${value} 题` }))}
+            onChange={(value) => onDailyGoal?.(Number(value))}
+          />
         </section>
-      ) : null}
+      </div>
 
       <section className="home-section">
         <div className="home-section-heading">
@@ -206,7 +227,13 @@ export function LibraryView({
 
       <section className="home-section">
         <div className="home-section-heading">
-          <div><h2>基础题库</h2><p>选择知识领域后，按课练习</p></div>
+          <div>
+            <h2>基础题库</h2>
+            <p>
+              选择知识领域后，按课练习
+              {books.length ? ` · 已练 ${books.filter((book) => attempts.some((attempt) => attempt.bookId === book.id)).length}/${books.length} 课` : ""}
+            </p>
+          </div>
         </div>
         <div className="subject-library-tabs" role="tablist" aria-label="题目科目">
           {SUBJECTS.map((item, index) => {
@@ -698,14 +725,18 @@ export function QuizView({ session, onBack, onPause, onDiscard, onChoose, onChec
   );
 }
 
-export function ResultView({ attempt, onRepeat, onLibrary, onReviewWrong }) {
+export function ResultView({ attempt, todayCount = 0, dailyGoal = 0, onRepeat, onLibrary, onReviewWrong }) {
   const wrongAnswers = attempt.answers.filter((answer) => !answer.isCorrect);
   const wrongCount = wrongAnswers.length;
   const wrongReview = attempt.mode === "wrong_review";
   const clearedAll = wrongReview && wrongCount === 0;
   const reviewWrongFirst = !wrongReview && wrongCount > 0;
+  // B5 reward: full sakura burst when the wrong book clears or the daily goal is crossed by this attempt.
+  const dailyCrossed = dailyGoal > 0 && todayCount >= dailyGoal && todayCount - (attempt.total || 0) < dailyGoal;
+  const celebrate = clearedAll || dailyCrossed;
   return (
     <section className="result-view">
+      <PetalFall variant={celebrate ? "full" : "light"} />
       <ResultScore score={pct(attempt.correct, attempt.total)}>
         {clearedAll ? <>全部清完 🌸 · 答对 {attempt.correct} / {attempt.total}</> : <>答对 {attempt.correct} / {attempt.total}</>}
       </ResultScore>

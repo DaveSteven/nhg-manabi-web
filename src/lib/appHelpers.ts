@@ -18,6 +18,31 @@ export const QUIZ_SESSION_MAX_AGE_MS = 72 * 60 * 60 * 1000;
 /** Wrong-question backlog that triggers the "clear wrong answers" suggestion (ux plan §二). */
 export const WRONG_BACKLOG_THRESHOLD = 10;
 
+/** Daily question-count goal (ux plan §六): stored locally, no backend. */
+export const DAILY_GOAL_KEY = "manabi_daily_goal";
+export const DAILY_GOAL_OPTIONS = [10, 20, 50];
+export const DEFAULT_DAILY_GOAL = 20;
+
+export function readDailyGoal() {
+  const value = Number(localStorage.getItem(DAILY_GOAL_KEY));
+  return DAILY_GOAL_OPTIONS.includes(value) ? value : DEFAULT_DAILY_GOAL;
+}
+
+export function writeDailyGoal(goal) {
+  localStorage.setItem(DAILY_GOAL_KEY, String(goal));
+}
+
+/** Sum of questions answered today across quiz + practice attempts (local timezone). */
+export function countTodayQuestions(attempts, now = new Date()) {
+  const today = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+  return attempts
+    .filter((attempt) => {
+      const date = new Date(attempt.createdAt);
+      return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}` === today;
+    })
+    .reduce((sum, attempt) => sum + (attempt.total || 0), 0);
+}
+
 export function isQuizSessionExpired(session) {
   const startedAt = new Date(session?.startedAt || 0).getTime();
   return !Number.isFinite(startedAt) || Date.now() - startedAt > QUIZ_SESSION_MAX_AGE_MS;

@@ -15,12 +15,15 @@ import {
 } from "./lib/study";
 import {
   buildContinueSuggestions,
+  countTodayQuestions,
   fetchStudyData,
   isQuizSessionExpired,
   makePracticeSession,
   mapPracticeQuestions,
   practiceLayers,
+  readDailyGoal,
   readStoredQuizSession,
+  writeDailyGoal,
   writeStoredQuizSession,
 } from "./lib/appHelpers";
 import { useExamFlow } from "./hooks/useExamFlow";
@@ -63,6 +66,7 @@ function App() {
   const [attempts, setAttempts] = useState([]);
   const [wrongItems, setWrongItems] = useState([]);
   const [practiceWrongItems, setPracticeWrongItems] = useState([]);
+  const [dailyGoal, setDailyGoal] = useState(() => readDailyGoal());
   const [loading, setLoading] = useState(true);
   const [booksLoading, setBooksLoading] = useState(false);
   const [error, setError] = useState("");
@@ -253,6 +257,12 @@ function App() {
     }
     return weakest;
   }, [practiceAttempts]);
+  const todayCount = useMemo(() => countTodayQuestions(learningAttempts), [learningAttempts]);
+
+  function changeDailyGoal(goal) {
+    writeDailyGoal(goal);
+    setDailyGoal(goal);
+  }
 
   // B1: rebuild an in-place session from exactly the wrong answers of the finished attempt
   // (falls back to the server wrong-question quiz when option data is incomplete).
@@ -593,6 +603,9 @@ function App() {
               currentUser={currentUser}
               continueSuggestions={continueSuggestions}
               weakPracticeCategory={weakPracticeCategory}
+              todayCount={todayCount}
+              dailyGoal={dailyGoal}
+              onDailyGoal={changeDailyGoal}
               onResume={() => navigate("/quiz")}
               onReviewWrong={() => (wrongItems.length ? startWrongReview() : navigate("/wrong"))}
               onLevel={chooseLevel}
@@ -659,6 +672,8 @@ function App() {
             session?.finishedAttempt ? (
               <ResultView
                 attempt={session.finishedAttempt}
+                todayCount={todayCount}
+                dailyGoal={dailyGoal}
                 onRepeat={() => (
                   session.mode === "mixed"
                     ? startMixedTest()

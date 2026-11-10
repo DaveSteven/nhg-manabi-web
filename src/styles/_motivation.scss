@@ -1,0 +1,118 @@
+// Motivation system (ux plan B5): sakura petal rewards, daily goal ring, home top row.
+@use "variables" as *;
+
+.home-top-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.home-daily-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 2px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: 0 4px 0 var(--shadow);
+}
+
+.home-daily-info {
+  display: grid;
+  gap: 2px;
+  margin-right: 6px;
+}
+
+.home-daily-info small {
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.home-daily-info strong {
+  font-size: 1.15rem;
+  white-space: nowrap;
+}
+
+.daily-ring-track {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 6;
+}
+
+.daily-ring-value {
+  fill: none;
+  stroke: var(--sakura);
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.6s ease;
+}
+
+.daily-ring-text {
+  fill: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 750;
+}
+
+@media (max-width: $bpMd) {
+  .home-top-row {
+    grid-template-columns: 1fr;
+  }
+
+  .home-daily-card {
+    justify-content: space-between;
+  }
+}
+
+// Sakura petal rain; fully disabled under prefers-reduced-motion.
+.petal-fall {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.petal-fall span {
+  position: absolute;
+  top: -24px;
+  background: linear-gradient(135deg, var(--sakura), var(--sakura-dark));
+  border-radius: 92% 8% 92% 8%;
+  opacity: 0;
+  animation-name: petal-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+.petal-fall.light span {
+  opacity: 0;
+  animation-timing-function: ease-in;
+}
+
+@keyframes petal-fall {
+  0% {
+    opacity: 0;
+    transform: translate(0, -24px) rotate(0deg);
+  }
+
+  8% {
+    opacity: 0.9;
+  }
+
+  85% {
+    opacity: 0.85;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(var(--drift, 0px), 105vh) rotate(560deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .petal-fall {
+    display: none;
+  }
+}

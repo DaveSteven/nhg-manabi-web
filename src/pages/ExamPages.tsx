@@ -22,6 +22,7 @@ import {
   ModalOverlay,
   OptionButton,
   PageHeader,
+  PetalFall,
   Progress,
   ResultActions,
   ResultScore,
@@ -567,6 +568,8 @@ export function ExamResultView({ exam, attempt, questions, onRepeat, onLibrary, 
 
   return (
     <section className="result-view exam-result-view">
+      {/* B5 reward rhythm: a full paper earns the sakura burst, practice runs get the subtle drift. */}
+      <PetalFall variant={practice ? "light" : "full"} />
       <ResultScore score={pct(attempt.correct, attempt.total)}>答对 {attempt.correct} / {attempt.total} · {attempt.title}</ResultScore>
 
       {practice ? (
