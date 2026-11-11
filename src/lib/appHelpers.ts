@@ -7,6 +7,7 @@ import {
   mapPracticeWrong,
   mapWrong,
   parseApiDate,
+  practiceName,
   writeExamCache,
 } from "./study";
 
@@ -135,6 +136,46 @@ export async function fetchStudyData(level, token) {
     examRuns,
     practiceAttempts: practiceAttempts.map(mapPracticeAttempt),
     practiceWrongItems: practiceWrong.map(mapPracticeWrong),
+  };
+}
+
+/** 试题收藏 MVP：ids 全量拉取（不带 level，题量小且可跨级显示按钮态）。 */
+export function fetchFavoriteIds(token) {
+  return api("/api/favorites/ids", {}, token);
+}
+
+/** 幂等收藏，重复收藏返回既有行。 */
+export function toggleFavorite(source, questionId, token) {
+  return api("/api/favorites", { method: "PUT", body: JSON.stringify({ source, question_id: questionId }) }, token);
+}
+
+export function unfavorite(source, questionId, token) {
+  return api(`/api/favorites/${source}/${questionId}`, { method: "DELETE" }, token);
+}
+
+/** 收藏列表（用户页），params: { level?, source? } */
+export function fetchFavorites(params: { level?: string; source?: string } = {}, token) {
+  const search = new URLSearchParams();
+  if (params.level) search.set("level", params.level);
+  if (params.source) search.set("source", params.source);
+  const query = search.toString();
+  return api(`/api/favorites${query ? `?${query}` : ""}`, {}, token);
+}
+
+/** 收藏列表行 → 用户页展示结构；sourceTitle：教材题用书名，真题用试卷名。 */
+export function mapFavorite(item) {
+  return {
+    key: `${item.source}:${item.question_id}`,
+    source: item.source,
+    questionId: item.question_id,
+    stem: item.stem,
+    level: item.level,
+    category: item.category,
+    categoryLabel: item.category_label,
+    examId: item.exam_id ?? null,
+    sourceTitle: item.source === "textbook" ? practiceName(item.book_name || "") : (item.exam_title || ""),
+    answerText: item.answer_text,
+    createdAt: item.created_at,
   };
 }
 

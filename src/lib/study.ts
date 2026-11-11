@@ -40,6 +40,8 @@ export async function api(path: string, options: RequestInit = {}, token: string
     const text = await response.text();
     throw new Error(text || `${response.status} ${response.statusText}`);
   }
+  // 收藏取消等接口返回 204 空响应体，json() 会抛错
+  if (response.status === 204) return null;
   return response.json();
 }
 

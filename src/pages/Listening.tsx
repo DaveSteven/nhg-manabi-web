@@ -155,7 +155,7 @@ function ExamQuestionGroups({ groups, detail, questions, progress, onOpen }) {
   );
 }
 
-export default function Listening({ userId, token, globalLevel: level }) {
+export default function Listening({ userId, token, globalLevel: level, favorites = null }) {
   const { examId, questionId } = useParams();
   const navigate = useNavigate();
   const key = `listening:${userId}`;
@@ -311,14 +311,14 @@ export default function Listening({ userId, token, globalLevel: level }) {
       setPracticeSession((current) => ({ ...current, questions: current.questions.filter((question) => wrongIds.has(question.id)), index: 0, answers: {}, saving: false, finishedAttempt: null }));
     }} onReset={() => setPracticeSession(null)} onHome={() => navigate("/")} />;
   } else if (practiceQuestion) {
-    body = <ListeningTrainer key={`practice:${practiceQuestion.id}`} question={practiceQuestion} examId={practiceQuestion.sourceExamId} token={token} saved={{}} feedbackMode={practiceSession.feedbackMode} onSave={savePractice} onNext={advancePractice} />;
+    body = <ListeningTrainer key={`practice:${practiceQuestion.id}`} question={practiceQuestion} examId={practiceQuestion.sourceExamId} token={token} saved={{}} feedbackMode={practiceSession.feedbackMode} onSave={savePractice} onNext={advancePractice} favorites={favorites} />;
   } else if (loading) {
     body = <p role="status">正在加载听力题目…</p>;
   } else if (!examId) {
     body = <PracticeSetup level={level} exams={exams} mode={practiceMode} setMode={setPracticeMode} examId={practiceExamId} setExamId={setPracticeExamId} types={practiceTypes} toggleType={togglePracticeType} count={practiceCount} setCount={setPracticeCount} feedbackMode={feedbackMode} setFeedbackMode={setFeedbackMode} starting={starting} onSubmit={startListeningPractice} />;
   } else if (questionId) {
     body = q
-      ? <ListeningTrainer key={`${userId}:${q.id}`} question={q} examId={detail.id} token={token} saved={progress[q.id] || {}} onSave={(patch) => save({ [q.id]: { ...progress[q.id], examId: detail.id, ...patch } })} onNext={nextExamQuestion} />
+      ? <ListeningTrainer key={`${userId}:${q.id}`} question={q} examId={detail.id} token={token} saved={progress[q.id] || {}} onSave={(patch) => save({ [q.id]: { ...progress[q.id], examId: detail.id, ...patch } })} onNext={nextExamQuestion} favorites={favorites} />
       : <p>没有找到这道听力题，请返回列表选择。</p>;
   } else {
     body = <ExamQuestionGroups groups={groups} detail={detail} questions={questions} progress={progress} onOpen={openQuestion} />;

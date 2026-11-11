@@ -11,6 +11,7 @@ import {
 import { BilingualTranscript, HtmlContent } from "./Html";
 import { ReviewMark, ReviewOptions } from "./CommonUi";
 import { Tooltip } from "./Tooltip";
+import FavoriteButton from "./FavoriteButton";
 import { useKeyboardAnswer } from "../hooks/useKeyboardAnswer";
 
 const pad2 = (n) => String(n).padStart(2, "0");
@@ -78,7 +79,7 @@ export function ListeningExamPlayer({ audioRef, audioUrl, audioError, started, o
   );
 }
 
-function ReviewItem({ question, answer, displayNumber, index, hasGroupPassage }) {
+function ReviewItem({ question, answer, displayNumber, index, hasGroupPassage, favorites }) {
   const reading = isReadingQuestion(question);
   const listening = isListeningQuestion(question);
   const plain = !listening && !reading;
@@ -90,6 +91,7 @@ function ReviewItem({ question, answer, displayNumber, index, hasGroupPassage })
         <div className="review-title-row">
           <span className="review-question-number">{displayNumber}</span>
           <div className="review-title"><HtmlContent html={answer.title || question?.title || ""} /></div>
+          <FavoriteButton favorites={favorites} source="exam" questionId={answer.questionId} />
         </div>
         {question?.image_url ? <ZoomImage className="review-image" src={assetSrc(question.image_url)} /> : null}
         {question?.media_url ? <audio className="exam-audio compact" controls src={assetSrc(question.media_url)} /> : null}
@@ -129,7 +131,7 @@ function PassageGroupHeader({ group }) {
   );
 }
 
-export function ExamReview({ reviewProblemGroups, answerByQuestion, answerForQuestion }) {
+export function ExamReview({ reviewProblemGroups, answerByQuestion, answerForQuestion, favorites }) {
   const orderedIds = useMemo(
     () => reviewProblemGroups.flatMap((group) => group.sections.flatMap((section) => section.items.map((item) => item.question.id))),
     [reviewProblemGroups],
@@ -204,6 +206,7 @@ export function ExamReview({ reviewProblemGroups, answerByQuestion, answerForQue
                         displayNumber={displayNumber}
                         index={index}
                         hasGroupPassage={Boolean(passageGroup.passage)}
+                        favorites={favorites}
                       />
                     ))}
                   </section>

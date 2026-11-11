@@ -31,6 +31,7 @@ import {
   TitleBlock,
 } from "../components/CommonUi";
 import { markKeyboardHintSeen, useKeyboardAnswer } from "../hooks/useKeyboardAnswer";
+import FavoriteButton from "../components/FavoriteButton";
 import { AnswerSheet, ExamReview, ListeningExamPlayer } from "../components/ExamParts";
 import { ZoomImage } from "../components/ZoomImage";
 
@@ -65,7 +66,7 @@ function PracticeExitModal({ onStay, onLeave }) {
   );
 }
 
-export function UnifiedPracticeSessionView({ session, onBack, onChoose, onMove, onCheck, onSubmit, submitting = false }) {
+export function UnifiedPracticeSessionView({ session, onBack, onChoose, onMove, onCheck, onSubmit, submitting = false, favorites }) {
   const groups = practiceQuestionGroups(session.questions);
   const currentQuestion = session.questions[session.index] || session.questions[0];
   const groupIndex = Math.max(0, groups.findIndex((group) => group.questions.some((question) => question.id === currentQuestion?.id)));
@@ -165,7 +166,10 @@ export function UnifiedPracticeSessionView({ session, onBack, onChoose, onMove, 
               const locked = Boolean(session.checked?.[question.id]);
               return (
                 <section className="practice-sub-question" id={`practice-question-${question.id}`} key={question.id}>
-                  <div className="random-practice-title">{group.questions.length > 1 ? <span>{questionIndex + 1}.</span> : null}<HtmlContent html={question.title} /></div>
+                  <div className="practice-question-title-row">
+                    <div className="random-practice-title">{group.questions.length > 1 ? <span>{questionIndex + 1}.</span> : null}<HtmlContent html={question.title} /></div>
+                    <FavoriteButton favorites={favorites} source="exam" questionId={question.id} />
+                  </div>
                   {question.image_url ? <ZoomImage className="exam-image" src={assetSrc(question.image_url)} /> : null}
                   <section className="options-grid exam-options">
                     {question.options.map((option, optionIndex) => {
@@ -364,7 +368,7 @@ export function ExamSectionBreakView({ session, onStartNext, starting = false })
   );
 }
 
-export function RandomPracticeSessionView({ session, onBack, onChoose, onMove, onSubmit }) {
+export function RandomPracticeSessionView({ session, onBack, onChoose, onMove, onSubmit, favorites }) {
   const question = session.questions[session.index];
   const chosenOptionId = session.answers[question.id] || null;
   const isLast = session.index === session.questions.length - 1;
@@ -396,7 +400,11 @@ export function RandomPracticeSessionView({ session, onBack, onChoose, onMove, o
         </button>
       </PageHeader>
       <article className="random-practice-question">
-        <div className="random-practice-meta"><span className="book-pill">{session.exam.level} · {examQuestionCategoryLabel(question)}</span><small>{question.source_exam_title}</small></div>
+        <div className="random-practice-meta">
+          <span className="book-pill">{session.exam.level} · {examQuestionCategoryLabel(question)}</span>
+          <small>{question.source_exam_title}</small>
+          <FavoriteButton favorites={favorites} source="exam" questionId={question.id} />
+        </div>
         <div className="random-practice-number">第 {question.practice_order || session.index + 1} 题</div>
         {hasVisibleHtml(question.passage) ? <section className="exam-passage"><HtmlContent html={question.passage} /></section> : null}
         <div className="random-practice-title"><HtmlContent html={question.title} /></div>
@@ -689,7 +697,7 @@ function EstimatedScore({ est }) {
   );
 }
 
-export function ExamResultView({ exam, attempt, questions, onRepeat, onLibrary }) {
+export function ExamResultView({ exam, attempt, questions, onRepeat, onLibrary, favorites }) {
   const answerByQuestion = new Map<number, any>(attempt.answers.map((answer) => [answer.questionId, answer]));
   const answerForQuestion = (question) =>
     answerByQuestion.get(question.id) || {
@@ -714,6 +722,7 @@ export function ExamResultView({ exam, attempt, questions, onRepeat, onLibrary }
         reviewProblemGroups={buildReviewProblemGroups(exam, questions)}
         answerByQuestion={answerByQuestion}
         answerForQuestion={answerForQuestion}
+        favorites={favorites}
       />
     </section>
   );

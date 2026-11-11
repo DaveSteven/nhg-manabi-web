@@ -47,7 +47,7 @@ export function ExamIntroRoute({ examSession, onLoadIntro, onBack, onStart, star
   return <ExamIntroView exam={examSession.exam} onBack={onBack} onStart={onStart} starting={starting} />;
 }
 
-export function ExamReviewRoute({ examSession, onLoadReview, onBack, onRepeat }) {
+export function ExamReviewRoute({ examSession, onLoadReview, onBack, onRepeat, favorites }) {
   const { examId, attemptId } = useParams();
   const numericExamId = Number(examId);
   const numericAttemptId = Number(attemptId);
@@ -71,6 +71,7 @@ export function ExamReviewRoute({ examSession, onLoadReview, onBack, onRepeat })
       questions={examSession.questions}
       onRepeat={() => onRepeat(examSession.exam)}
       onLibrary={onBack}
+      favorites={favorites}
     />
   );
 }

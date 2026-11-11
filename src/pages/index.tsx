@@ -16,17 +16,20 @@ import {
   NotebookPen,
   RotateCcw,
   Search,
+  Star,
   Target,
   Cherry,
   Flame,
   X,
 } from "lucide-react";
 import { LEVELS, SUBJECTS, api, fetchStatsOverview, formatDate, pct, subjectLabel } from "../lib/study";
+import { fetchFavorites, mapFavorite } from "../lib/appHelpers";
 import UiSelect from "../components/UiSelect";
 import { Tooltip } from "../components/Tooltip";
 import { HtmlInline } from "../components/Html";
 import { DailyRing, EmptyState, FieldInput, KeyboardToast, ModalOverlay, OptionButton, PageHeader, Progress, BrandMark, ShortcutHelp, ThemeToggle, TitleBlock } from "../components/CommonUi";
 import { markKeyboardHintSeen, useKeyboardAnswer } from "../hooks/useKeyboardAnswer";
+import FavoriteButton from "../components/FavoriteButton";
 import { ResultFilter, ResultGroupCard, ResultPage, ResultQuestion, ResultReview, ResultSummary, answerStatus, countStatuses, scoreTone, singleNavChunk } from "../components/ResultParts";
 
 export * from "./ExamPages";
@@ -225,7 +228,7 @@ export function LibraryView({
         </div>
         <div className="home-module-grid">
           <article className="home-training-module">
-            <div className="home-module-heading"><div><Target size={25} /><span><strong>专项练习</strong></span></div></div>
+            <div className="home-module-heading"><div><Target size={25} /><span><strong>真题专项练习</strong></span></div></div>
             <div className="home-module-actions">
               <button onClick={onOpenVocabularyPractice} disabled={!exams.length} title={exams.length ? undefined : "需先有该级别真题题库"} type="button"><Languages size={22} /><span><strong>文字词汇专项</strong></span><ChevronRight size={19} /></button>
               <button onClick={onOpenGrammarPractice} disabled={!exams.length} title={exams.length ? undefined : "需先有该级别真题题库"} type="button"><BrainCircuit size={22} /><span><strong>文法专项</strong></span><ChevronRight size={19} /></button>
@@ -565,7 +568,7 @@ export function LoginView({ onLogin }) {
   );
 }
 
-export function UserView({ currentUser, attempts, level, token, onBack, onOpenStats, onLogout }) {
+export function UserView({ currentUser, attempts, level, token, onBack, onOpenStats, onOpenFavorites, onLogout }) {
   // 连续学习数据复用统计页 overview 接口；加载失败静默降级，不影响用户页其余内容
   const [streak, setStreak] = useState(null);
   useEffect(() => {
@@ -579,6 +582,15 @@ export function UserView({ currentUser, attempts, level, token, onBack, onOpenSt
       alive = false;
     };
   }, [level, token]);
+  // 收藏入口卡片：只取数量做摘要，列表在 /favorites 页展示
+  const [favoriteCount, setFavoriteCount] = useState<number | null>(null);
+  useEffect(() => {
+    let alive = true;
+    fetchFavorites({}, token)
+      .then((rows) => { if (alive) setFavoriteCount(rows.length); })
+      .catch(() => { if (alive) setFavoriteCount(null); });
+    return () => { alive = false; };
+  }, [token]);
   const badgeEarned = streak !== null && streak.current >= STREAK_BADGE_DAYS;
 
   return (
@@ -613,6 +625,11 @@ export function UserView({ currentUser, attempts, level, token, onBack, onOpenSt
         <ChevronRight size={20} />
       </button>
 
+      <button className="profile-stats-card" onClick={onOpenFavorites} type="button">
+        <span><Star size={22} /></span>
+        <div><strong>试题收藏</strong><small>{favoriteCount === null ? "收藏题目，随时回练" : `${favoriteCount} 道收藏题，点开即练`}</small></div>
+        <ChevronRight size={20} />
+      </button>
 
       <HistoryPanel attempts={attempts} />
 
@@ -640,7 +657,7 @@ function ExitConfirmOverlay({ onStay, onLeave }) {
   );
 }
 
-export function QuizView({ session, onBack, onDiscard, onChoose, onCheck, onNext, onMove, onComplete }) {
+export function QuizView({ session, onBack, onDiscard, onChoose, onCheck, onNext, onMove, onComplete, favorites }) {
   const question = session.questions[session.index];
   const { checked, checkResult } = session;
   const isCorrect = Boolean(checkResult?.is_correct);
@@ -694,7 +711,10 @@ export function QuizView({ session, onBack, onDiscard, onChoose, onCheck, onNext
       </PageHeader>
 
       <section className="question-area">
-        <div className={"book-pill"}>{session.book.categoryLabel} · {session.book.book_name}</div>
+        <div className="question-area-heading">
+          <div className={"book-pill"}>{session.book.categoryLabel} · {session.book.book_name}</div>
+          <FavoriteButton favorites={favorites} source="textbook" questionId={question.id} />
+        </div>
         <h2>{question.stem}</h2>
       </section>
 
@@ -818,6 +838,78 @@ export function ResultView({ attempt, questions = [], todayCount = 0, dailyGoal 
         )))}
       </ResultReview>
     </ResultPage>
+  );
+}
+
+export function FavoritesView({ token, onBack, onOpen }) {
+  const [items, setItems] = useState<any[] | null>(null);
+  const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    let alive = true;
+    fetchFavorites({}, token)
+      .then((rows) => { if (alive) setItems(rows.map(mapFavorite)); })
+      .catch((err) => { if (alive) setError(err.message || "收藏列表加载失败"); });
+    return () => { alive = false; };
+  }, [token]);
+
+  const totalPages = Math.max(1, Math.ceil((items?.length || 0) / WRONG_BOOK_PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageStart = (currentPage - 1) * WRONG_BOOK_PAGE_SIZE;
+  const visibleItems = (items || []).slice(pageStart, pageStart + WRONG_BOOK_PAGE_SIZE);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  return (
+    <section className="wrong-page">
+      <PageHeader onBack={onBack}>
+        <div className="wrong-page-title">
+          <div className="book-pill">试题收藏</div>
+          <p>{error ? "加载失败" : items === null ? "加载中…" : `${items.length} 道收藏题`}</p>
+        </div>
+      </PageHeader>
+
+      {error ? (
+        <div className="center-state error">{error}</div>
+      ) : items === null ? (
+        <p className="empty-history" role="status">正在加载收藏列表…</p>
+      ) : items.length ? (
+        <>
+          <div className="favorites-list">
+            {visibleItems.map((item) => (
+              <button className="favorites-row" key={item.key} onClick={() => onOpen?.(item)} type="button">
+                <div className="favorites-details">
+                  <div className="favorites-stem">{cleanSearchText(item.stem) || "（无题干）"}</div>
+                  <div className="favorites-meta">
+                    <span>{item.level} {item.categoryLabel}</span>
+                    {item.sourceTitle ? <span>{item.sourceTitle}</span> : null}
+                    <span>{formatDate(item.createdAt)}</span>
+                  </div>
+                </div>
+                <ChevronRight size={18} aria-hidden="true" />
+              </button>
+            ))}
+          </div>
+
+          {totalPages > 1 ? (
+            <nav className="favorites-pagination" aria-label="收藏列表分页">
+              <button className="secondary-button" type="button" disabled={currentPage === 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>
+                <ArrowLeft size={18} />上一页
+              </button>
+              <span>第 {currentPage} / {totalPages} 页</span>
+              <button className="secondary-button" type="button" disabled={currentPage === totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))}>
+                下一页<ArrowRight size={18} />
+              </button>
+            </nav>
+          ) : null}
+        </>
+      ) : (
+        <p className="empty-history">还没有收藏题。做题、复习和听力页面的星星按钮可以收藏题目。</p>
+      )}
+    </section>
   );
 }
 

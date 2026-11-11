@@ -28,6 +28,7 @@ import {
   writePracticeMode,
 } from "./lib/appHelpers";
 import { useExamFlow } from "./hooks/useExamFlow";
+import useFavorites from "./hooks/useFavorites";
 import { ExamIntroRoute, ExamReviewRoute, ExamRoute } from "./routes/ExamRoutes";
 import {
   ExamListView,
@@ -44,6 +45,7 @@ import {
   Shell,
   UserView,
   WrongBookView,
+  FavoritesView,
   PRACTICE_CATEGORIES,
 } from "./pages";
 
@@ -75,6 +77,8 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [booksLoading, setBooksLoading] = useState(false);
   const [error, setError] = useState("");
+  // 收藏态：进入做题/复习/听力场景拉一次 ids 存内存，按钮据此显示；模考进行中不显示收藏按钮
+  const favorites = useFavorites(authToken);
   const {
     examSession, setExamSession, examStarting, examSectionStarting, examSubmitting, examSaveState,
     loadExam, startExam, resumeExam, abandonExam, loadExamIntro, beginExam, reviewExamAttempt, loadExamReview,
@@ -440,6 +444,52 @@ function App() {
     preparePractice(source, quiz, "wrong_review");
   }
 
+  // 收藏题「点开即练」：听力走深链，真题进专项单题模式，教材题取单题卷直接进 /quiz，
+  // 不经过 /practice-setup 的模式选择，练习模式沿用上次使用（readPracticeMode）。
+  async function startFavoriteTextbookQuestion(questionId) {
+    if (!questionId) return;
+    setError("");
+    const quiz = await api(`/api/questions/${questionId}/quiz`, {}, authToken);
+    const source = {
+      id: null,
+      book_id: null,
+      book_name: "收藏题练习",
+      level: quiz.level,
+      subject: quiz.subject,
+      subjectLabel: quiz.subject_label,
+      categoryLabel: `${quiz.level} ${quiz.subject_label}`,
+    };
+    startSession(source, quiz, "favorite_review", readPracticeMode());
+  }
+
+  async function startFavoriteExamQuestion(item) {
+    if (item.category === "listening") {
+      navigate(`/listening/${item.examId}/${item.questionId}`);
+      return;
+    }
+    setError("");
+    const row = await api(`/api/exam-practice/questions/${item.questionId}`, {}, authToken);
+    const questions = mapPracticeQuestions([row], "favorite");
+    const categoryLabel = (PRACTICE_CATEGORIES[item.category] || PRACTICE_CATEGORIES.vocabulary).label;
+    setGrammarPractice(makePracticeSession({
+      config: { mode: "random", feedbackMode: readPracticeMode(), category: item.category, count: 1 },
+      level,
+      title: `${categoryLabel}收藏题`,
+      layers: practiceLayers(questions, "收藏题"),
+      questions,
+    }));
+    navigate(`/${item.category}-practice`);
+  }
+
+  async function openFavorite(item) {
+    try {
+      if (item.source === "exam") await startFavoriteExamQuestion(item);
+      else await startFavoriteTextbookQuestion(item.questionId);
+    } catch (err) {
+      setError(`无法打开该题：${err.message}`);
+    }
+  }
+
   function preparePractice(source, quiz, mode) {
     setPendingPractice({ source, quiz, mode });
     navigate("/practice-setup");
@@ -636,7 +686,7 @@ function App() {
   return (
     <Shell>
       <Routes>
-        <Route path="/listening/:examId?/:questionId?" element={<Listening key={currentUser.id} userId={currentUser.id} token={authToken} globalLevel={level} />} />
+        <Route path="/listening/:examId?/:questionId?" element={<Listening key={currentUser.id} userId={currentUser.id} token={authToken} globalLevel={level} favorites={favorites} />} />
         <Route
           path="/"
           element={(
@@ -696,6 +746,7 @@ function App() {
                 onCheck={checkGrammarQuestions}
                 onSubmit={submitGrammarPractice}
                 submitting={practiceSubmitting}
+                favorites={favorites}
               />
             ) : (
               <GrammarPracticeSetupView
@@ -722,7 +773,9 @@ function App() {
                     ? startMixedTest()
                     : session.mode === "wrong_review"
                       ? startWrongReview()
-                      : startBook(session.book || selectedBook)
+                      : session.mode === "favorite_review"
+                        ? startFavoriteTextbookQuestion(session.questions[0]?.id)
+                        : startBook(session.book || selectedBook)
                 )}
                 onLibrary={resetToLibrary}
                 onReviewWrong={reviewAttemptWrong}
@@ -737,11 +790,16 @@ function App() {
                 onNext={nextQuestion}
                 onMove={moveQuizQuestion}
                 onComplete={completeImmersiveQuiz}
+                favorites={favorites}
               />
             ) : (
               <Navigate to="/" replace />
             )
           }
+        />
+        <Route
+          path="/favorites"
+          element={<FavoritesView token={authToken} onBack={resetToLibrary} onOpen={openFavorite} />}
         />
         <Route
           path="/wrong"
@@ -776,6 +834,7 @@ function App() {
               token={authToken}
               onBack={resetToLibrary}
               onOpenStats={() => navigate("/stats")}
+              onOpenFavorites={() => navigate("/favorites")}
               onLogout={logout}
             />
           )}
@@ -834,6 +893,7 @@ function App() {
               onLoadReview={loadExamReview}
               onBack={resetToExamList}
               onRepeat={startExam}
+              favorites={favorites}
             />
           )}
         />

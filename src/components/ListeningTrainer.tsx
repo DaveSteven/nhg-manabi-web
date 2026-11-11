@@ -3,6 +3,7 @@ import { CheckCircle2, CircleAlert, Eye, EyeOff, Pause, Play, RotateCcw, Volume2
 import { api, assetSrc } from "../lib/study";
 import { analysisParagraphs, plain, segments, translationLines } from "../lib/listening";
 import UiSelect from "./UiSelect";
+import FavoriteButton from "./FavoriteButton";
 
 const MODE_FULL = "整题练习";
 const MODE_FOCUS = "逐段精听";
@@ -132,7 +133,7 @@ function AnswerFeedback({ result, question, choice, onFocusMode }: any) {
   );
 }
 
-export default function ListeningTrainer({ question: q, examId, token, saved, feedbackMode = "instant", onSave, onNext }) {
+export default function ListeningTrainer({ question: q, examId, token, saved, feedbackMode = "instant", onSave, onNext, favorites }) {
   const audio = useRef<HTMLAudioElement>(null);
   const range = useRef<any>(null);
   const transcriptList = useRef<HTMLDivElement>(null);
@@ -331,7 +332,10 @@ export default function ListeningTrainer({ question: q, examId, token, saved, fe
       <div className="listening-main-column">
       <div className="listening-card listening-content">
         <div className="listening-content-heading">
-          <h2>{mode === MODE_FOCUS ? "逐段精听" : "听力题目"}</h2>
+          <div className="listening-heading-main">
+            <h2>{mode === MODE_FOCUS ? "逐段精听" : "听力题目"}</h2>
+            <FavoriteButton favorites={favorites} source="exam" questionId={q.id} />
+          </div>
           <span>{mode === MODE_FOCUS ? `${rows.length} 个片段 · 按需展开原文` : "听完音频后选择答案"}</span>
           {mode === MODE_FOCUS ? <button className="secondary-button listening-return-full" onClick={() => changeMode(MODE_FULL)} type="button">返回整题</button> : null}
         </div>
