@@ -147,6 +147,33 @@
 .profile-stats-card > svg { flex-shrink: 0; }
 .profile-stats-card > svg { color: var(--primary); }
 
+/* B5：连续学习行 —— 达成 7 天后升级为樱花徽章 */
+.profile-streak {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-6);
+  border-radius: var(--r-lg);
+  color: var(--muted);
+  background: var(--surface);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.profile-streak svg {
+  flex-shrink: 0;
+}
+
+.profile-streak.earned {
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  border: 1px solid var(--primary);
+}
+
+.profile-streak.earned strong {
+  font-weight: var(--fw-bold);
+}
+
 .new-user-form {
   display: grid;
   gap: 12px;

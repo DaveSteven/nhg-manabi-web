@@ -17,9 +17,11 @@ import {
   RotateCcw,
   Search,
   Target,
+  Cherry,
+  Flame,
   X,
 } from "lucide-react";
-import { LEVELS, SUBJECTS, api, formatDate, pct, subjectLabel } from "../lib/study";
+import { LEVELS, SUBJECTS, api, fetchStatsOverview, formatDate, pct, subjectLabel } from "../lib/study";
 import UiSelect from "../components/UiSelect";
 import { Tooltip } from "../components/Tooltip";
 import { HtmlInline } from "../components/Html";
@@ -34,6 +36,8 @@ export * from "./PracticePages";
 const WEAK_ACCURACY = 60;
 const MASTERED_ACCURACY = 85;
 const WRONG_BOOK_PAGE_SIZE = 10;
+// B5 遗留项：连续学习达成天数，点亮用户页樱花徽章
+const STREAK_BADGE_DAYS = 7;
 
 // 靠近网格左右边缘的方块，tooltip 改为贴边对齐，避免气泡超出页面
 function alignLessonTip(event) {
@@ -79,7 +83,6 @@ export function LibraryView({
   onOpenExamList,
   onOpenListening,
   onOpenWrongBook,
-  onOpenStats,
   onOpenUser,
   onSearch,
 }) {
@@ -162,14 +165,6 @@ export function LibraryView({
             {wrongItems.length ? (
               <span className="wrong-badge">{wrongItems.length}</span>
             ) : null}
-          </button>
-          <button
-            className="wrong-icon-button"
-            onClick={onOpenStats}
-            type="button"
-            aria-label="数据中心"
-          >
-            <BarChart3 size={23} />
           </button>
           <button
             className="avatar-button"
@@ -570,7 +565,22 @@ export function LoginView({ onLogin }) {
   );
 }
 
-export function UserView({ currentUser, attempts, onBack, onOpenStats, onLogout }) {
+export function UserView({ currentUser, attempts, level, token, onBack, onOpenStats, onLogout }) {
+  // 连续学习数据复用统计页 overview 接口；加载失败静默降级，不影响用户页其余内容
+  const [streak, setStreak] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    fetchStatsOverview(level, token)
+      .then((data) => {
+        if (alive && data?.streak) setStreak(data.streak);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [level, token]);
+  const badgeEarned = streak !== null && streak.current >= STREAK_BADGE_DAYS;
+
   return (
     <section className="user-page">
       <PageHeader onBack={onBack}>
@@ -585,6 +595,17 @@ export function UserView({ currentUser, attempts, onBack, onOpenStats, onLogout 
         </div>
         <button className="secondary-button logout-button" onClick={onLogout} type="button"><LogOut size={18} aria-hidden="true" />退出登录</button>
       </section>
+
+      {streak ? (
+        <div className={badgeEarned ? "profile-streak earned" : "profile-streak"} aria-label="连续学习">
+          {badgeEarned ? <Cherry size={18} aria-hidden="true" /> : <Flame size={18} aria-hidden="true" />}
+          {badgeEarned ? (
+            <span><strong>7 日连续学习达成</strong> · 已连续 {streak.current} 天（最长 {streak.longest} 天）</span>
+          ) : (
+            <span>连续学习 {streak.current} 天，坚持 7 天点亮樱花徽章</span>
+          )}
+        </div>
+      ) : null}
 
       <button className="profile-stats-card" onClick={onOpenStats} type="button">
         <span><BarChart3 size={22} /></span>

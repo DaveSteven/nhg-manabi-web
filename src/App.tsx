@@ -666,7 +666,6 @@ function App() {
               onOpenListening={() => navigate("/listening")}
               onOpenExamList={() => navigate("/exams")}
               onOpenWrongBook={() => navigate("/wrong")}
-              onOpenStats={() => navigate("/stats")}
               onOpenUser={() => navigate("/user")}
               onSearch={(query) => navigate(`/search?q=${encodeURIComponent(query)}`)}
             />
@@ -773,6 +772,8 @@ function App() {
             <UserView
               currentUser={currentUser}
               attempts={learningAttempts}
+              level={level}
+              token={authToken}
               onBack={resetToLibrary}
               onOpenStats={() => navigate("/stats")}
               onLogout={logout}
