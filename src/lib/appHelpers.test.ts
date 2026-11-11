@@ -29,6 +29,20 @@ describe("practiceQuestionGroups", () => {
     const groups = practiceQuestionGroups(questions);
     expect(groups.map((group) => group.questions.map((question) => question.id))).toEqual([[1, 2], [3], [4]]);
   });
+
+  it("splits a multi-article layer into one group per passage", () => {
+    const questions = [
+      { id: 1, question_type: 32, exam_id: 8, layer_id: 10, passage: "<p>甲の文章</p>" },
+      { id: 2, question_type: 32, exam_id: 8, layer_id: 10, passage: "<p>甲の文章</p>" },
+      { id: 3, question_type: 32, exam_id: 8, layer_id: 10, passage: "<p>乙の文章</p>" },
+      { id: 4, question_type: 32, exam_id: 8, layer_id: 10, passage: "<p><br></p>" },
+      { id: 5, question_type: 36, exam_id: 8, layer_id: 10 },
+    ];
+    const groups = practiceQuestionGroups(questions);
+    expect(groups.map((group) => group.questions.map((question) => question.id))).toEqual([[1, 2], [3], [4, 5]]);
+    // 空壳 passage（纯标签）不能当分组键，要与无文章小题并成整层组
+    expect(groups[2].passage).toBe("<p><br></p>");
+  });
 });
 
 describe("countTodayQuestions", () => {

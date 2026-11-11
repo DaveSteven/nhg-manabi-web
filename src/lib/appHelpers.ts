@@ -219,7 +219,15 @@ export function practiceQuestionGroups(questions) {
   const byKey = new Map<string, any>();
   questions.forEach((question, index) => {
     const shared = question.question_type === 23 || (question.question_type >= 31 && question.question_type <= 36);
-    const key = shared ? `${question.source_exam_id || "exam"}:${question.source_layer_id || question.layer_id || question.passage || index}` : `question:${question.id}`;
+    // 一层可能装多篇文章（如短編読解 3 篇 × 小题）：有可见文章按文章分组，
+    // 无文章的（信息检索整页图）保持整层一组，材料图不拆散。
+    const visiblePassage = (question.passage || "")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/&nbsp;|&#160;/gi, " ")
+      .trim();
+    const examKey = question.source_exam_id || question.exam_id || "exam";
+    const layerKey = question.source_layer_id || question.layer_id || index;
+    const key = shared ? `${examKey}:${visiblePassage ? `p:${visiblePassage}` : `l:${layerKey}`}` : `question:${question.id}`;
     let group = byKey.get(key);
     if (!group) {
       group = {
