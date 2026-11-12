@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import Listening from "./Listening";
 import { SESSION_TOKEN_KEY } from "../lib/study";
+import { useListeningStore } from "../stores/listening";
 
 const userId = 1;
 const progressKey = `listening:${userId}`;
@@ -65,6 +66,8 @@ async function startExamPractice() {
 
 beforeEach(() => {
   localStorage.clear();
+  // 练习会话在 persist store：跨用例重置，避免上一用例的 practiceSession 恢复
+  useListeningStore.setState({ progressByUser: {}, practiceSession: null });
   localStorage.setItem(SESSION_TOKEN_KEY, "test-token");
   vi.stubGlobal("fetch", vi.fn(fakeFetch));
 });

@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CheckCircle2, ClipboardList, Play, RotateCcw } from "lucide-react";
 import { api, assetSrc, mapPracticeAttempt, pct } from "../lib/study";
-import { LISTENING_TYPES, listeningGroupLabel, plain, readProgress, segments } from "../lib/listening";
+import { LISTENING_TYPES, listeningGroupLabel, plain, segments } from "../lib/listening";
+import { useListeningStore } from "../stores/listening";
 import UiSelect from "../components/UiSelect";
 import ListeningTrainer from "../components/ListeningTrainer";
 import { ModalOverlay, PageHeader, TitleBlock } from "../components/CommonUi";
@@ -10,7 +11,7 @@ import { ResultFilter, ResultGroupCard, ResultPage, ResultQuestion, ResultReview
 import { HtmlContent, hasVisibleHtml } from "../components/Html";
 import { ZoomImage } from "../components/ZoomImage";
 import { ChoiceCard, ConfigSection } from "./PracticePages";
-import { readPracticeMode, writePracticeMode } from "../lib/appHelpers";
+import { isQuizSessionExpired, readPracticeMode, writePracticeMode } from "../lib/appHelpers";
 
 const COUNT_OPTIONS = [5, 10, 20, 30];
 const isListeningType = (type: number) => type >= 41 && type <= 46;
@@ -160,8 +161,25 @@ function ExamQuestionGroups({ groups, detail, questions, progress, onOpen }) {
 export default function Listening({ userId, token, globalLevel: level, favorites = null }) {
   const { examId, questionId } = useParams();
   const navigate = useNavigate();
-  const key = `listening:${userId}`;
-  const [progress, setProgress] = useState(() => readProgress(key));
+  // T-022 刀三：听力进度在 zustand persist store（旧 localStorage 键已收编迁移）
+  const progressByUser = useListeningStore((state) => state.progressByUser);
+  const saveProgressStore = useListeningStore((state) => state.saveProgress);
+  const progress = progressByUser[userId] || {};
+  // 听力专项练习会话也持久化（刷新恢复）：按账号隔离 + 无完成结果的会话 72h 超期后不再恢复
+  const storedPracticeSession = useListeningStore((state) => state.practiceSession);
+  const setPracticeSessionStore = useListeningStore((state) => state.setPracticeSession);
+  const practiceSession = storedPracticeSession?.userId === userId
+    && (storedPracticeSession.finishedAttempt || !isQuizSessionExpired({ startedAt: storedPracticeSession.startedAt }))
+    ? storedPracticeSession
+    : null;
+
+  function setPracticeSession(updater) {
+    setPracticeSessionStore((current) => {
+      const currentForUser = current?.userId === userId ? current : null;
+      const next = typeof updater === "function" ? updater(currentForUser) : updater;
+      return next ? { ...next, userId } : next;
+    });
+  }
   const [exams, setExams] = useState<any[]>([]);
   const [detail, setDetail] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
@@ -173,16 +191,11 @@ export default function Listening({ userId, token, globalLevel: level, favorites
   const [practiceTypes, setPracticeTypes] = useState(LISTENING_TYPES.map((item) => item.id));
   const [practiceCount, setPracticeCount] = useState(10);
   const [feedbackMode, setFeedbackMode] = useState(readPracticeMode);
-  const [practiceSession, setPracticeSession] = useState<any>(null);
   const [starting, setStarting] = useState(false);
   const [showExit, setShowExit] = useState(false);
 
   function save(patch) {
-    setProgress((p) => {
-      const next = { ...p, ...patch };
-      try { localStorage.setItem(key, JSON.stringify(next)); } catch { setError("无法保存进度，请检查浏览器存储空间。"); }
-      return next;
-    });
+    saveProgressStore(userId, patch);
   }
 
   useEffect(() => {
@@ -253,7 +266,7 @@ export default function Listening({ userId, token, globalLevel: level, favorites
       if (!pool.length) throw new Error("所选条件下没有可用的听力题目");
       const selected = practiceMode === "random" ? [...pool].sort(() => Math.random() - 0.5).slice(0, Math.min(practiceCount, pool.length)) : pool;
       writePracticeMode(feedbackMode);
-      setPracticeSession({ questions: selected, index: 0, answers: {}, feedbackMode, saving: false, finishedAttempt: null });
+      setPracticeSession({ questions: selected, index: 0, answers: {}, feedbackMode, saving: false, finishedAttempt: null, startedAt: new Date().toISOString() });
     } catch (e) {
       setError(`组题失败：${e.message}`);
     } finally {

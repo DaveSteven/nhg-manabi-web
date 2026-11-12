@@ -14,7 +14,7 @@ import { useExamSessionStore } from "../stores/examSession";
  *  T-022 刀一：会话与保存状态存于 useExamSessionStore，本 hook 退化为 actions 层（签名不变）。
  *  模考域拉取（exam detail / questions / run / runs 列表）经 Query 缓存（fetchQuery，去重 + 短 staleTime）；
  *  进行中 run 的恢复依据改为服务端（GET /api/exam-runs），localStorage 考试缓存降级为 index/answers 加速缓存。 */
-export function useExamFlow({ navigate, authToken, currentUser, exams, level, refreshStudyData, setExamRuns, setError, onLeave }) {
+export function useExamFlow({ navigate, authToken, currentUser, exams, level, refreshStudyData, onExamRunAbandoned, setError, onLeave }) {
   const queryClient = useQueryClient();
   const examSession = useExamSessionStore((state) => state.examSession);
   const examStarting = useExamSessionStore((state) => state.examStarting);
@@ -124,7 +124,7 @@ export function useExamFlow({ navigate, authToken, currentUser, exams, level, re
     await api(`/api/exam-runs/${run.id}/abandon`, { method: "POST" }, authToken);
     clearExamCache(currentUser.id, exam.id);
     queryClient.invalidateQueries({ queryKey: ["exam-runs"] });
-    setExamRuns((rows) => rows.filter((item) => item.id !== run.id));
+    onExamRunAbandoned?.();
   }
 
   async function loadExamIntro(examId) {

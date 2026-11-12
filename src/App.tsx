@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   DEFAULT_LEVEL,
   SUBJECTS,
@@ -35,6 +36,7 @@ import {
 } from "./lib/appHelpers";
 import { useExamFlow } from "./hooks/useExamFlow";
 import useFavorites from "./hooks/useFavorites";
+import { fetchBooks, useBooks, useExams, useStudyData } from "./hooks/useLibraryData";
 import { ExamIntroRoute, ExamReviewRoute, ExamRoute } from "./routes/ExamRoutes";
 import {
   ExamListView,
@@ -60,11 +62,8 @@ import { PracticeResultView } from "./pages/PracticeResult";
 
 function App() {
   const navigate = useNavigate();
-  const [books, setBooks] = useState([]);
-  const [exams, setExams] = useState([]);
-  const [examAttempts, setExamAttempts] = useState([]);
-  const [examRuns, setExamRuns] = useState([]);
-  const [practiceAttempts, setPracticeAttempts] = useState([]);
+  // T-022 刀三：books/exams/学习数据（错题、作答记录等）迁 Query 缓存，替换内存 cache ref
+  const queryClient = useQueryClient();
   // T-022 刀一：auth 状态在 useAuthStore（zustand persist，只存 token）
   const currentUser = useAuthStore((state) => state.currentUser);
   const authToken = useAuthStore((state) => state.token);
@@ -86,39 +85,38 @@ function App() {
   const [selectedBook, setSelectedBook] = useState(null);
   const [practiceMode, setPracticeMode] = useState(readPracticeMode);
   const [pendingPractice, setPendingPractice] = useState(null);
-  const [attempts, setAttempts] = useState([]);
-  const [wrongItems, setWrongItems] = useState([]);
-  const [practiceWrongItems, setPracticeWrongItems] = useState([]);
   const [dailyGoal, setDailyGoal] = useState(() => readDailyGoal());
   const [loading, setLoading] = useState(true);
-  const [booksLoading, setBooksLoading] = useState(false);
   const [error, setError] = useState("");
   // 收藏态：进入做题/复习/听力场景拉一次 ids 存内存，按钮据此显示；模考进行中不显示收藏按钮
   const favorites = useFavorites(authToken);
+  const booksQuery = useBooks(level, subject, authToken, currentUser?.id);
+  const examsQuery = useExams(level, authToken, currentUser?.id);
+  const studyQuery = useStudyData(level, authToken, currentUser?.id);
+  const books = booksQuery.data || [];
+  const exams = examsQuery.data || [];
+  const attempts = studyQuery.data?.attempts || [];
+  const wrongItems = studyQuery.data?.wrongItems || [];
+  const examAttempts = studyQuery.data?.examAttempts || [];
+  const examRuns = studyQuery.data?.examRuns || [];
+  const practiceAttempts = studyQuery.data?.practiceAttempts || [];
+  const practiceWrongItems = studyQuery.data?.practiceWrongItems || [];
+  const booksLoading = booksQuery.isFetching && !booksQuery.data;
   const {
     examSession, setExamSession, examStarting, examSectionStarting, examSubmitting, examSaveState,
     loadExam, startExam, resumeExam, abandonExam, loadExamIntro, beginExam, reviewExamAttempt, loadExamReview,
     chooseExamOption, retryExamSave, moveExamQuestion, submitExam, startNextExamSection, leaveActiveExam,
-  } = useExamFlow({ navigate, authToken, currentUser, exams, level, refreshStudyData, setExamRuns, setError, onLeave: () => resetToExamList() });
-  const booksCache = useRef(new Map());
-  const booksInflight = useRef(new Map());
-  const levelDataCache = useRef(new Map());
+  } = useExamFlow({ navigate, authToken, currentUser, exams, level, refreshStudyData, onExamRunAbandoned: invalidateStudyData, setError, onLeave: () => resetToExamList() });
   // T-022 刀二：quiz/专项练习进度串行保存队列（镜像模考 examSaveQueue 模式）
   const quizSaveQueue = useRef(Promise.resolve());
   const quizSaveVersion = useRef(0);
 
-  function applyStudyData(data) {
-    setAttempts(data.attempts);
-    setWrongItems(data.wrongItems);
-    setExamAttempts(data.examAttempts);
-    setExamRuns(data.examRuns);
-    setPracticeAttempts(data.practiceAttempts);
-    setPracticeWrongItems(data.practiceWrongItems);
+  function invalidateStudyData() {
+    return queryClient.invalidateQueries({ queryKey: ["study-data", currentUser?.id, level] });
   }
 
-  async function refreshStudyData(nextLevel = level, token = authToken) {
-    if (!token) return;
-    applyStudyData(await fetchStudyData(nextLevel, token));
+  async function refreshStudyData() {
+    await invalidateStudyData();
   }
 
   // ---- T-022 刀二：practice_sessions 同步（串行队列；无 sessionId 时为纯内存会话，队列空转） ----
@@ -273,81 +271,25 @@ function App() {
     };
   }, [authToken, currentUser?.id]);
 
-  function fetchBooks(targetLevel, targetSubject) {
-    const key = `${targetLevel}:${targetSubject}`;
-    const pending = booksInflight.current.get(key);
-    if (pending) return pending;
-    const request = api(`/api/books?level=${targetLevel}&subject=${targetSubject}`, {}, authToken)
-      .then((rows) => {
-        const mapped = rows.map(mapBook);
-        booksCache.current.set(key, mapped);
-        return mapped;
-      })
-      .finally(() => booksInflight.current.delete(key));
-    booksInflight.current.set(key, request);
-    return request;
-  }
-
+  // 拉取失败统一透出到页面错误条
   useEffect(() => {
-    let ignore = false;
-    async function loadBooks() {
-      if (!authToken || !currentUser) return;
-      const cacheKey = `${level}:${subject}`;
-      const cached = booksCache.current.get(cacheKey);
-      // 命中缓存时直接展示，避免清空列表导致页面高度塌陷再撑开（切换 tab 抖动）
-      if (cached) setBooks(cached);
-      setBooksLoading(!cached);
-      try {
-        const mappedBooks = await fetchBooks(level, subject);
-        if (!ignore) setBooks(mappedBooks);
-      } catch (err) {
-        if (!ignore) setError(`データを読み込めませんでした: ${err.message}`);
-      } finally {
-        if (!ignore) setBooksLoading(false);
-      }
-      // 后台预取同等级的其他科目，让首次切换 tab 也能命中缓存
-      SUBJECTS.forEach((item) => {
-        if (item.id !== subject && !booksCache.current.has(`${level}:${item.id}`)) {
-          fetchBooks(level, item.id).catch(() => {});
-        }
-      });
-    }
-    loadBooks();
-    return () => {
-      ignore = true;
-    };
-  }, [level, subject, currentUser?.id, authToken]);
+    const queryError = booksQuery.error || examsQuery.error || studyQuery.error;
+    if (queryError) setError(`データを読み込めませんでした: ${queryError.message}`);
+  }, [booksQuery.error, examsQuery.error, studyQuery.error]);
 
+  // 后台预取同等级其他科目的 books，让首次切换 tab 也能命中缓存
   useEffect(() => {
-    let ignore = false;
-    async function loadLevelData() {
-      if (!authToken || !currentUser) return;
-      const cacheKey = `${currentUser.id}:${level}`;
-      const cached = levelDataCache.current.get(cacheKey);
-      if (cached) {
-        setExams(cached.exams);
-        applyStudyData(cached);
+    if (!authToken || !currentUser) return;
+    SUBJECTS.forEach((item) => {
+      if (item.id !== subject) {
+        queryClient.prefetchQuery({
+          queryKey: ["books", currentUser.id, level, item.id],
+          queryFn: () => fetchBooks(level, item.id, authToken),
+          staleTime: 60_000,
+        });
       }
-      try {
-        const [examRows, studyData] = await Promise.all([
-          api(`/api/exams?level=${level}`, {}, authToken),
-          fetchStudyData(level, authToken),
-        ]);
-        const nextData = { exams: examRows.map(mapExam), ...studyData };
-        levelDataCache.current.set(cacheKey, nextData);
-        if (!ignore) {
-          setExams(nextData.exams);
-          applyStudyData(nextData);
-        }
-      } catch (err) {
-        if (!ignore) setError(`データを読み込めませんでした: ${err.message}`);
-      }
-    }
-    loadLevelData();
-    return () => {
-      ignore = true;
-    };
-  }, [level, currentUser?.id, authToken]);
+    });
+  }, [authToken, currentUser, level, subject, queryClient]);
 
   const changePracticeMode = (mode) => { writePracticeMode(mode); setPracticeMode(mode); };
 
@@ -463,7 +405,7 @@ function App() {
       return { exam, detail, questions };
     }));
     const allowedTypes = new Set(config.types.map(Number));
-    const layerImageByExam = new Map(loaded.map(({ detail }) => [detail.id, new Map((detail.layers || []).map((layer) => [layer.id, layer.image_url || ""]))]));
+    const layerImageByExam = new Map<number, Map<number, string>>(loaded.map(({ detail }) => [detail.id, new Map((detail.layers || []).map((layer) => [layer.id, layer.image_url || ""]))]));
     const questions = loaded.flatMap(({ exam, questions }) => questions
       .filter((question) => allowedTypes.has(question.question_type))
       .map((question) => ({
@@ -554,7 +496,7 @@ function App() {
       if (grammarPractice?.sessionId) {
         enqueueQuizSave(() => completePracticeSession(authToken, grammarPractice.sessionId).catch(() => null));
       }
-      await refreshStudyData(level, authToken);
+      await refreshStudyData();
     } catch (error) {
       setError("");
       setGrammarPractice((current) => ({ ...current, saveError: error.message || "保存失败，请重试" }));
@@ -790,7 +732,7 @@ function App() {
       if (session?.sessionId) {
         enqueueQuizSave(() => completePracticeSession(authToken, session.sessionId).catch(() => null));
       }
-      await refreshStudyData(level, authToken);
+      await refreshStudyData();
       setSession((current) => ({ ...current, saving: false, finishedAttempt: saved }));
     } catch (error) {
       setSession((current) => ({ ...current, saving: false, saveError: error.message || "保存失败，请重试" }));
@@ -839,9 +781,8 @@ function App() {
     clearAuth();
     setSession(null);
     setGrammarPractice(null);
-    setAttempts([]);
-    setExamAttempts([]);
-    setWrongItems([]);
+    // 清空 Query 缓存，避免跨账号读到上一账号的 books/exams/学习数据
+    queryClient.clear();
     resetTo("/");
   }
 

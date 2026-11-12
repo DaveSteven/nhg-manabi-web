@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
   BarChart3,
@@ -202,30 +203,30 @@ function ExamScoreChart({ points, onReviewAttempt }) {
 }
 
 export function StatsView({ level, token, onBack, onAction, onExams, onReviewAttempt }) {
-  const [overview, setOverview] = useState(null);
-  const [trend, setTrend] = useState([]);
-  const [examStats, setExamStats] = useState(null);
+  // T-022 刀三：统计拉取迁 Query（overview/trend/exam-score 三域独立缓存）
   const [days, setDays] = useState(90);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const overviewQuery = useQuery({
+    queryKey: ["stats-overview", level],
+    queryFn: () => fetchStatsOverview(level, token),
+    enabled: Boolean(token),
+    staleTime: 60_000,
+  });
+  const trendQuery = useQuery({
+    queryKey: ["stats-trend", level, days],
+    queryFn: () => fetchStatsTrend({ level, days, granularity: days <= 90 ? "day" : "week" }, token),
+    enabled: Boolean(token),
+    staleTime: 60_000,
+  });
+  const examStatsQuery = useQuery({
+    queryKey: ["stats-exams", level],
+    queryFn: () => fetchStatsExams(level, token),
+    enabled: Boolean(token),
+    staleTime: 60_000,
+  });
 
-  useEffect(() => {
-    let ignore = false;
-    setLoading(true);
-    setError("");
-    Promise.all([
-      fetchStatsOverview(level, token),
-      fetchStatsTrend({ level, days, granularity: days <= 90 ? "day" : "week" }, token),
-      fetchStatsExams(level, token),
-    ]).then(([nextOverview, nextTrend, nextExamStats]) => {
-      if (!ignore) { setOverview(nextOverview); setTrend(nextTrend.points); setExamStats(nextExamStats); }
-    }).catch((reason) => {
-      if (!ignore) setError(reason.message || "统计数据加载失败");
-    }).finally(() => {
-      if (!ignore) setLoading(false);
-    });
-    return () => { ignore = true; };
-  }, [days, level, token]);
+  const overview = overviewQuery.data ?? null;
+  const trend = trendQuery.data?.points ?? [];
+  const examStats = examStatsQuery.data ?? null;
 
   const comparison = useMemo(() => compareRecentActivity(overview?.activity || []), [overview]);
   const weakest = useMemo(() => {
@@ -241,8 +242,9 @@ export function StatsView({ level, token, onBack, onAction, onExams, onReviewAtt
     return measured.sort((left, right) => left.accuracy - right.accuracy)[0] || null;
   }, [examPerformance]);
 
-  if (loading && !overview) return <div className="center-state">加载中…</div>;
-  if (error && !overview) return <div className="center-state error">{error}</div>;
+  const loadError = overviewQuery.error || trendQuery.error || examStatsQuery.error;
+  if (overviewQuery.isPending) return <div className="center-state">加载中…</div>;
+  if (loadError && !overview) return <div className="center-state error">{loadError.message || "统计数据加载失败"}</div>;
 
   const totals = overview.totals;
   const hasData = totals.questions_answered > 0;
