@@ -11,11 +11,25 @@ import {
 import { BilingualTranscript, HtmlContent } from "./Html";
 import { ReviewMark, ReviewOptions } from "./CommonUi";
 import { Tooltip } from "./Tooltip";
-import FavoriteButton from "./FavoriteButton";
+import FavoriteButton, { FavoriteGroupButton } from "./FavoriteButton";
 import { QuestionPersonalBadge } from "./QuestionPersonalBadge";
 import { useKeyboardAnswer } from "../hooks/useKeyboardAnswer";
 
 const pad2 = (n) => String(n).padStart(2, "0");
+
+/** 共享材料题（T-021/D13 组级收藏范围）：听读解的 23 与 31–36。 */
+function isSharedMaterialQuestion(question) {
+  const type = question?.question_type || 0;
+  return type === 23 || (type >= 31 && type <= 36);
+}
+
+/** 与 groupReviewItemsByPassage 同口径的「可见文章」判定。 */
+function hasVisiblePassage(passage) {
+  return Boolean((passage || "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .trim());
+}
 
 /** Group consecutive problem sections that share the same part label (语言知识 / 阅读 / 听力). */
 function groupByPart(problemSections) {
@@ -80,7 +94,7 @@ export function ListeningExamPlayer({ audioRef, audioUrl, audioError, started, o
   );
 }
 
-function ReviewItem({ question, answer, displayNumber, index, hasGroupPassage, favorites, personalStats }) {
+function ReviewItem({ question, answer, displayNumber, index, hasGroupPassage, inGroup = false, favorites, personalStats }) {
   const reading = isReadingQuestion(question);
   const listening = isListeningQuestion(question);
   const plain = !listening && !reading;
@@ -93,7 +107,7 @@ function ReviewItem({ question, answer, displayNumber, index, hasGroupPassage, f
           <span className="review-question-number">{displayNumber}</span>
           <div className="review-title"><HtmlContent html={answer.title || question?.title || ""} /></div>
           <QuestionPersonalBadge stats={personalStats} questionId={answer.questionId} />
-          <FavoriteButton favorites={favorites} source="exam" questionId={answer.questionId} />
+          {!inGroup ? <FavoriteButton favorites={favorites} source="exam" questionId={answer.questionId} /> : null}
         </div>
         {question?.image_url ? <ZoomImage className="review-image" src={assetSrc(question.image_url)} /> : null}
         {question?.media_url ? <audio className="exam-audio compact" controls src={assetSrc(question.media_url)} /> : null}
@@ -190,32 +204,51 @@ export function ExamReview({ reviewProblemGroups, answerByQuestion, answerForQue
         {reviewProblemGroups.map((group) => (
           <section className="review-part-block" key={group.label}>
             <div className="review-part-heading">{group.label}</div>
-            {group.sections.map((section) => (
-              <section className="review-problem-block" key={section.id}>
-                <div className="review-problem-heading">{section.problemLabel}</div>
-                {section.layer?.image_url ? <ZoomImage className="review-image" src={assetSrc(section.layer.image_url)} /> : null}
-                {groupReviewItemsByPassage(section.items).map((passageGroup, groupIndex) => (
-                  <section
-                    className={`review-passage-group ${passageGroup.passage ? "has-shared-passage" : "single-question-group"}`}
-                    key={`${section.id}-${passageGroup.key}-${groupIndex}`}
-                  >
-                    <PassageGroupHeader group={passageGroup} />
-                    {passageGroup.items.map(({ question, index, displayNumber }) => (
-                      <ReviewItem
-                        key={`${question.id}-${index}`}
-                        question={question}
-                        answer={answerForQuestion(question)}
-                        displayNumber={displayNumber}
-                        index={index}
-                        hasGroupPassage={Boolean(passageGroup.passage)}
-                        favorites={favorites}
-                        personalStats={personalStats}
-                      />
-                    ))}
-                  </section>
-                ))}
-              </section>
-            ))}
+            {group.sections.map((section) => {
+              // 信息检索等无文章共享材料：整层数一题一组，组星放問題层级（回顾页无现成层组头容器）。
+              const sectionQuestionIds = section.items.map(({ question }) => question.id);
+              const sectionAsGroup = isSharedMaterialQuestion(section.items[0]?.question)
+                && section.items.every(({ question }) => !hasVisiblePassage(question.passage));
+              return (
+                <section className="review-problem-block" key={section.id}>
+                  <div className="review-problem-heading-row">
+                    <div className="review-problem-heading">{section.problemLabel}</div>
+                    {sectionAsGroup ? <FavoriteGroupButton favorites={favorites} source="exam" questionIds={sectionQuestionIds} /> : null}
+                  </div>
+                  {section.layer?.image_url ? <ZoomImage className="review-image" src={assetSrc(section.layer.image_url)} /> : null}
+                  {groupReviewItemsByPassage(section.items).map((passageGroup, groupIndex) => {
+                    const passageQuestionIds = passageGroup.items.map(({ question }) => question.id);
+                    const passageAsGroup = Boolean(passageGroup.passage) && isSharedMaterialQuestion(passageGroup.question);
+                    return (
+                      <section
+                        className={`review-passage-group ${passageGroup.passage ? "has-shared-passage" : "single-question-group"}`}
+                        key={`${section.id}-${passageGroup.key}-${groupIndex}`}
+                      >
+                        {passageAsGroup ? (
+                          <div className="review-passage-group-head">
+                            <PassageGroupHeader group={passageGroup} />
+                            <FavoriteGroupButton favorites={favorites} source="exam" questionIds={passageQuestionIds} />
+                          </div>
+                        ) : <PassageGroupHeader group={passageGroup} />}
+                        {passageGroup.items.map(({ question, index, displayNumber }) => (
+                          <ReviewItem
+                            key={`${question.id}-${index}`}
+                            question={question}
+                            answer={answerForQuestion(question)}
+                            displayNumber={displayNumber}
+                            index={index}
+                            hasGroupPassage={Boolean(passageGroup.passage)}
+                            inGroup={passageAsGroup || sectionAsGroup}
+                            favorites={favorites}
+                            personalStats={personalStats}
+                          />
+                        ))}
+                      </section>
+                    );
+                  })}
+                </section>
+              );
+            })}
           </section>
         ))}
       </section>

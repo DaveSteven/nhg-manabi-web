@@ -468,12 +468,13 @@ function App() {
       return;
     }
     setError("");
-    const row = await api(`/api/exam-practice/questions/${item.questionId}`, {}, authToken);
-    const questions = mapPracticeQuestions([row], "favorite", item.level || level);
+    // 组级收藏（T-021/D13）：打开收藏行进整组练习，代理题 id 换回所在组的全部小题。
+    const rows = await api(`/api/exam-practice/questions/${item.questionId}/group`, {}, authToken);
+    const questions = mapPracticeQuestions(rows, "favorite", item.level || level);
     const categoryLabel = (PRACTICE_CATEGORIES[item.category] || PRACTICE_CATEGORIES.vocabulary).label;
     setGrammarPractice(makePracticeSession({
-      config: { mode: "random", feedbackMode: readPracticeMode(), category: item.category, count: 1 },
-      level,
+      config: { mode: "random", feedbackMode: readPracticeMode(), category: item.category, count: questions.length },
+      level: item.level || level,
       title: `${categoryLabel}收藏题`,
       layers: practiceLayers(questions, "收藏题"),
       questions,

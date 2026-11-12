@@ -33,7 +33,7 @@ import {
   TitleBlock,
 } from "../components/CommonUi";
 import { markKeyboardHintSeen, useKeyboardAnswer } from "../hooks/useKeyboardAnswer";
-import FavoriteButton from "../components/FavoriteButton";
+import FavoriteButton, { FavoriteGroupButton } from "../components/FavoriteButton";
 import { QuestionPersonalBadge } from "../components/QuestionPersonalBadge";
 import { AnswerSheet, ExamReview, ListeningExamPlayer } from "../components/ExamParts";
 import { ZoomImage } from "../components/ZoomImage";
@@ -159,6 +159,7 @@ export function UnifiedPracticeSessionView({ session, onBack, onChoose, onMove, 
             <header className="practice-group-heading">
               <strong>{sharedMaterialGroup ? `第 ${groupIndex + 1} 篇 · 本篇已答 ${groupAnswered}/${group.questions.length}` : `第 ${session.index + 1} 题`}</strong>
               <div><span className="book-pill">{session.exam.level} · {examQuestionCategoryLabel(group.questions[0])}</span><small>{group.sourceExamTitle}</small></div>
+              {sharedMaterialGroup ? <FavoriteGroupButton favorites={favorites} source="exam" questionIds={group.questions.map((question) => question.id)} /> : null}
             </header>
             {group.groupImage ? <ZoomImage className="exam-image" src={assetSrc(group.groupImage)} /> : null}
             {hasVisibleHtml(group.passage) ? <section className="exam-passage practice-shared-passage" id="practice-passage"><HtmlContent html={group.passage} /></section> : null}
@@ -171,7 +172,7 @@ export function UnifiedPracticeSessionView({ session, onBack, onChoose, onMove, 
                   <div className="practice-question-title-row">
                     <div className="random-practice-title">{group.questions.length > 1 ? <span>{questionIndex + 1}.</span> : null}<HtmlContent html={question.title} /></div>
                     <QuestionPersonalBadge stats={personalStats} questionId={question.id} />
-                    <FavoriteButton favorites={favorites} source="exam" questionId={question.id} />
+                    {!sharedMaterialGroup ? <FavoriteButton favorites={favorites} source="exam" questionId={question.id} /> : null}
                   </div>
                   {question.image_url ? <ZoomImage className="exam-image" src={assetSrc(question.image_url)} /> : null}
                   <section className="options-grid exam-options">
