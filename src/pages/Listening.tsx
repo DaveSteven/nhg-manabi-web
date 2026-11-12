@@ -106,7 +106,9 @@ function PracticeResult({ attempt, questions, onReviewWrong, onReset, onHome }) 
                 id={answer.questionId}
                 number={index + 1}
                 status={statuses[index]}
-                meta={question?.sourceExamTitle || null}
+                meta={question?.sourceExamTitle || question?.sourceLevel
+                  ? <span className="result-meta-tag">{[question?.sourceLevel, question?.sourceExamTitle].filter(Boolean).join(" · ")}</span>
+                  : null}
                 stem={hasVisibleHtml(answer.title || question?.title) ? <HtmlContent inline html={answer.title || question?.title} /> : null}
                 media={question?.image_url ? <ZoomImage className="exam-image" src={assetSrc(question.image_url)} /> : null}
                 options={question?.options || []}

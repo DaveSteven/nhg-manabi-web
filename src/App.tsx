@@ -310,7 +310,7 @@ function App() {
     const title = `${level} ${label}专项`;
     if (config.mode === "random") {
       const rows = await api(`/api/exam-practice/random?level=${level}&types=${config.types.join(",")}&limit=${config.count}`, {}, authToken);
-      const questions = mapPracticeQuestions(rows, "practice");
+      const questions = mapPracticeQuestions(rows, "practice", level);
       setGrammarPractice(makePracticeSession({ config, level, title, questions, layers: practiceLayers(questions, `${label}专项`) }));
       return;
     }
@@ -330,6 +330,7 @@ function App() {
         ...question,
         source_exam_id: exam.id,
         source_exam_title: exam.title,
+        source_level: exam.level,
         layer_image_url: layerImageByExam.get(exam.id)?.get(question.layer_id) || "",
       })));
     if (!questions.length) throw new Error("所选条件下没有可用的专项题目");
@@ -409,7 +410,7 @@ function App() {
   async function startPracticeWrongReview(category) {
     setError("");
     const rows = await api(`/api/practice-wrong-questions/quiz?level=${level}&category=${category}&limit=20`, {}, authToken);
-    const questions = mapPracticeQuestions(rows, "practice-wrong");
+    const questions = mapPracticeQuestions(rows, "practice-wrong", level);
     const categoryLabel = (PRACTICE_CATEGORIES[category] || PRACTICE_CATEGORIES.grammar).label;
     setGrammarPractice(makePracticeSession({
       config: { mode: "random", feedbackMode: readPracticeMode(), category, count: questions.length, wrongReview: true },
@@ -468,7 +469,7 @@ function App() {
     }
     setError("");
     const row = await api(`/api/exam-practice/questions/${item.questionId}`, {}, authToken);
-    const questions = mapPracticeQuestions([row], "favorite");
+    const questions = mapPracticeQuestions([row], "favorite", item.level || level);
     const categoryLabel = (PRACTICE_CATEGORIES[item.category] || PRACTICE_CATEGORIES.vocabulary).label;
     setGrammarPractice(makePracticeSession({
       config: { mode: "random", feedbackMode: readPracticeMode(), category: item.category, count: 1 },

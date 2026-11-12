@@ -179,11 +179,13 @@ export function mapFavorite(item) {
   };
 }
 
-export function mapPracticeQuestions(rows, layerPrefix) {
+/** level：真题等级（N1…），结果页年月 tag 展示用；调用方已知（接口按 level 过滤或来自收藏行）。 */
+export function mapPracticeQuestions(rows, layerPrefix, level = "") {
   return rows.map((question) => ({
     ...question,
     source_exam_id: question.exam_id,
     source_exam_title: question.exam_title,
+    source_level: level,
     source_layer_id: question.layer_id,
     layer_id: `${layerPrefix}-${question.id}`,
     order_index: question.practice_order,
@@ -237,6 +239,7 @@ export function practiceQuestionGroups(questions) {
         // 题组级材料图（信息检索页面图等），来自 API 的 layer_image_url。
         groupImage: question.layer_image_url || "",
         sourceExamTitle: question.source_exam_title || "",
+        sourceLevel: question.source_level || "",
       };
       byKey.set(key, group);
       groups.push(group);

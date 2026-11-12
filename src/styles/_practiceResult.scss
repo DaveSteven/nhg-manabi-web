@@ -218,7 +218,11 @@
 .practice-result-passage + .practice-result-question { margin-top: 16px; }
 
 .practice-result-question header { display: flex; align-items: center; gap: 10px; }
-.practice-result-question header small { margin-left: auto; color: var(--muted); font-size: var(--fs-sm); }
+/* 题头右侧元信息（个人统计徽章在左、试卷「等级 · 年月」tag 最右）整体靠右，flex gap 代替「 · 」拼接。 */
+.practice-result-question header small { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; color: var(--muted); font-size: var(--fs-sm); }
+
+/* 试卷年月中性描边 tag：与个人统计徽章（纯文字）区分，避免年月读起来像统计数据。 */
+.result-meta-tag { padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; }
 
 .practice-result-number {
   display: grid;
@@ -332,11 +336,20 @@
 .listening.listening-result .practice-result { max-width: none; }
 
 /* 题目个人维度（T-011）：「已练习 N 次 · 我的正确率 M%」一行元信息，练习页与回顾页共用。 */
+/* 个人统计徽章：文字保持退墨灰，只给数字上色（次数/正确率樱墨强调），
+   正确率按表现分色——≥80% 松绿、<60% 绯红、60–79% 樱墨。全走 token，深色模式自动切换。 */
 .question-personal-badge {
   color: var(--muted);
   font-size: var(--fs-sm);
   white-space: nowrap;
 }
+
+.personal-num {
+  color: var(--primary-dark);
+  font-weight: var(--fw-bold);
+}
+.personal-num.good { color: var(--correct); }
+.personal-num.low { color: var(--error); }
 
 /* 个人维度徽章在标题行内：垂直居中、靠右贴着收藏按钮（练习页 flex 行 + 模考回顾 grid 行）。 */
 .practice-question-title-row .question-personal-badge {

@@ -115,7 +115,7 @@ function ReviewGroup({ group, visible, numberById, answerById, statusOf, persona
           <header className="practice-result-group-heading">
             <strong>共享文章</strong>
             <span>第 {range} 题 · 答对 {correct} / {group.questions.length}</span>
-            {group.sourceExamTitle ? <small>{group.sourceExamTitle}</small> : null}
+            {group.sourceExamTitle || group.sourceLevel ? <small>{[group.sourceLevel, group.sourceExamTitle].filter(Boolean).join(" · ")}</small> : null}
           </header>
           {group.groupImage ? <ZoomImage className="exam-image" src={assetSrc(group.groupImage)} /> : null}
           {hasPassage ? (
@@ -138,9 +138,8 @@ function ReviewGroup({ group, visible, numberById, answerById, statusOf, persona
             status={statusOf(question)}
             meta={(
               <>
-                {shared ? null : group.sourceExamTitle}
-                {shared ? null : " · "}
                 <QuestionPersonalBadge stats={personalStats} questionId={question.id} />
+                {shared ? null : <span className="result-meta-tag">{[group.sourceLevel, group.sourceExamTitle].filter(Boolean).join(" · ")}</span>}
               </>
             )}
             stem={<HtmlContent html={answer?.title || question.title || ""} />}
