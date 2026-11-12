@@ -22,7 +22,6 @@ import { practiceQuestionGroups } from "../lib/appHelpers";
 import { HtmlContent, hasVisibleHtml } from "../components/Html";
 import {
   EmptyState,
-  KeyboardToast,
   ModalOverlay,
   OptionButton,
   PageHeader,
@@ -41,12 +40,6 @@ import { ZoomImage } from "../components/ZoomImage";
 
 const pad2 = (n) => String(n).padStart(2, "0");
 
-const EXAM_SHORTCUT_ROWS: Array<[string, string]> = [
-  ["1 ~ 4", "为当前未作答的小题选择选项"],
-  ["Enter / Space", "进入下一组"],
-  ["Esc", "暂停 / 退出确认"],
-  ["?", "显示快捷键速查"],
-];
 const scrollTop = () => requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
 const enterFullscreen = () => document.documentElement.requestFullscreen?.();
 const TIMER_NOTICES = [[600, "本科剩余 10 分钟"], [300, "本科剩余 5 分钟"], [60, "本科只剩 1 分钟"]] as const;
@@ -409,12 +402,14 @@ export function ExamSectionBreakView({ session, onStartNext, starting = false })
 
 export function ExamSessionView({ session, onBack, onChoose, onMove, onSubmit, saveState = "idle", onRetrySave = () => {}, submitting = false }) {
   const [showAnswerSheet, setShowAnswerSheet] = useState(false);
-  const [showShortcuts, setShowShortcuts] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [timerNotice, setTimerNotice] = useState("");
   const [listeningStarted, setListeningStarted] = useState(false);
+  const [listeningEnded, setListeningEnded] = useState(false);
   const [audioError, setAudioError] = useState("");
   const expiredRef = useRef(false);
+  // 听力每组音频只能播一次：手动切页后回到已播过的组不再重播。
+  const playedAudiosRef = useRef<Set<string>>(new Set());
   const previousRemainingRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const submitRef = useRef(onSubmit);
@@ -474,37 +469,20 @@ export function ExamSessionView({ session, onBack, onChoose, onMove, onSubmit, s
   };
   const moveToPage = (pageIndex) => jumpToFirstOf(problemPages[pageIndex]);
 
-  // B3 keyboard: digits answer the first unanswered sub-question on the page; Enter advances a group.
-  const activeQuestion = currentPage.questions.find((item) => !session.answers[item.id]) || null;
-  const handleKeyboardExit = () => {
-    // Real exam runs confirm inside onBack (leaveActiveExam); standalone practice needs its own guard.
-    if (session.run) {
-      onBack();
-      return;
-    }
-    if (window.confirm("退出后本次专项练习进度不会保存。确定退出吗？")) onBack();
-  };
-  useKeyboardAnswer({
-    active: !showShortcuts,
-    optionCount: activeQuestion ? activeQuestion.options.length : 0,
-    onNumber: (index) => {
-      if (activeQuestion) onChoose(activeQuestion.id, activeQuestion.options[index].id);
-    },
-    onAdvance: !isTimedListening && canNext ? () => moveToPage(currentPageIndex + 1) : undefined,
-    onExit: handleKeyboardExit,
-    onHelp: () => { markKeyboardHintSeen(); setShowShortcuts((value) => !value); },
-  });
-
   useEffect(() => {
     setAudioError("");
     if (!isTimedListening || !listeningStarted || !audioRef.current || !currentAudioUrl) return;
+    if (playedAudiosRef.current.has(currentAudioUrl)) { setListeningEnded(true); return; }
+    setListeningEnded(false);
+    playedAudiosRef.current.add(currentAudioUrl);
     audioRef.current.play().catch(() => {
+      playedAudiosRef.current.delete(currentAudioUrl);
       setListeningStarted(false);
       setAudioError("音频无法播放，请检查网络后重试。");
     });
   }, [currentPageIndex, currentAudioUrl, isTimedListening, listeningStarted]);
 
-  const finishListeningAudio = () => (canNext ? moveToPage(currentPageIndex + 1) : onSubmit(true));
+  const markListeningEnded = () => setListeningEnded(true);
   const startListening = () => { setAudioError(""); audioRef.current?.load(); setListeningStarted(true); };
   const failListening = () => { setListeningStarted(false); setAudioError("音频加载失败，请检查网络后重试。"); };
 
@@ -536,14 +514,6 @@ export function ExamSessionView({ session, onBack, onChoose, onMove, onSubmit, s
               {showAnswerSheet ? "收起答题卡" : "答题卡"}
             </button>
           ) : null}
-          <button
-            className="shortcut-toggle"
-            onClick={() => { markKeyboardHintSeen(); setShowShortcuts(true); }}
-            type="button"
-            aria-label="快捷键速查"
-          >
-            <Keyboard size={18} />
-          </button>
           <button className="primary-button" onClick={() => onSubmit(false)} disabled={submitting || saveState === "saving"} type="button">
             {submitting ? "正在提交…" : session.run ? "提交本科" : "提交"}
           </button>
@@ -580,8 +550,9 @@ export function ExamSessionView({ session, onBack, onChoose, onMove, onSubmit, s
               audioUrl={currentAudioUrl}
               audioError={audioError}
               started={listeningStarted}
+              ended={listeningEnded}
               onStart={startListening}
-              onEnded={finishListeningAudio}
+              onEnded={markListeningEnded}
               onError={failListening}
             />
           ) : null}
@@ -598,7 +569,7 @@ export function ExamSessionView({ session, onBack, onChoose, onMove, onSubmit, s
                     <div className="exam-sub-question-title"><span>{pad2(displayNumber)}.</span><HtmlContent html={item.title} /></div>
                     {item.media_url && !isTimedListening ? <audio className="exam-audio" controls src={assetSrc(item.media_url)} /> : null}
                     {item.image_url ? <ZoomImage className="exam-image" src={assetSrc(item.image_url)} /> : null}
-                    <section className={`options-grid exam-options ${item.id === activeQuestion?.id ? "keyboard-active" : ""}`.trim()}>
+                    <section className="options-grid exam-options">
                       {item.options.map((option, index) => (
                         <OptionButton
                           key={`${item.id}-${option.id}`}
@@ -616,24 +587,12 @@ export function ExamSessionView({ session, onBack, onChoose, onMove, onSubmit, s
             </section>
           </section>
 
-          {!isTimedListening ? (
-            <footer className="exam-nav">
-              <button className="secondary-button" onClick={() => moveToPage(currentPageIndex - 1)} disabled={!canPrev} type="button">上一组</button>
-              <button className="primary-button" onClick={() => moveToPage(currentPageIndex + 1)} disabled={!canNext} type="button">下一组 <kbd className="kbd-hint">↵</kbd></button>
-            </footer>
-          ) : null}
+          <footer className="exam-nav">
+            <button className="secondary-button" onClick={() => moveToPage(currentPageIndex - 1)} disabled={!canPrev} type="button">上一组</button>
+            <button className="primary-button" onClick={() => moveToPage(currentPageIndex + 1)} disabled={!canNext} type="button">下一组</button>
+          </footer>
         </section>
       </section>
-
-      <KeyboardToast suppress={showShortcuts} />
-      {showShortcuts ? (
-        <ModalOverlay title="键盘快捷键" onClose={() => setShowShortcuts(false)}>
-          <ShortcutHelp rows={EXAM_SHORTCUT_ROWS} />
-          <div className="modal-actions">
-            <button className="primary-button" onClick={() => setShowShortcuts(false)} type="button">知道了</button>
-          </div>
-        </ModalOverlay>
-      ) : null}
     </div>
   );
 }

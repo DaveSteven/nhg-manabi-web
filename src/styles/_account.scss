@@ -59,14 +59,8 @@
   box-shadow: var(--shadow-soft);
 }
 
-.user-page > .profile-card,
-.user-page > .history-panel {
+.user-page > .profile-card {
   margin-top: 0;
-}
-
-.user-page > .history-panel {
-  padding: var(--sp-6);
-  box-shadow: var(--shadow-soft);
 }
 
 .profile-card {
@@ -374,35 +368,6 @@
 .section-title h2 {
   font-size: var(--fs-lg);
 }
-
-.history-list {
-  display: grid;
-  gap: 8px;
-}
-
-.history-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--sp-4);
-  align-items: center;
-  padding: var(--sp-4);
-  border-radius: var(--r-sm);
-  background: var(--surface);
-}
-
-.history-details { min-width: 0; }
-.history-book { color: var(--ink); font-weight: var(--fw-medium); overflow-wrap: anywhere; }
-.history-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-3);
-  margin-top: var(--sp-1);
-  color: var(--muted);
-  font-size: var(--fs-sm);
-}
-.history-score { display: grid; gap: var(--sp-1); text-align: right; }
-.history-score strong { color: var(--ink); font-size: var(--fs-lg); font-variant-numeric: tabular-nums; }
-.history-score small { color: var(--muted); font-size: var(--fs-xs); }
 
 .empty-history,
 .empty-books,

@@ -831,7 +831,6 @@ function App() {
           element={(
             <UserView
               currentUser={currentUser}
-              attempts={learningAttempts}
               level={level}
               token={authToken}
               onBack={resetToLibrary}

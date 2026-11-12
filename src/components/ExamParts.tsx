@@ -77,18 +77,18 @@ export function AnswerSheet({ exam, problemSections, currentProblem, answers, qu
   );
 }
 
-export function ListeningExamPlayer({ audioRef, audioUrl, audioError, started, onStart, onEnded, onError }) {
+export function ListeningExamPlayer({ audioRef, audioUrl, audioError, started, ended = false, onStart, onEnded, onError }) {
   const failed = Boolean(audioError || !audioUrl);
   return (
     <section className={`listening-exam-player ${failed ? "error" : ""}`}>
       <Headphones size={28} />
       <div>
-        <strong>{failed ? "听力音频加载失败" : started ? "听力音频播放中" : "准备播放听力音频"}</strong>
-        <p>{audioError || (!audioUrl ? "当前题组缺少音频，请重试或稍后继续考试。" : "音频只能播放一次，结束后将自动进入下一组。")}</p>
+        <strong>{failed ? "听力音频加载失败" : ended ? "本组音频播放结束" : started ? "听力音频播放中" : "准备播放听力音频"}</strong>
+        <p>{audioError || (!audioUrl ? "当前题组缺少音频，请重试或稍后继续考试。" : "每组音频只能播放一次，播完后请作答并手动切换到下一组。")}</p>
       </div>
       {!started
         ? <button className="primary-button" type="button" disabled={!audioUrl} onClick={onStart}>{audioError ? "重新加载" : "开始播放"}</button>
-        : <span>正在播放</span>}
+        : <span>{ended ? "已结束" : "正在播放"}</span>}
       <audio ref={audioRef} src={assetSrc(audioUrl)} preload="auto" onEnded={onEnded} onError={onError} controls={false} />
     </section>
   );

@@ -568,7 +568,7 @@ export function LoginView({ onLogin }) {
   );
 }
 
-export function UserView({ currentUser, attempts, level, token, onBack, onOpenStats, onOpenFavorites, onLogout }) {
+export function UserView({ currentUser, level, token, onBack, onOpenStats, onOpenFavorites, onLogout }) {
   // 连续学习数据复用统计页 overview 接口；加载失败静默降级，不影响用户页其余内容
   const [streak, setStreak] = useState(null);
   useEffect(() => {
@@ -630,8 +630,6 @@ export function UserView({ currentUser, attempts, level, token, onBack, onOpenSt
         <div><strong>试题收藏</strong><small>{favoriteCount === null ? "收藏题目，随时回练" : `${favoriteCount} 道收藏题，点开即练`}</small></div>
         <ChevronRight size={20} />
       </button>
-
-      <HistoryPanel attempts={attempts} />
 
     </section>
   );
@@ -908,39 +906,6 @@ export function FavoritesView({ token, onBack, onOpen }) {
         </>
       ) : (
         <p className="empty-history">还没有收藏题。做题、复习和听力页面的星星按钮可以收藏题目。</p>
-      )}
-    </section>
-  );
-}
-
-function HistoryPanel({ attempts }) {
-  const recent = attempts.slice(0, 8);
-  return (
-    <section className="history-panel">
-      <div className="section-title">
-        <BarChart3 size={22} />
-        <h2>最近记录</h2>
-      </div>
-      {recent.length ? (
-        <div className="history-list">
-          {recent.map((attempt) => (
-            <div className="history-row" key={attempt.id}>
-              <div className="history-details">
-                <div className="history-book">{attempt.bookName}</div>
-                <div className="history-meta">
-                  <span>{attempt.categoryLabel || attempt.level}</span>
-                  <span>{formatDate(attempt.createdAt)}</span>
-                </div>
-              </div>
-              <div className="history-score">
-                <strong>{pct(attempt.correct, attempt.total)}%</strong>
-                <small>正确率</small>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="empty-history">暂无学习记录。</p>
       )}
     </section>
   );
