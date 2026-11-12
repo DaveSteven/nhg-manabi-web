@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import {
   DEFAULT_LEVEL,
-  SESSION_TOKEN_KEY,
   SUBJECTS,
   api,
   mapAttempt,
@@ -14,6 +13,7 @@ import {
   readUserLevelCache,
   writeUserLevelCache,
 } from "./lib/study";
+import { useAuthStore } from "./stores/auth";
 import {
   buildContinueSuggestions,
   countTodayQuestions,
@@ -59,8 +59,12 @@ function App() {
   const [examAttempts, setExamAttempts] = useState([]);
   const [examRuns, setExamRuns] = useState([]);
   const [practiceAttempts, setPracticeAttempts] = useState([]);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [authToken, setAuthToken] = useState(() => localStorage.getItem(SESSION_TOKEN_KEY));
+  // T-022 刀一：auth 状态在 useAuthStore（zustand persist，只存 token）
+  const currentUser = useAuthStore((state) => state.currentUser);
+  const authToken = useAuthStore((state) => state.token);
+  const setAuthUser = useAuthStore((state) => state.setUser);
+  const setAuthSession = useAuthStore((state) => state.setSession);
+  const clearAuth = useAuthStore((state) => state.clear);
   const [level, setLevel] = useState(DEFAULT_LEVEL);
   const [subject, setSubject] = useState("grammar");
   const [selectedBook, setSelectedBook] = useState(null);
@@ -115,16 +119,14 @@ function App() {
       try {
         const restoredUser = authToken ? await api("/api/me", {}, authToken) : null;
         if (!ignore) {
-          setCurrentUser(restoredUser);
+          setAuthUser(restoredUser);
           if (restoredUser) {
             setLevel(normalizeLevel(restoredUser.current_level || readUserLevelCache(restoredUser.id)));
           }
         }
       } catch (err) {
-        localStorage.removeItem(SESSION_TOKEN_KEY);
         if (!ignore) {
-          setAuthToken(null);
-          setCurrentUser(null);
+          clearAuth();
         }
       } finally {
         if (!ignore) setLoading(false);
@@ -600,9 +602,7 @@ function App() {
   }
 
   async function applySession(session) {
-    localStorage.setItem(SESSION_TOKEN_KEY, session.token);
-    setAuthToken(session.token);
-    setCurrentUser(session.user);
+    setAuthSession(session.token, session.user);
     setLevel(normalizeLevel(session.user?.current_level || readUserLevelCache(session.user?.id)));
     resetTo("/");
   }
@@ -612,7 +612,7 @@ function App() {
     setLevel(normalized);
     if (currentUser) {
       writeUserLevelCache(currentUser.id, normalized);
-      setCurrentUser((user) => user ? { ...user, current_level: normalized } : user);
+      setAuthUser((user) => user ? { ...user, current_level: normalized } : user);
     }
     if (!authToken || !currentUser || currentUser.current_level === normalized) return;
 
@@ -621,7 +621,7 @@ function App() {
         method: "POST",
         body: JSON.stringify({ current_level: normalized }),
       }, authToken);
-      setCurrentUser(updatedUser);
+      setAuthUser(updatedUser);
       writeUserLevelCache(updatedUser.id, updatedUser.current_level);
     } catch (err) {
       console.warn("Could not save current level to the API; using local cache.", err);
@@ -640,9 +640,7 @@ function App() {
     if (authToken) {
       await api("/api/auth/logout", { method: "POST" }, authToken).catch(() => null);
     }
-    localStorage.removeItem(SESSION_TOKEN_KEY);
-    setAuthToken(null);
-    setCurrentUser(null);
+    clearAuth();
     setAttempts([]);
     setExamAttempts([]);
     setWrongItems([]);
@@ -860,11 +858,9 @@ function App() {
           path="/exams/:examId/start"
           element={(
             <ExamIntroRoute
-              examSession={examSession}
               onLoadIntro={loadExamIntro}
               onBack={resetToExamList}
               onStart={beginExam}
-              starting={examStarting}
             />
           )}
         />
@@ -872,17 +868,13 @@ function App() {
           path="/exams/:examId"
           element={(
             <ExamRoute
-              examSession={examSession}
               onLoadExam={loadExam}
               onBack={leaveActiveExam}
               onChoose={chooseExamOption}
               onMove={moveExamQuestion}
               onSubmit={submitExam}
               onStartNext={startNextExamSection}
-              saveState={examSaveState}
               onRetrySave={retryExamSave}
-              submitting={examSubmitting}
-              sectionStarting={examSectionStarting}
             />
           )}
         />
@@ -890,7 +882,6 @@ function App() {
           path="/exams/:examId/review/:attemptId"
           element={(
             <ExamReviewRoute
-              examSession={examSession}
               onLoadReview={loadExamReview}
               onBack={resetToExamList}
               onRepeat={startExam}

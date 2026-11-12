@@ -4,8 +4,9 @@ import React from "react";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./App";
-import { SESSION_TOKEN_KEY } from "./lib/study";
+import { useAuthStore } from "./stores/auth";
 
 const user = { id: 1, username: "tester", current_level: "N5" };
 
@@ -87,7 +88,8 @@ async function startPractice() {
 
 beforeEach(() => {
   localStorage.clear();
-  localStorage.setItem(SESSION_TOKEN_KEY, "test-token");
+  // T-022 刀一：auth 在 zustand store，直接 seed（App 会以 token 走 /api/me 恢复 currentUser）
+  useAuthStore.setState({ token: "test-token", currentUser: null });
   vi.stubGlobal("fetch", vi.fn(fakeFetch));
 });
 
@@ -100,9 +102,11 @@ afterEach(() => {
 describe("专项练习退出后答案重置", () => {
   it("退出再进入后，之前选中的选项不应保持选中", async () => {
     render(
-      <MemoryRouter initialEntries={["/grammar-practice"]}>
-        <App />
-      </MemoryRouter>,
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter initialEntries={["/grammar-practice"]}>
+          <App />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     // 第一次进入：开始练习并选择一个选项

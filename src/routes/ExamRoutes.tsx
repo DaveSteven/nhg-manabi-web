@@ -1,11 +1,19 @@
 import React, { useEffect } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { ExamIntroView, ExamResultView, ExamSectionBreakView, ExamSessionView } from "../pages";
+import { useExamSessionStore } from "../stores/examSession";
+
+// T-022 刀一 ①-3：路由守卫只读统一状态层（useExamSessionStore），不再接 App 内存 props
+// （规则见 docs/develop/state-management.md 规则 3）。动作回调仍由 App 传入。
 
 const Loading = ({ text }) => <div className="center-state">{text}</div>;
 
-export function ExamRoute({ examSession, onLoadExam, onBack, onChoose, onMove, onSubmit, onStartNext, saveState, onRetrySave, submitting, sectionStarting }) {
+export function ExamRoute({ onLoadExam, onBack, onChoose, onMove, onSubmit, onStartNext, onRetrySave }) {
   const numericExamId = Number(useParams().examId);
+  const examSession = useExamSessionStore((state) => state.examSession);
+  const saveState = useExamSessionStore((state) => state.examSaveState);
+  const submitting = useExamSessionStore((state) => state.examSubmitting);
+  const sectionStarting = useExamSessionStore((state) => state.examSectionStarting);
 
   useEffect(() => {
     if (!Number.isFinite(numericExamId)) return;
@@ -35,8 +43,11 @@ export function ExamRoute({ examSession, onLoadExam, onBack, onChoose, onMove, o
   );
 }
 
-export function ExamIntroRoute({ examSession, onLoadIntro, onBack, onStart, starting }) {
+export function ExamIntroRoute({ onLoadIntro, onBack, onStart }) {
   const numericExamId = Number(useParams().examId);
+  const examSession = useExamSessionStore((state) => state.examSession);
+  const starting = useExamSessionStore((state) => state.examStarting);
+
   useEffect(() => {
     if (!Number.isFinite(numericExamId)) return;
     // 已处于 intro，或该科存在进行中/待开始的 run（beginExam 的 transition 提交间隙会短暂经过这里）时不重载，
@@ -54,10 +65,11 @@ export function ExamIntroRoute({ examSession, onLoadIntro, onBack, onStart, star
   return <ExamIntroView exam={examSession.exam} onBack={onBack} onStart={onStart} starting={starting} />;
 }
 
-export function ExamReviewRoute({ examSession, onLoadReview, onBack, onRepeat, favorites }) {
+export function ExamReviewRoute({ onLoadReview, onBack, onRepeat, favorites }) {
   const { examId, attemptId } = useParams();
   const numericExamId = Number(examId);
   const numericAttemptId = Number(attemptId);
+  const examSession = useExamSessionStore((state) => state.examSession);
   const valid = Number.isFinite(numericExamId) && Number.isFinite(numericAttemptId);
   const loaded = Boolean(
     examSession?.exam?.id === numericExamId

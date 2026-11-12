@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   api,
   clearExamCache,
@@ -7,35 +8,84 @@ import {
   readExamCache,
 } from "../lib/study";
 import { persistExamProgress, preloadExamAssets, questionsForRunSection } from "../lib/appHelpers";
+import { useExamSessionStore } from "../stores/examSession";
 
-/** Exam run lifecycle: loading, answering (with queued server saves), section transitions, submit and review. */
+/** Exam run lifecycle: loading, answering (with queued server saves), section transitions, submit and review.
+ *  T-022 刀一：会话与保存状态存于 useExamSessionStore，本 hook 退化为 actions 层（签名不变）。
+ *  模考域拉取（exam detail / questions / run / runs 列表）经 Query 缓存（fetchQuery，去重 + 短 staleTime）；
+ *  进行中 run 的恢复依据改为服务端（GET /api/exam-runs），localStorage 考试缓存降级为 index/answers 加速缓存。 */
 export function useExamFlow({ navigate, authToken, currentUser, exams, level, refreshStudyData, setExamRuns, setError, onLeave }) {
-  const [examSession, setExamSession] = useState<any>(null);
-  const [examStarting, setExamStarting] = useState(false);
-  const [examSectionStarting, setExamSectionStarting] = useState(false);
-  const [examSubmitting, setExamSubmitting] = useState(false);
-  const [examSaveState, setExamSaveState] = useState("idle");
+  const queryClient = useQueryClient();
+  const examSession = useExamSessionStore((state) => state.examSession);
+  const examStarting = useExamSessionStore((state) => state.examStarting);
+  const examSectionStarting = useExamSessionStore((state) => state.examSectionStarting);
+  const examSubmitting = useExamSessionStore((state) => state.examSubmitting);
+  const examSaveState = useExamSessionStore((state) => state.examSaveState);
+  const setExamSession = useExamSessionStore((state) => state.setExamSession);
+  const setExamStarting = useExamSessionStore((state) => state.setExamStarting);
+  const setExamSectionStarting = useExamSessionStore((state) => state.setExamSectionStarting);
+  const setExamSubmitting = useExamSessionStore((state) => state.setExamSubmitting);
+  const setExamSaveState = useExamSessionStore((state) => state.setExamSaveState);
   const examSaveQueue = useRef(Promise.resolve());
   const examSaveFailures = useRef(new Set());
   const examSaveVersion = useRef(0);
 
+  async function fetchExamDetail(examId) {
+    return queryClient.fetchQuery({
+      queryKey: ["exam-detail", examId],
+      queryFn: () => api(`/api/exams/${examId}`, {}, authToken),
+      staleTime: 60_000,
+    });
+  }
+
+  async function fetchExamQuestions(examId) {
+    return queryClient.fetchQuery({
+      queryKey: ["exam-questions", examId],
+      queryFn: () => api(`/api/exams/${examId}/questions`, {}, authToken),
+      staleTime: 60_000,
+    });
+  }
+
+  async function fetchExamRun(runId) {
+    return queryClient.fetchQuery({
+      queryKey: ["exam-run", runId],
+      queryFn: () => api(`/api/exam-runs/${runId}`, {}, authToken),
+      staleTime: 5_000,
+    });
+  }
+
+  /** 服务端恢复依据：该 exam 当前进行中/待开始下一科的 run id（至多一个）。 */
+  async function findActiveRunId(examId) {
+    const runs = await queryClient.fetchQuery({
+      queryKey: ["exam-runs"],
+      queryFn: () => api("/api/exam-runs", {}, authToken),
+      staleTime: 10_000,
+    });
+    const active = runs.find(
+      (run) => run.exam_id === examId && ["in_progress", "awaiting_section"].includes(run.status),
+    );
+    return active?.id || null;
+  }
+
   async function loadExam(examId, baseExam = null) {
     setError("");
     const numericExamId = Number(examId);
+    // 提交完成后缓存已清；若内存里已是本科的回顾态（提交后 ExamRoute effect 会再次触发 loadExam），应回到回顾页而非说明页。
+    if (examSession?.finishedAttempt && examSession?.exam?.id === numericExamId) {
+      navigate(`/exams/${numericExamId}/review/${examSession.reviewAttemptId}`, { replace: true });
+      return;
+    }
+    // 恢复依据：服务端 active run 优先；localStorage 缓存的 runId 兜底（runId/index/answers 均为可丢弃加速缓存）
     const cached = readExamCache(currentUser.id, numericExamId);
-    if (!cached.runId) {
-      // 提交完成后缓存已清；若内存里已是本科的回顾态（提交后 ExamRoute effect 会再次触发 loadExam），应回到回顾页而非说明页。
-      if (examSession?.finishedAttempt && examSession?.exam?.id === numericExamId) {
-        navigate(`/exams/${numericExamId}/review/${examSession.reviewAttemptId}`, { replace: true });
-        return;
-      }
+    const runId = (await findActiveRunId(numericExamId)) || cached.runId || null;
+    if (!runId) {
       navigate(`/exams/${numericExamId}/start`, { replace: true });
       return;
     }
     const [detail, allQuestions, run] = await Promise.all([
-      api(`/api/exams/${numericExamId}`, {}, authToken),
-      api(`/api/exams/${numericExamId}/questions`, {}, authToken),
-      api(`/api/exam-runs/${cached.runId}`, {}, authToken),
+      fetchExamDetail(numericExamId),
+      fetchExamQuestions(numericExamId),
+      fetchExamRun(runId),
     ]);
     const exam = baseExam || exams.find((item) => item.id === numericExamId) || mapExam(detail);
     const questions = questionsForRunSection(allQuestions, run);
@@ -73,11 +123,20 @@ export function useExamFlow({ navigate, authToken, currentUser, exams, level, re
     if (!window.confirm(`确定放弃 ${exam.title}？已完成的答案不会生成成绩。`)) return;
     await api(`/api/exam-runs/${run.id}/abandon`, { method: "POST" }, authToken);
     clearExamCache(currentUser.id, exam.id);
+    queryClient.invalidateQueries({ queryKey: ["exam-runs"] });
     setExamRuns((rows) => rows.filter((item) => item.id !== run.id));
   }
 
   async function loadExamIntro(examId) {
-    const detail = await api(`/api/exams/${Number(examId)}`, {}, authToken);
+    const numericExamId = Number(examId);
+    // 整页刷新后 store 已清空，误入 /start 无法靠内存会话拦截：
+    // 服务端存在进行中 run 时不进说明页，直接走 loadExam 恢复（避免重复开卷）。
+    const activeRunId = await findActiveRunId(numericExamId).catch(() => null);
+    if (activeRunId) {
+      await loadExam(numericExamId);
+      return;
+    }
+    const detail = await fetchExamDetail(numericExamId);
     setExamSession({ exam: { ...mapExam(detail), layers: detail.layers || [] }, phase: "intro" });
   }
 
@@ -87,11 +146,12 @@ export function useExamFlow({ navigate, authToken, currentUser, exams, level, re
     const exam = examSession.exam;
     try {
       const [detail, allQuestions] = await Promise.all([
-        api(`/api/exams/${exam.id}`, {}, authToken),
-        api(`/api/exams/${exam.id}/questions`, {}, authToken),
+        fetchExamDetail(exam.id),
+        fetchExamQuestions(exam.id),
       ]);
       await preloadExamAssets(allQuestions);
       const run = await api(`/api/exam-runs?exam_id=${exam.id}`, { method: "POST" }, authToken);
+      queryClient.invalidateQueries({ queryKey: ["exam-runs"] });
       const cached = readExamCache(currentUser.id, exam.id);
       const next = {
         exam: { ...exam, layers: detail.layers || [] }, run, allQuestions,
@@ -117,8 +177,9 @@ export function useExamFlow({ navigate, authToken, currentUser, exams, level, re
     setError("");
     const numericExamId = Number(examId);
     const numericAttemptId = Number(attemptId);
+    // 回顾内容随重考变化，不缓存（仅 exam detail 走 Query 缓存）
     const [detail, questions, attemptDetail] = await Promise.all([
-      api(`/api/exams/${numericExamId}`, {}, authToken),
+      fetchExamDetail(numericExamId),
       api(`/api/exam-attempts/${numericAttemptId}/questions`, {}, authToken),
       api(`/api/exam-attempts/${numericAttemptId}`, {}, authToken),
     ]);
