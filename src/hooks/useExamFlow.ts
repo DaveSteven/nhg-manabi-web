@@ -24,6 +24,11 @@ export function useExamFlow({ navigate, authToken, currentUser, exams, level, re
     const numericExamId = Number(examId);
     const cached = readExamCache(currentUser.id, numericExamId);
     if (!cached.runId) {
+      // 提交完成后缓存已清；若内存里已是本科的回顾态（提交后 ExamRoute effect 会再次触发 loadExam），应回到回顾页而非说明页。
+      if (examSession?.finishedAttempt && examSession?.exam?.id === numericExamId) {
+        navigate(`/exams/${numericExamId}/review/${examSession.reviewAttemptId}`, { replace: true });
+        return;
+      }
       navigate(`/exams/${numericExamId}/start`, { replace: true });
       return;
     }
