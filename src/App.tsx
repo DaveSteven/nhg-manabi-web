@@ -33,7 +33,6 @@ import { ExamIntroRoute, ExamReviewRoute, ExamRoute } from "./routes/ExamRoutes"
 import {
   ExamListView,
   ExamSessionView,
-  RandomPracticeSessionView,
   UnifiedPracticeSessionView,
   SearchView,
   GrammarPracticeSetupView,

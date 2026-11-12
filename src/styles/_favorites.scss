@@ -50,9 +50,9 @@
   margin-top: 2px;
 }
 
-// 模考回顾：题号 + 题干 + 收藏按钮三列
+// 模考回顾：题号 + 题干 + 个人维度徽章 + 收藏按钮四列（无徽章时第四列空置）
 .review-title-row {
-  grid-template-columns: 34px 1fr auto;
+  grid-template-columns: 34px 1fr auto auto;
 }
 
 // 听力页标题行：标题 + 收藏按钮成组

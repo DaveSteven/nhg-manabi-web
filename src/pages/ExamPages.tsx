@@ -14,7 +14,9 @@ import {
   latestExamAttemptByExam,
   pct,
   secondsUntil,
+  SESSION_TOKEN_KEY,
 } from "../lib/study";
+import { useQuestionPersonal } from "../lib/questionStats";
 import { practiceQuestionGroups } from "../lib/appHelpers";
 import { HtmlContent, hasVisibleHtml } from "../components/Html";
 import {
@@ -32,6 +34,7 @@ import {
 } from "../components/CommonUi";
 import { markKeyboardHintSeen, useKeyboardAnswer } from "../hooks/useKeyboardAnswer";
 import FavoriteButton from "../components/FavoriteButton";
+import { QuestionPersonalBadge } from "../components/QuestionPersonalBadge";
 import { AnswerSheet, ExamReview, ListeningExamPlayer } from "../components/ExamParts";
 import { ZoomImage } from "../components/ZoomImage";
 
@@ -41,13 +44,6 @@ const EXAM_SHORTCUT_ROWS: Array<[string, string]> = [
   ["1 ~ 4", "为当前未作答的小题选择选项"],
   ["Enter / Space", "进入下一组"],
   ["Esc", "暂停 / 退出确认"],
-  ["?", "显示快捷键速查"],
-];
-
-const PRACTICE_SHORTCUT_ROWS: Array<[string, string]> = [
-  ["1 ~ 4", "选择对应选项"],
-  ["Enter / Space", "进入下一题"],
-  ["Esc", "退出专项练习"],
   ["?", "显示快捷键速查"],
 ];
 const scrollTop = () => requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
@@ -68,6 +64,12 @@ function PracticeExitModal({ onStay, onLeave }) {
 
 export function UnifiedPracticeSessionView({ session, onBack, onChoose, onMove, onCheck, onSubmit, submitting = false, favorites }) {
   const groups = practiceQuestionGroups(session.questions);
+  // 个人维度（T-011）：真题专项练习按 exam_question 口径批量拉取，作答过的题才显示
+  const personalStats = useQuestionPersonal(
+    "exam_question",
+    session.questions.map((question) => question.id),
+    localStorage.getItem(SESSION_TOKEN_KEY),
+  );
   const currentQuestion = session.questions[session.index] || session.questions[0];
   const groupIndex = Math.max(0, groups.findIndex((group) => group.questions.some((question) => question.id === currentQuestion?.id)));
   const group = groups[groupIndex] || { questions: [] };
@@ -168,6 +170,7 @@ export function UnifiedPracticeSessionView({ session, onBack, onChoose, onMove, 
                 <section className="practice-sub-question" id={`practice-question-${question.id}`} key={question.id}>
                   <div className="practice-question-title-row">
                     <div className="random-practice-title">{group.questions.length > 1 ? <span>{questionIndex + 1}.</span> : null}<HtmlContent html={question.title} /></div>
+                    <QuestionPersonalBadge stats={personalStats} questionId={question.id} />
                     <FavoriteButton favorites={favorites} source="exam" questionId={question.id} />
                   </div>
                   {question.image_url ? <ZoomImage className="exam-image" src={assetSrc(question.image_url)} /> : null}
@@ -364,73 +367,6 @@ export function ExamSectionBreakView({ session, onStartNext, starting = false })
           <button className="secondary-button" onClick={enterFullscreen} disabled={starting} type="button">进入全屏</button>
         </div>
       </div>
-    </section>
-  );
-}
-
-export function RandomPracticeSessionView({ session, onBack, onChoose, onMove, onSubmit, favorites }) {
-  const question = session.questions[session.index];
-  const chosenOptionId = session.answers[question.id] || null;
-  const isLast = session.index === session.questions.length - 1;
-  const [showShortcuts, setShowShortcuts] = useState(false);
-
-  const handleExit = () => {
-    if (window.confirm("退出后本次专项练习进度不会保存。确定退出吗？")) onBack();
-  };
-  useKeyboardAnswer({
-    active: !showShortcuts,
-    optionCount: question.options.length,
-    onNumber: (index) => onChoose(question.id, question.options[index].id),
-    onAdvance: isLast ? undefined : () => onMove(session.index + 1),
-    onExit: handleExit,
-    onHelp: () => { markKeyboardHintSeen(); setShowShortcuts((value) => !value); },
-  });
-
-  return (
-    <section className="random-practice-view">
-      <PageHeader onBack={onBack}>
-        <div className="quiz-progress"><Progress value={pct(session.index + 1, session.questions.length)} /><span>{session.index + 1} / {session.questions.length}</span></div>
-        <button
-          className="shortcut-toggle"
-          onClick={() => { markKeyboardHintSeen(); setShowShortcuts(true); }}
-          type="button"
-          aria-label="快捷键速查"
-        >
-          <Keyboard size={18} />
-        </button>
-      </PageHeader>
-      <article className="random-practice-question">
-        <div className="random-practice-meta">
-          <span className="book-pill">{session.exam.level} · {examQuestionCategoryLabel(question)}</span>
-          <small>{question.source_exam_title}</small>
-          <FavoriteButton favorites={favorites} source="exam" questionId={question.id} />
-        </div>
-        <div className="random-practice-number">第 {question.practice_order || session.index + 1} 题</div>
-        {hasVisibleHtml(question.passage) ? <section className="exam-passage"><HtmlContent html={question.passage} /></section> : null}
-        <div className="random-practice-title"><HtmlContent html={question.title} /></div>
-        {question.image_url ? <ZoomImage className="exam-image" src={assetSrc(question.image_url)} /> : null}
-        <section className="options-grid exam-options keyboard-active">
-          {question.options.map((option, index) => (
-            <OptionButton key={option.id} index={index} option={option} className={chosenOptionId === option.id ? "selected" : ""} onClick={() => onChoose(question.id, option.id)}><span /></OptionButton>
-          ))}
-        </section>
-      </article>
-      <footer className="exam-nav random-practice-nav">
-        <button className="secondary-button" disabled={session.index === 0} onClick={() => onMove(session.index - 1)} type="button">上一题</button>
-        {isLast
-          ? <button className="primary-button" onClick={onSubmit} type="button">提交</button>
-          : <button className="primary-button" onClick={() => onMove(session.index + 1)} type="button">下一题 <kbd className="kbd-hint">↵</kbd></button>}
-      </footer>
-
-      <KeyboardToast suppress={showShortcuts} />
-      {showShortcuts ? (
-        <ModalOverlay title="键盘快捷键" onClose={() => setShowShortcuts(false)}>
-          <ShortcutHelp rows={PRACTICE_SHORTCUT_ROWS} />
-          <div className="modal-actions">
-            <button className="primary-button" onClick={() => setShowShortcuts(false)} type="button">知道了</button>
-          </div>
-        </ModalOverlay>
-      ) : null}
     </section>
   );
 }
@@ -699,6 +635,12 @@ function EstimatedScore({ est }) {
 
 export function ExamResultView({ exam, attempt, questions, onRepeat, onLibrary, favorites }) {
   const answerByQuestion = new Map<number, any>(attempt.answers.map((answer) => [answer.questionId, answer]));
+  // 模考完成后的回顾页展示个人维度（T-011）；进行中的 ExamSessionView 不接入（D9）
+  const personalStats = useQuestionPersonal(
+    "exam_question",
+    questions.map((question) => question.id),
+    localStorage.getItem(SESSION_TOKEN_KEY),
+  );
   const answerForQuestion = (question) =>
     answerByQuestion.get(question.id) || {
       questionId: question.id,
@@ -723,6 +665,7 @@ export function ExamResultView({ exam, attempt, questions, onRepeat, onLibrary, 
         answerByQuestion={answerByQuestion}
         answerForQuestion={answerForQuestion}
         favorites={favorites}
+        personalStats={personalStats}
       />
     </section>
   );

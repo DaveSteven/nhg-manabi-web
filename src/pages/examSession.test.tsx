@@ -58,4 +58,48 @@ describe("ExamSessionView timer", () => {
     expect(onSubmit).toHaveBeenCalledTimes(1);
     expect(onSubmit).toHaveBeenCalledWith(true);
   });
+
+  it("does not request personal question stats during an exam (D9 / AC2)", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}", { status: 200 }));
+    const question = {
+      id: 1,
+      layer_id: 1,
+      order_index: 1,
+      question_type: 21,
+      title: "問題",
+      passage: "",
+      options: [{ id: 11, text: "A" }],
+    };
+    const session = {
+      exam: {
+        id: 1,
+        level: "N5",
+        title: "Test",
+        layers: [{ id: 1, order_index: 1, title: "問題1", question_type: 21 }],
+      },
+      run: {
+        id: 1,
+        status: "in_progress",
+        current_section: 0,
+        section_expires_at: "2026-11-09T00:10:00Z",
+        sections: [{ key: "grammar_reading", label: "文法・阅读" }],
+      },
+      questions: [question],
+      index: 0,
+      answers: {},
+    };
+
+    render(
+      <ExamSessionView
+        session={session}
+        onBack={() => {}}
+        onChoose={() => {}}
+        onMove={() => {}}
+        onSubmit={() => {}}
+      />,
+    );
+
+    expect(fetchSpy.mock.calls.filter(([url]) => String(url).includes("question-personal"))).toHaveLength(0);
+    fetchSpy.mockRestore();
+  });
 });

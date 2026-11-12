@@ -330,3 +330,21 @@
 /* 听力结果页：外层页头与结果内容同宽对齐。 */
 .listening.listening-result { max-width: 1180px; margin-left: auto; margin-right: auto; }
 .listening.listening-result .practice-result { max-width: none; }
+
+/* 题目个人维度（T-011）：「已练习 N 次 · 我的正确率 M%」一行元信息，练习页与回顾页共用。 */
+.question-personal-badge {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+/* 个人维度徽章在标题行内：垂直居中、靠右贴着收藏按钮（练习页 flex 行 + 模考回顾 grid 行）。 */
+.practice-question-title-row .question-personal-badge {
+  align-self: center;
+  margin-left: auto;
+}
+
+.review-title-row .question-personal-badge {
+  align-self: center;
+  justify-self: end;
+}

@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from "react";
 import { RotateCcw } from "lucide-react";
-import { assetSrc, isReadingQuestion, pct } from "../lib/study";
+import { assetSrc, isReadingQuestion, pct, SESSION_TOKEN_KEY } from "../lib/study";
 import { practiceQuestionGroups } from "../lib/appHelpers";
+import { useQuestionPersonal } from "../lib/questionStats";
 import { BilingualTranscript, HtmlContent, cleanHtml } from "../components/Html";
+import { QuestionPersonalBadge } from "../components/QuestionPersonalBadge";
 import {
   ResultFilter,
   ResultGroupCard,
@@ -28,6 +30,12 @@ const isSharedType = (type) => type === 23 || (type >= 31 && type <= 36);
 
 export function PracticeResultView({ attempt, questions, category = "grammar", onRepeat, onReviewWrong = null, onLibrary }) {
   const [filter, setFilter] = useState<ResultFilter>("all");
+  // 个人维度（T-011）：专项练习结果按 exam_question 口径批量拉取，作答过的题才显示
+  const personalStats = useQuestionPersonal(
+    "exam_question",
+    questions.map((question) => question.id),
+    localStorage.getItem(SESSION_TOKEN_KEY),
+  );
 
   const answerById = useMemo(() => new Map<number, any>(attempt.answers.map((answer) => [answer.questionId, answer])), [attempt]);
   const statusOf = (question) => answerStatus(answerById.get(question.id));
@@ -83,14 +91,14 @@ export function PracticeResultView({ attempt, questions, category = "grammar", o
 
       <ResultReview chunks={navChunks} total={questions.length} missed={missed} filter={filter} onFilter={setFilter}>
         {visibleGroups.map(({ group, visible }) => (
-          <ReviewGroup group={group} visible={visible} key={group.key} numberById={numberById} answerById={answerById} statusOf={statusOf} />
+          <ReviewGroup group={group} visible={visible} key={group.key} numberById={numberById} answerById={answerById} statusOf={statusOf} personalStats={personalStats} />
         ))}
       </ResultReview>
     </ResultPage>
   );
 }
 
-function ReviewGroup({ group, visible, numberById, answerById, statusOf }) {
+function ReviewGroup({ group, visible, numberById, answerById, statusOf, personalStats }) {
   const first = group.questions[0];
   // 信息检索等材料可能只有图片，不能用 hasVisibleHtml（只认文字）判断。
   const hasPassage = Boolean(cleanHtml(group.passage));
@@ -128,7 +136,13 @@ function ReviewGroup({ group, visible, numberById, answerById, statusOf }) {
             id={question.id}
             number={numberById.get(question.id)}
             status={statusOf(question)}
-            meta={shared ? null : group.sourceExamTitle}
+            meta={(
+              <>
+                {shared ? null : group.sourceExamTitle}
+                {shared ? null : " · "}
+                <QuestionPersonalBadge stats={personalStats} questionId={question.id} />
+              </>
+            )}
             stem={<HtmlContent html={answer?.title || question.title || ""} />}
             media={question.image_url ? <ZoomImage className="exam-image" src={assetSrc(question.image_url)} /> : null}
             options={question.options || []}
