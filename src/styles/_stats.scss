@@ -57,6 +57,7 @@
 .chart-line { fill: none; stroke: var(--primary); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
 .chart-node { fill: var(--card); stroke: var(--primary); stroke-width: 3; cursor: help; }
 .chart-node:focus { outline: none; fill: var(--primary-soft); stroke-width: 5; }
+.chart-node--action { cursor: pointer; }
 .chart-axis-labels { display: flex; justify-content: space-between; padding-left: 34px; color: var(--muted); font-size: var(--fs-xs); }
 .stats-conclusion { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 18px; padding: 14px 16px; border-left: 3px solid var(--primary); border-radius: 0 var(--r-sm) var(--r-sm) 0; background: var(--primary-soft); }
 .stats-conclusion p { margin: 0; color: var(--ink); font-size: var(--fs-md); }
@@ -69,6 +70,14 @@
 .subject-name i { width: 10px; height: 10px; border-radius: 50%; }
 .subject-track { height: 9px; overflow: hidden; border-radius: 999px; background: var(--line); }
 .subject-track i { display: block; height: 100%; border-radius: inherit; }
+/* T-013 言語知識双段堆叠条：两段宽度按各子科目答对占比，首尾段保留胶囊圆角 */
+.subject-track--stacked { display: flex; }
+.subject-track--stacked i { flex: 0 0 auto; }
+.subject-track--stacked i:first-child { border-radius: 999px 0 0 999px; }
+.subject-track--stacked i:last-child { border-radius: 0 999px 999px 0; }
+.subject-track--stacked i:only-child { border-radius: inherit; }
+/* T-013 目标分占位 badge（全站统一中性款） */
+.stats-goal-badge { flex: 0 0 auto; padding: 6px 10px; border-radius: 999px; color: var(--muted); background: var(--surface); font-size: var(--fs-sm); }
 .stats-subject-row > strong { text-align: right; font-variant-numeric: tabular-nums; }
 .stats-insights { position: sticky; top: 16px; display: grid; gap: 12px; }
 .stats-insights-title { display: flex; align-items: center; gap: 8px; padding: 4px 3px; }

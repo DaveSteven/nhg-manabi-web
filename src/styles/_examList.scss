@@ -409,6 +409,68 @@
   white-space: nowrap;
 }
 
+/* T-016: 历史成绩展开 */
+.exam-card .history-toggle-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 30px;
+  padding: 0 9px;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+  box-shadow: var(--shadow-rest);
+  white-space: nowrap;
+}
+
+.history-toggle-chevron { transition: transform 120ms ease-out; }
+
+.history-toggle-chevron.expanded { transform: rotate(180deg); }
+
+/* 展开态卡片恢复实色（done 卡默认降透明度） */
+.exam-card.done:has(.exam-history-list) { opacity: 1; }
+
+.exam-history-list {
+  grid-column: 1 / -1;
+  display: grid;
+  padding: 4px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.exam-history-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto 16px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: var(--r-xs);
+  color: var(--ink);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.exam-history-row:last-child { border-bottom: 0; }
+
+.exam-history-row:hover,
+.exam-history-row:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+.exam-history-row:focus-visible { outline-style: solid; }
+
+.exam-history-row strong { font-variant-numeric: tabular-nums; }
+
+.exam-history-date,
+.exam-history-count {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
 .book-meta {
   display: flex;
   justify-content: space-between;

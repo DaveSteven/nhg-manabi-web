@@ -5,6 +5,7 @@ import {
   BookOpenCheck,
   CalendarDays,
   Flame,
+  LineChart,
   Sparkles,
   Target,
   TrendingDown,
@@ -12,8 +13,14 @@ import {
 } from "lucide-react";
 import { Tooltip } from "../components/Tooltip";
 import { EmptyState, PageHeader, ThemeToggle } from "../components/CommonUi";
-import { fetchStatsOverview, fetchStatsTrend } from "../lib/study";
-import { compareRecentActivity, formatStatDate, heatLevel } from "../lib/stats";
+import { fetchStatsExams, fetchStatsOverview, fetchStatsTrend } from "../lib/study";
+import {
+  compareRecentActivity,
+  examPerformanceView,
+  examScoreDelta,
+  formatStatDate,
+  heatLevel,
+} from "../lib/stats";
 
 const SUBJECT_COLORS = {
   vocabulary: "var(--chart-vocabulary)",
@@ -107,9 +114,97 @@ function SubjectBars({ subjects, onAction }) {
   );
 }
 
-export function StatsView({ level, token, onBack, onAction, onExams }) {
+/** T-013：三大块行点击后的练习去向（言語知識 → 较弱子科目）。 */
+function examSectionActionSubject(section) {
+  if (section.section === "listening") return "listening";
+  if (section.section === "reading") return "reading";
+  const measured = section.parts.filter((part) => part.accuracy !== null);
+  return measured.sort((left, right) => left.accuracy - right.accuracy)[0]?.subject || "grammar";
+}
+
+/** 三大块条形：复用 stats-subject-row；言語知識按各子科目答对占比堆叠双段。 */
+function ExamSectionBars({ sections, onAction }) {
+  return (
+    <div className="stats-subject-list">
+      {sections.map((section) => {
+        const stacked = section.parts.length > 1;
+        return (
+          <Tooltip key={section.section} tip={section.total ? `${section.correct}/${section.total} 题答对` : `${section.label}暂无练习数据`}>
+            <button type="button" className="stats-subject-row" onClick={() => onAction(examSectionActionSubject(section))}>
+              <span className="subject-name">{section.label}</span>
+              <span className={`subject-track${stacked ? " subject-track--stacked" : ""}`}>
+                {section.total
+                  ? section.parts.map((part) => (
+                    <i
+                      key={part.subject}
+                      style={{ width: `${part.correct / section.total * 100}%`, background: SUBJECT_COLORS[part.subject] }}
+                    />
+                  ))
+                  : null}
+              </span>
+              <strong>{section.accuracy === null ? "—" : `${section.accuracy}%`}</strong>
+              <ArrowRight size={17} />
+            </button>
+          </Tooltip>
+        );
+      })}
+    </div>
+  );
+}
+
+/** 真题分数曲线：节点可点击进对应回顾页（区别于趋势图的纯查看）。 */
+function ExamScoreChart({ points, onReviewAttempt }) {
+  const chartPoints = points.filter((point) => point.score !== null);
+  if (!chartPoints.length) return null;
+  const width = 720;
+  const height = 220;
+  const padX = 34;
+  const padY = 24;
+  const x = (index) => chartPoints.length === 1 ? width / 2 : padX + index / (chartPoints.length - 1) * (width - padX * 2);
+  const y = (score) => padY + (100 - score) / 100 * (height - padY * 2);
+  const path = chartPoints.map((point, index) => `${x(index)},${y(point.score)}`).join(" ");
+  const review = (point) => onReviewAttempt({ examId: point.examId, id: point.attemptId });
+  return (
+    <div className="stats-line-chart">
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="真题分数折线图">
+        {[0, 50, 100].map((value) => (
+          <g key={value}>
+            <line x1={padX} x2={width - padX} y1={y(value)} y2={y(value)} className="chart-grid-line" />
+            <text x="2" y={y(value) + 4}>{value}%</text>
+          </g>
+        ))}
+        {chartPoints.length > 1 ? <polyline points={path} className="chart-line" /> : null}
+        {chartPoints.map((point, index) => (
+          <circle
+            key={`${point.attemptId}-${index}`}
+            cx={x(index)}
+            cy={y(point.score)}
+            r="5"
+            className="chart-node chart-node--action"
+            tabIndex={0}
+            role="button"
+            aria-label={`${point.title} ${point.score}%，查看该次解析`}
+            onClick={() => review(point)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") review(point);
+            }}
+          >
+            <title>{`${point.title} ${point.score}% · 点击查看该次解析`}</title>
+          </circle>
+        ))}
+      </svg>
+      <div className="chart-axis-labels">
+        <span>{formatStatDate(chartPoints[0].createdAt.slice(0, 10))}</span>
+        <span>{formatStatDate(chartPoints.at(-1).createdAt.slice(0, 10))}</span>
+      </div>
+    </div>
+  );
+}
+
+export function StatsView({ level, token, onBack, onAction, onExams, onReviewAttempt }) {
   const [overview, setOverview] = useState(null);
   const [trend, setTrend] = useState([]);
+  const [examStats, setExamStats] = useState(null);
   const [days, setDays] = useState(90);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -121,8 +216,9 @@ export function StatsView({ level, token, onBack, onAction, onExams }) {
     Promise.all([
       fetchStatsOverview(level, token),
       fetchStatsTrend({ level, days, granularity: days <= 90 ? "day" : "week" }, token),
-    ]).then(([nextOverview, nextTrend]) => {
-      if (!ignore) { setOverview(nextOverview); setTrend(nextTrend.points); }
+      fetchStatsExams(level, token),
+    ]).then(([nextOverview, nextTrend, nextExamStats]) => {
+      if (!ignore) { setOverview(nextOverview); setTrend(nextTrend.points); setExamStats(nextExamStats); }
     }).catch((reason) => {
       if (!ignore) setError(reason.message || "统计数据加载失败");
     }).finally(() => {
@@ -136,6 +232,14 @@ export function StatsView({ level, token, onBack, onAction, onExams }) {
     const measured = (overview?.breakdown_by_subject || []).filter((item) => item.accuracy !== null);
     return measured.sort((left, right) => left.accuracy - right.accuracy)[0] || null;
   }, [overview]);
+  const examPerformance = useMemo(() => examPerformanceView(examStats), [examStats]);
+  const examPoints = examPerformance.points;
+  const latestExamPoint = examPoints.at(-1) || null;
+  const examDelta = examScoreDelta(examPoints);
+  const weakestExamSection = useMemo(() => {
+    const measured = examPerformance.sections.filter((item) => item.accuracy !== null);
+    return measured.sort((left, right) => left.accuracy - right.accuracy)[0] || null;
+  }, [examPerformance]);
 
   if (loading && !overview) return <div className="center-state">加载中…</div>;
   if (error && !overview) return <div className="center-state error">{error}</div>;
@@ -183,6 +287,19 @@ export function StatsView({ level, token, onBack, onAction, onExams }) {
                 <SubjectBars subjects={overview.breakdown_by_subject} onAction={onAction} />
                 <div className="stats-conclusion"><p>{weakest ? `${weakest.label}正确率最低（${weakest.accuracy}%）。` : "暂无科目数据。"}</p><button type="button" onClick={() => onAction(weakest?.subject || "reading")}>开始{weakest?.label || "科目"}专项 <ArrowRight size={16} /></button></div>
               </section>
+
+              {examPoints.length ? (
+                <section className="stats-panel">
+                  <div className="stats-panel-heading"><div><span><LineChart size={20} /> 真题成绩</span><h2>分数走势与三大块</h2></div><span className="stats-goal-badge">目标分未设置</span></div>
+                  <ExamScoreChart points={examPoints} onReviewAttempt={onReviewAttempt} />
+                  <div className="stats-conclusion">
+                    <p>{latestExamPoint ? `最近一次 ${latestExamPoint.title} ${latestExamPoint.score}%${examDelta === null ? "" : examDelta === 0 ? "，与上次持平" : `，较上次${examDelta > 0 ? " ↑" : " ↓"}${Math.abs(examDelta)}`}` : "暂无真题成绩。"}</p>
+                    {latestExamPoint ? <button type="button" onClick={() => onReviewAttempt({ examId: latestExamPoint.examId, id: latestExamPoint.attemptId })}>查看最近解析 <ArrowRight size={16} /></button> : null}
+                  </div>
+                  <ExamSectionBars sections={examPerformance.sections} onAction={onAction} />
+                  <div className="stats-conclusion"><p>{weakestExamSection ? `${weakestExamSection.label}正确率最低（${weakestExamSection.accuracy}%）。` : "暂无三大块数据。"}</p><button type="button" onClick={() => onAction(weakestExamSection ? examSectionActionSubject(weakestExamSection) : "grammar")}>{weakestExamSection ? `${weakestExamSection.label}专项练习` : "开始练习"} <ArrowRight size={16} /></button></div>
+                </section>
+              ) : null}
             </main>
 
             <aside className="stats-insights" aria-label="学习概况">

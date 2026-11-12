@@ -36,3 +36,43 @@ export function formatStatDate(value) {
   const date = new Date(`${value}T00:00:00`);
   return new Intl.DateTimeFormat("zh-CN", { month: "short", day: "numeric" }).format(date);
 }
+
+/** T-013 真题成绩：`/api/stats/exams` 的 snake_case 契约 → 视图模型。 */
+export function examPerformanceView(data) {
+  return {
+    points: (data?.points || []).map((point) => ({
+      attemptId: point.attempt_id,
+      examId: point.exam_id,
+      title: point.title,
+      level: point.level,
+      correct: point.correct,
+      total: point.total,
+      score: point.score,
+      createdAt: point.created_at,
+    })),
+    sections: (data?.by_section || []).map((section) => ({
+      section: section.section,
+      label: section.label,
+      correct: section.correct,
+      total: section.total,
+      accuracy: section.accuracy,
+      parts: (section.parts || []).map((part) => ({
+        subject: part.subject,
+        label: part.label,
+        correct: part.correct,
+        total: part.total,
+        accuracy: part.accuracy,
+      })),
+    })),
+    goal: data?.goal || { enabled: false, goal_pct: null },
+  };
+}
+
+/** 最近一次真题分数与上一次的差（点数不足 2 或缺分数返回 null），保留一位小数。 */
+export function examScoreDelta(points) {
+  if (points.length < 2) return null;
+  const latest = points[points.length - 1];
+  const previous = points[points.length - 2];
+  if (latest.score === null || previous.score === null) return null;
+  return Math.round((latest.score - previous.score) * 10) / 10;
+}

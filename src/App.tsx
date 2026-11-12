@@ -822,6 +822,7 @@ function App() {
               onBack={resetToLibrary}
               onAction={(category) => navigate(category === "listening" ? "/listening" : `/${category}-practice`)}
               onExams={() => navigate("/exams")}
+              onReviewAttempt={reviewExamAttempt}
             />
           )}
         />

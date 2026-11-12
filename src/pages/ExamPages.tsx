@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ChevronRight, ClipboardList, Clock3, Headphones, Keyboard, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronRight, ClipboardList, Clock3, Headphones, Keyboard, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import {
   assetSrc,
   buildExamProblemSections,
@@ -10,6 +10,7 @@ import {
   examQuestionDisplayNumber,
   examSectionsForLevel,
   formatClock,
+  formatDate,
   groupQuestionsByPassage,
   latestExamAttemptByExam,
   pct,
@@ -252,8 +253,18 @@ function ActiveRunCard({ exam, run, onResumeExam, onAbandonExam }) {
 }
 
 export function ExamListView({ exams, level, examAttempts, examRuns = [], onBack, onStartExam, onResumeExam, onAbandonExam, onReviewAttempt }) {
+  const [expandedExamId, setExpandedExamId] = useState<number | null>(null);
   const examStats = latestExamAttemptByExam(examAttempts);
   const activeRuns = new Map<number, any>(examRuns.map((run) => [run.exam_id, run]));
+  // T-016：按 exam_id 分组全部历史 attempt（新→旧），>1 次的已完成卡提供展开列表
+  const attemptsByExam = new Map<number, any[]>();
+  for (const attempt of examAttempts) {
+    if (!attemptsByExam.has(attempt.examId)) attemptsByExam.set(attempt.examId, []);
+    attemptsByExam.get(attempt.examId).push(attempt);
+  }
+  for (const history of attemptsByExam.values()) {
+    history.sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+  }
   const byDateDesc = (left, right) => (Number.isFinite(examDateTime(right)) ? examDateTime(right) : 0) - (Number.isFinite(examDateTime(left)) ? examDateTime(left) : 0);
   const activeExams = exams.filter((exam) => activeRuns.has(exam.id));
   const freshExams = exams.filter((exam) => !activeRuns.has(exam.id) && !examStats.get(exam.id)).sort(byDateDesc);
@@ -265,6 +276,8 @@ export function ExamListView({ exams, level, examAttempts, examRuns = [], onBack
       return <ActiveRunCard key={exam.id} exam={exam} run={activeRun} onResumeExam={onResumeExam} onAbandonExam={onAbandonExam} />;
     }
     const last = examStats.get(exam.id);
+    const history = attemptsByExam.get(exam.id) || [];
+    const expanded = expandedExamId === exam.id;
     return (
       <article className={`exam-card ${last ? "done" : ""}`.trim()} key={exam.id}>
         <div>
@@ -274,8 +287,30 @@ export function ExamListView({ exams, level, examAttempts, examRuns = [], onBack
         </div>
         <div className="exam-card-actions">
           {last ? <button className="secondary-button review-exam-button" onClick={() => onReviewAttempt(last)} type="button">查看解析</button> : null}
+          {history.length > 1 ? (
+            <button
+              className="secondary-button history-toggle-button"
+              onClick={() => setExpandedExamId(expanded ? null : exam.id)}
+              type="button"
+              aria-expanded={expanded}
+            >
+              历史成绩 {history.length} 次 <ChevronDown size={14} className={`history-toggle-chevron${expanded ? " expanded" : ""}`} />
+            </button>
+          ) : null}
           <button className="start-button" onClick={() => onStartExam(exam)} type="button" aria-label={`开始 ${exam.title}`}><ChevronRight size={24} /></button>
         </div>
+        {expanded ? (
+          <div className="exam-history-list">
+            {history.map((attempt) => (
+              <button key={attempt.id} type="button" className="exam-history-row" onClick={() => onReviewAttempt(attempt)}>
+                <span className="exam-history-date">{formatDate(attempt.createdAt)}</span>
+                <strong>{pct(attempt.correct, attempt.total)}%</strong>
+                <span className="exam-history-count">{attempt.correct}/{attempt.total}</span>
+                <ArrowRight size={15} />
+              </button>
+            ))}
+          </div>
+        ) : null}
       </article>
     );
   };

@@ -24,7 +24,8 @@
 // Flat controls (no resting shadow): depress without inventing a shadow.
 .review-jump-dot:active,
 .answer-dot:active,
-.exam-run-abandon:active {
+.exam-run-abandon:active,
+.exam-history-row:active {
   transform: translateY(1px);
 }
 

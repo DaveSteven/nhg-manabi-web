@@ -59,6 +59,11 @@ export function fetchStatsTrend(
   return api(`/api/stats/trend?${params}`, {}, token);
 }
 
+export function fetchStatsExams(level: string, token: string) {
+  const params = new URLSearchParams({ level });
+  return api(`/api/stats/exams?${params}`, {}, token);
+}
+
 export function pct(value, total) {
   if (!total) return 0;
   return Math.round((value / total) * 100);
