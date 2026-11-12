@@ -3,7 +3,11 @@ import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-do
 import {
   DEFAULT_LEVEL,
   SUBJECTS,
+  abandonPracticeSession,
   api,
+  completePracticeSession,
+  createPracticeSession,
+  fetchActivePracticeSession,
   mapAttempt,
   mapBook,
   mapExam,
@@ -11,9 +15,11 @@ import {
   normalizeLevel,
   pct,
   readUserLevelCache,
+  savePracticeSessionAnswer,
   writeUserLevelCache,
 } from "./lib/study";
 import { useAuthStore } from "./stores/auth";
+import { useQuizSessionStore } from "./stores/quizSession";
 import {
   buildContinueSuggestions,
   countTodayQuestions,
@@ -65,14 +71,21 @@ function App() {
   const setAuthUser = useAuthStore((state) => state.setUser);
   const setAuthSession = useAuthStore((state) => state.setSession);
   const clearAuth = useAuthStore((state) => state.clear);
+  // T-022 刀二：quiz/专项练习会话状态在 useQuizSessionStore，事实源为服务端 practice_sessions
+  const session = useQuizSessionStore((state) => state.quizSession);
+  const setSession = useQuizSessionStore((state) => state.setQuizSession);
+  const grammarPractice = useQuizSessionStore((state) => state.grammarPractice);
+  const setGrammarPractice = useQuizSessionStore((state) => state.setGrammarPractice);
+  const practiceSubmitting = useQuizSessionStore((state) => state.practiceSubmitting);
+  const setPracticeSubmitting = useQuizSessionStore((state) => state.setPracticeSubmitting);
+  const quizRestoring = useQuizSessionStore((state) => state.quizRestoring);
+  const setQuizRestoring = useQuizSessionStore((state) => state.setQuizRestoring);
+  const setQuizSaveState = useQuizSessionStore((state) => state.setQuizSaveState);
   const [level, setLevel] = useState(DEFAULT_LEVEL);
   const [subject, setSubject] = useState("grammar");
   const [selectedBook, setSelectedBook] = useState(null);
-  const [session, setSession] = useState(null);
   const [practiceMode, setPracticeMode] = useState(readPracticeMode);
   const [pendingPractice, setPendingPractice] = useState(null);
-  const [grammarPractice, setGrammarPractice] = useState(null);
-  const [practiceSubmitting, setPracticeSubmitting] = useState(false);
   const [attempts, setAttempts] = useState([]);
   const [wrongItems, setWrongItems] = useState([]);
   const [practiceWrongItems, setPracticeWrongItems] = useState([]);
@@ -90,6 +103,9 @@ function App() {
   const booksCache = useRef(new Map());
   const booksInflight = useRef(new Map());
   const levelDataCache = useRef(new Map());
+  // T-022 刀二：quiz/专项练习进度串行保存队列（镜像模考 examSaveQueue 模式）
+  const quizSaveQueue = useRef(Promise.resolve());
+  const quizSaveVersion = useRef(0);
 
   function applyStudyData(data) {
     setAttempts(data.attempts);
@@ -103,6 +119,49 @@ function App() {
   async function refreshStudyData(nextLevel = level, token = authToken) {
     if (!token) return;
     applyStudyData(await fetchStudyData(nextLevel, token));
+  }
+
+  // ---- T-022 刀二：practice_sessions 同步（串行队列；无 sessionId 时为纯内存会话，队列空转） ----
+
+  function enqueueQuizSave(task: () => Promise<any>) {
+    const version = ++quizSaveVersion.current;
+    setQuizSaveState("saving");
+    quizSaveQueue.current = quizSaveQueue.current.then(async () => {
+      try {
+        await task();
+        if (version === quizSaveVersion.current) setQuizSaveState("saved");
+      } catch (error) {
+        console.warn("practice session save failed", error);
+        if (version === quizSaveVersion.current) setQuizSaveState("error");
+      }
+    });
+    return quizSaveQueue.current;
+  }
+
+  function syncQuizAnswer(currentSession: any, questionId: number, payload: any, index = currentSession?.index) {
+    if (!currentSession?.sessionId) return;
+    enqueueQuizSave(() => savePracticeSessionAnswer(authToken, currentSession.sessionId, questionId, { payload, current_index: index }));
+  }
+
+  function syncQuizIndex(currentSession: any, questionId: number, index: number) {
+    if (!currentSession?.sessionId) return;
+    enqueueQuizSave(() => savePracticeSessionAnswer(authToken, currentSession.sessionId, questionId, { current_index: index }));
+  }
+
+  /** 开练时创建服务端会话（best-effort：失败退化为纯内存会话，不阻断开练）。 */
+  async function attachPracticeServerSession(sessionObject: any, options: { source: string; label: string; meta: object }) {
+    try {
+      const created = await createPracticeSession(authToken, {
+        source: options.source,
+        label: options.label,
+        question_ids: sessionObject.questions.map((question: any) => question.id),
+        meta: options.meta,
+      });
+      return { ...sessionObject, sessionId: created.id };
+    } catch (error) {
+      console.warn("practice session create failed; falling back to memory-only", error);
+      return sessionObject;
+    }
   }
 
   function clearSessions() {
@@ -137,6 +196,82 @@ function App() {
       ignore = true;
     };
   }, []);
+
+  // T-022 刀二：从服务端恢复进行中的练习会话（刷新/重开浏览器，AC-02）。
+  // 72h 为前端建议规则：超期会话不自动恢复（服务端保留，下次开练按单活跃规则替换）。
+  useEffect(() => {
+    let ignore = false;
+    async function restoreQuizFromServer() {
+      if (!authToken) {
+        setQuizRestoring(false);
+        return;
+      }
+      // auth 恢复（/api/me）进行中：保持 restoring 阻塞 /quiz 守卫，等 currentUser 就绪后本 effect 重跑
+      if (!currentUser) return;
+      setQuizRestoring(true);
+      try {
+        const active = await fetchActivePracticeSession(authToken);
+        if (ignore || !active || active.status !== "in_progress") return;
+        const startedAt = active.meta?.startedAt || active.created_at;
+        if (isQuizSessionExpired({ startedAt })) return;
+        const clampIndex = (questions) => Math.max(0, Math.min(questions.length - 1, Number(active.current_index) || 0));
+        if (active.meta?.flow === "grammar") {
+          const rows = await api(`/api/exam-practice/questions?ids=${active.question_ids.join(",")}`, {}, authToken);
+          if (ignore || !rows.length) return;
+          const { config, title, level: sessionLevel } = active.meta;
+          const questions = mapPracticeQuestions(rows, "practice", sessionLevel);
+          const answers: Record<string, any> = {};
+          const checked: Record<string, any> = {};
+          const feedback: Record<string, any> = {};
+          for (const [questionId, payload] of Object.entries(active.answers || {}) as [string, any][]) {
+            if (!payload || typeof payload !== "object") continue;
+            if ("a" in payload && payload.a !== null) answers[questionId] = payload.a;
+            if (payload.c) checked[questionId] = true;
+            if (payload.f) feedback[questionId] = payload.f;
+          }
+          setGrammarPractice({
+            ...makePracticeSession({ config, level: sessionLevel, title, layers: practiceLayers(questions, title), questions }),
+            sessionId: active.id,
+            index: clampIndex(questions),
+            answers,
+            checked,
+            feedback,
+          });
+        } else if (active.meta?.flow === "quiz") {
+          const quiz = await api(`/api/questions/quiz?ids=${active.question_ids.join(",")}`, {}, authToken);
+          if (ignore || !quiz.length) return;
+          const draftAnswers: Record<string, any> = {};
+          for (const [questionId, payload] of Object.entries(active.answers || {}) as [string, any][]) {
+            if (payload && typeof payload === "object" && payload.d != null) draftAnswers[questionId] = payload.d;
+          }
+          setSession({
+            userId: currentUser.id,
+            sessionId: active.id,
+            book: active.meta.book,
+            title: active.meta.title,
+            questions: quiz,
+            index: clampIndex(quiz),
+            answers: [],
+            chosen: null,
+            checked: false,
+            checkResult: null,
+            feedbackMode: active.meta.feedbackMode ?? practiceMode,
+            draftAnswers,
+            mode: active.meta.mode,
+            startedAt,
+          });
+        }
+      } catch (error) {
+        console.warn("practice session restore failed", error);
+      } finally {
+        if (!ignore) setQuizRestoring(false);
+      }
+    }
+    restoreQuizFromServer();
+    return () => {
+      ignore = true;
+    };
+  }, [authToken, currentUser?.id]);
 
   function fetchBooks(targetLevel, targetSubject) {
     const key = `${targetLevel}:${targetSubject}`;
@@ -244,13 +379,13 @@ function App() {
     [attempts, practiceAttempts],
   );
   const continueSuggestions = useMemo(() => buildContinueSuggestions({
-    session: null,
+    session,
     userId: currentUser?.id,
     wrongCount: allWrongItems.length,
     libraryWrongCount: wrongItems.length,
     attempts,
     books,
-  }), [currentUser?.id, allWrongItems, wrongItems, attempts, books]);
+  }), [session, currentUser?.id, allWrongItems, wrongItems, attempts, books]);
 
   const todayCount = useMemo(() => countTodayQuestions(learningAttempts), [learningAttempts]);
 
@@ -313,7 +448,10 @@ function App() {
     if (config.mode === "random") {
       const rows = await api(`/api/exam-practice/random?level=${level}&types=${config.types.join(",")}&limit=${config.count}`, {}, authToken);
       const questions = mapPracticeQuestions(rows, "practice", level);
-      setGrammarPractice(makePracticeSession({ config, level, title, questions, layers: practiceLayers(questions, `${label}专项`) }));
+      setGrammarPractice(await attachPracticeServerSession(
+        makePracticeSession({ config, level, title, questions, layers: practiceLayers(questions, `${label}专项`) }),
+        { source: "exam_practice", label: title, meta: { flow: "grammar", config, title, level } },
+      ));
       return;
     }
     const selectedExams = config.mode === "exam" ? exams.filter((exam) => exam.id === Number(config.examId)) : exams;
@@ -340,7 +478,10 @@ function App() {
     const layers = loaded.flatMap(({ detail }) => detail.layers || [])
       .filter((layer) => layerIds.has(layer.id))
       .map((layer, index) => ({ ...layer, order_index: index + 1 }));
-    setGrammarPractice(makePracticeSession({ config, level, title, layers, questions }));
+    setGrammarPractice(await attachPracticeServerSession(
+      makePracticeSession({ config, level, title, layers, questions }),
+      { source: "exam_practice", label: title, meta: { flow: "grammar", config, title, level } },
+    ));
   }
 
   function openPractice(category) {
@@ -355,6 +496,9 @@ function App() {
         answers: { ...current.answers, [questionId]: optionId },
       }),
     }));
+    if (!grammarPractice?.checked?.[questionId]) {
+      syncQuizAnswer(grammarPractice, questionId, { a: optionId });
+    }
   }
 
   async function checkGrammarQuestions(questions) {
@@ -371,6 +515,10 @@ function App() {
         checked: { ...current.checked, ...Object.fromEntries(questions.map((question) => [question.id, true])) },
         feedback: { ...current.feedback, ...Object.fromEntries(results.map((result) => [result.question_id, result])) },
       }));
+      // 服务端进度：作答 + 即时判反馈一并写入（{a: 选项id, c: 已判, f: 判题结果}）
+      for (const result of results) {
+        syncQuizAnswer(grammarPractice, result.question_id, { a: grammarPractice.answers[result.question_id], c: true, f: result });
+      }
     } finally {
       setPracticeSubmitting(false);
     }
@@ -381,6 +529,9 @@ function App() {
       ...current,
       index: Math.max(0, Math.min(current.questions.length - 1, index)),
     }));
+    const nextIndex = grammarPractice ? Math.max(0, Math.min(grammarPractice.questions.length - 1, index)) : 0;
+    const question = grammarPractice?.questions?.[nextIndex];
+    if (question) syncQuizIndex(grammarPractice, question.id, nextIndex);
   }
 
   async function submitGrammarPractice() {
@@ -400,6 +551,9 @@ function App() {
         }),
       }, authToken));
       setGrammarPractice((current) => ({ ...current, finishedAttempt: savedAttempt }));
+      if (grammarPractice?.sessionId) {
+        enqueueQuizSave(() => completePracticeSession(authToken, grammarPractice.sessionId).catch(() => null));
+      }
       await refreshStudyData(level, authToken);
     } catch (error) {
       setError("");
@@ -414,13 +568,20 @@ function App() {
     const rows = await api(`/api/practice-wrong-questions/quiz?level=${level}&category=${category}&limit=20`, {}, authToken);
     const questions = mapPracticeQuestions(rows, "practice-wrong", level);
     const categoryLabel = (PRACTICE_CATEGORIES[category] || PRACTICE_CATEGORIES.grammar).label;
-    setGrammarPractice(makePracticeSession({
-      config: { mode: "random", feedbackMode: readPracticeMode(), category, count: questions.length, wrongReview: true },
-      level,
-      title: `${level} ${categoryLabel}错题复习`,
-      layers: practiceLayers(questions, `${categoryLabel}错题`),
-      questions,
-    }));
+    setGrammarPractice(await attachPracticeServerSession(
+      makePracticeSession({
+        config: { mode: "random", feedbackMode: readPracticeMode(), category, count: questions.length, wrongReview: true },
+        level,
+        title: `${level} ${categoryLabel}错题复习`,
+        layers: practiceLayers(questions, `${categoryLabel}错题`),
+        questions,
+      }),
+      {
+        source: "exam_practice",
+        label: `${level} ${categoryLabel}错题复习`,
+        meta: { flow: "grammar", config: { mode: "random", feedbackMode: readPracticeMode(), category, count: questions.length, wrongReview: true }, title: `${level} ${categoryLabel}错题复习`, level },
+      },
+    ));
     navigate(`/${category}-practice`);
   }
 
@@ -474,13 +635,20 @@ function App() {
     const rows = await api(`/api/exam-practice/questions/${item.questionId}/group`, {}, authToken);
     const questions = mapPracticeQuestions(rows, "favorite", item.level || level);
     const categoryLabel = (PRACTICE_CATEGORIES[item.category] || PRACTICE_CATEGORIES.vocabulary).label;
-    setGrammarPractice(makePracticeSession({
-      config: { mode: "random", feedbackMode: readPracticeMode(), category: item.category, count: questions.length },
-      level: item.level || level,
-      title: `${categoryLabel}收藏题`,
-      layers: practiceLayers(questions, "收藏题"),
-      questions,
-    }));
+    setGrammarPractice(await attachPracticeServerSession(
+      makePracticeSession({
+        config: { mode: "random", feedbackMode: readPracticeMode(), category: item.category, count: questions.length },
+        level: item.level || level,
+        title: `${categoryLabel}收藏题`,
+        layers: practiceLayers(questions, "收藏题"),
+        questions,
+      }),
+      {
+        source: "exam_practice",
+        label: `${categoryLabel}收藏题`,
+        meta: { flow: "grammar", config: { mode: "random", feedbackMode: readPracticeMode(), category: item.category, count: questions.length }, title: `${categoryLabel}收藏题`, level: item.level || level },
+      },
+    ));
     navigate(`/${item.category}-practice`);
   }
 
@@ -498,17 +666,27 @@ function App() {
     navigate("/practice-setup");
   }
 
-  function startPreparedPractice(feedbackMode) {
+  async function startPreparedPractice(feedbackMode) {
     if (!pendingPractice) return;
     changePracticeMode(feedbackMode);
-    startSession(pendingPractice.source, pendingPractice.quiz, pendingPractice.mode, feedbackMode);
+    await startSession(pendingPractice.source, pendingPractice.quiz, pendingPractice.mode, feedbackMode);
     setPendingPractice(null);
   }
 
-  function startSession(source, quiz, mode, feedbackMode = practiceMode) {
+  async function startSession(source, quiz, mode, feedbackMode = practiceMode) {
     setSelectedBook(source);
+    const startedAt = new Date().toISOString();
+    const withServerSession = await attachPracticeServerSession(
+      { questions: quiz.questions },
+      {
+        source: mode,
+        label: quiz.title || "",
+        meta: { flow: "quiz", mode, book: source, title: quiz.title, feedbackMode, startedAt },
+      },
+    );
     setSession({
       userId: currentUser.id,
+      sessionId: withServerSession.sessionId || null,
       book: source,
       title: quiz.title,
       questions: quiz.questions,
@@ -520,7 +698,7 @@ function App() {
       feedbackMode,
       draftAnswers: {},
       mode,
-      startedAt: new Date().toISOString(),
+      startedAt,
     });
     navigate("/quiz");
   }
@@ -533,8 +711,19 @@ function App() {
 
   // B4: explicit discard — drop the stored session entirely instead of pausing it.
   function discardQuizSession() {
+    if (session?.sessionId) {
+      enqueueQuizSave(() => abandonPracticeSession(authToken, session.sessionId).catch(() => null));
+    }
     setSession(null);
     navigate("/");
+  }
+
+  // 专项练习中途退出：与旧行为一致视为放弃（服务端会话置 abandoned，可被下次开练替换）
+  function exitGrammarPractice() {
+    if (grammarPractice?.sessionId && !grammarPractice?.finishedAttempt) {
+      enqueueQuizSave(() => abandonPracticeSession(authToken, grammarPractice.sessionId).catch(() => null));
+    }
+    setGrammarPractice(null);
   }
   const resetToExamList = () => resetTo("/exams");
 
@@ -542,6 +731,7 @@ function App() {
     if (!session || session.checked) return;
     const question = session.questions[session.index];
     setSession((current) => ({ ...current, chosen: optionIndex, draftAnswers: { ...current.draftAnswers, [question.id]: question.options[optionIndex].id } }));
+    syncQuizAnswer(session, question.id, { d: question.options[optionIndex].id });
   }
 
   function moveQuizQuestion(index) {
@@ -551,6 +741,9 @@ function App() {
       const chosenId = current.draftAnswers?.[question.id];
       return { ...current, index: nextIndex, chosen: chosenId ? question.options.findIndex((option) => option.id === chosenId) : null, checked: false, checkResult: null };
     });
+    const nextIndex = session ? Math.max(0, Math.min(session.questions.length - 1, index)) : 0;
+    const question = session?.questions?.[nextIndex];
+    if (question) syncQuizIndex(session, question.id, nextIndex);
   }
 
   function completeImmersiveQuiz() {
@@ -594,6 +787,9 @@ function App() {
     };
     try {
       const saved = mapAttempt(await api("/api/attempts", { method: "POST", body: JSON.stringify(payload) }, authToken));
+      if (session?.sessionId) {
+        enqueueQuizSave(() => completePracticeSession(authToken, session.sessionId).catch(() => null));
+      }
       await refreshStudyData(level, authToken);
       setSession((current) => ({ ...current, saving: false, finishedAttempt: saved }));
     } catch (error) {
@@ -641,6 +837,8 @@ function App() {
       await api("/api/auth/logout", { method: "POST" }, authToken).catch(() => null);
     }
     clearAuth();
+    setSession(null);
+    setGrammarPractice(null);
     setAttempts([]);
     setExamAttempts([]);
     setWrongItems([]);
@@ -739,7 +937,7 @@ function App() {
             ) : grammarPractice ? (
               <UnifiedPracticeSessionView
                 session={grammarPractice}
-                onBack={() => setGrammarPractice(null)}
+                onBack={exitGrammarPractice}
                 onChoose={chooseGrammarOption}
                 onMove={moveGrammarQuestion}
                 onCheck={checkGrammarQuestions}
@@ -747,6 +945,8 @@ function App() {
                 submitting={practiceSubmitting}
                 favorites={favorites}
               />
+            ) : quizRestoring ? (
+              <div className="center-state">正在恢复练习…</div>
             ) : (
               <GrammarPracticeSetupView
                 exams={exams}
@@ -791,6 +991,8 @@ function App() {
                 onComplete={completeImmersiveQuiz}
                 favorites={favorites}
               />
+            ) : quizRestoring ? (
+              <div className="center-state">正在恢复练习…</div>
             ) : (
               <Navigate to="/" replace />
             )

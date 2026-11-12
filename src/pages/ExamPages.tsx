@@ -15,9 +15,9 @@ import {
   latestExamAttemptByExam,
   pct,
   secondsUntil,
-  SESSION_TOKEN_KEY,
 } from "../lib/study";
 import { useQuestionPersonal } from "../lib/questionStats";
+import { useAuthStore } from "../stores/auth";
 import { practiceQuestionGroups } from "../lib/appHelpers";
 import { HtmlContent, hasVisibleHtml } from "../components/Html";
 import {
@@ -59,10 +59,11 @@ function PracticeExitModal({ onStay, onLeave }) {
 export function UnifiedPracticeSessionView({ session, onBack, onChoose, onMove, onCheck, onSubmit, submitting = false, favorites }) {
   const groups = practiceQuestionGroups(session.questions);
   // 个人维度（T-011）：真题专项练习按 exam_question 口径批量拉取，作答过的题才显示
+  const authToken = useAuthStore((state) => state.token);
   const personalStats = useQuestionPersonal(
     "exam_question",
     session.questions.map((question) => question.id),
-    localStorage.getItem(SESSION_TOKEN_KEY),
+    authToken,
   );
   const currentQuestion = session.questions[session.index] || session.questions[0];
   const groupIndex = Math.max(0, groups.findIndex((group) => group.questions.some((question) => question.id === currentQuestion?.id)));
@@ -631,10 +632,11 @@ function EstimatedScore({ est }) {
 export function ExamResultView({ exam, attempt, questions, onRepeat, onLibrary, favorites }) {
   const answerByQuestion = new Map<number, any>(attempt.answers.map((answer) => [answer.questionId, answer]));
   // 模考完成后的回顾页展示个人维度（T-011）；进行中的 ExamSessionView 不接入（D9）
+  const authToken = useAuthStore((state) => state.token);
   const personalStats = useQuestionPersonal(
     "exam_question",
     questions.map((question) => question.id),
-    localStorage.getItem(SESSION_TOKEN_KEY),
+    authToken,
   );
   const answerForQuestion = (question) =>
     answerByQuestion.get(question.id) || {

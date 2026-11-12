@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { RotateCcw } from "lucide-react";
-import { assetSrc, isReadingQuestion, pct, SESSION_TOKEN_KEY } from "../lib/study";
+import { assetSrc, isReadingQuestion, pct } from "../lib/study";
+import { useAuthStore } from "../stores/auth";
 import { practiceQuestionGroups } from "../lib/appHelpers";
 import { useQuestionPersonal } from "../lib/questionStats";
 import { BilingualTranscript, HtmlContent, cleanHtml } from "../components/Html";
@@ -31,10 +32,11 @@ const isSharedType = (type) => type === 23 || (type >= 31 && type <= 36);
 export function PracticeResultView({ attempt, questions, category = "grammar", onRepeat, onReviewWrong = null, onLibrary }) {
   const [filter, setFilter] = useState<ResultFilter>("all");
   // 个人维度（T-011）：专项练习结果按 exam_question 口径批量拉取，作答过的题才显示
+  const authToken = useAuthStore((state) => state.token);
   const personalStats = useQuestionPersonal(
     "exam_question",
     questions.map((question) => question.id),
-    localStorage.getItem(SESSION_TOKEN_KEY),
+    authToken,
   );
 
   const answerById = useMemo(() => new Map<number, any>(attempt.answers.map((answer) => [answer.questionId, answer])), [attempt]);

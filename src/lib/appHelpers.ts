@@ -11,9 +11,6 @@ import {
   writeExamCache,
 } from "./study";
 
-const QUIZ_SESSION_KEY = "manabi_quiz_session";
-/** Pre-rename key; read once for migration, then always written under QUIZ_SESSION_KEY. */
-const LEGACY_QUIZ_SESSION_KEY = "japanese-study-quiz-session";
 export const PRACTICE_MODE_KEY = "manabi_practice_mode";
 export const PRACTICE_MODES = ["instant", "immersive"] as const;
 export type PracticeMode = typeof PRACTICE_MODES[number];
@@ -60,29 +57,6 @@ export function countTodayQuestions(attempts, now = new Date()) {
 export function isQuizSessionExpired(session) {
   const startedAt = new Date(session?.startedAt || 0).getTime();
   return !Number.isFinite(startedAt) || Date.now() - startedAt > QUIZ_SESSION_MAX_AGE_MS;
-}
-
-export function readStoredQuizSession() {
-  try {
-    const stored = localStorage.getItem(QUIZ_SESSION_KEY);
-    if (stored !== null) return JSON.parse(stored);
-    // One-time migration from the pre-rename key.
-    const legacy = localStorage.getItem(LEGACY_QUIZ_SESSION_KEY);
-    if (legacy !== null) {
-      localStorage.removeItem(LEGACY_QUIZ_SESSION_KEY);
-      return JSON.parse(legacy);
-    }
-    return null;
-  } catch {
-    localStorage.removeItem(QUIZ_SESSION_KEY);
-    localStorage.removeItem(LEGACY_QUIZ_SESSION_KEY);
-    return null;
-  }
-}
-
-export function writeStoredQuizSession(session) {
-  if (session) localStorage.setItem(QUIZ_SESSION_KEY, JSON.stringify(session));
-  else localStorage.removeItem(QUIZ_SESSION_KEY);
 }
 
 export function questionsForRunSection(allQuestions, run) {

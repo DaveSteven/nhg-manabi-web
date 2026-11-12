@@ -64,6 +64,28 @@ export function fetchStatsExams(level: string, token: string) {
   return api(`/api/stats/exams?${params}`, {}, token);
 }
 
+// ---- T-022 刀二：practice_sessions（专项练习/quiz 会话服务端化） ----
+
+export function createPracticeSession(token: string, body: { source: string; label?: string; question_ids: number[]; meta?: object }) {
+  return api("/api/practice-sessions", { method: "POST", body: JSON.stringify(body) }, token);
+}
+
+export function fetchActivePracticeSession(token: string) {
+  return api("/api/practice-sessions/active", {}, token);
+}
+
+export function savePracticeSessionAnswer(token: string, sessionId: string, questionId: number, body: { payload?: unknown; current_index?: number }) {
+  return api(`/api/practice-sessions/${sessionId}/answers/${questionId}`, { method: "PUT", body: JSON.stringify(body) }, token);
+}
+
+export function completePracticeSession(token: string, sessionId: string) {
+  return api(`/api/practice-sessions/${sessionId}/complete`, { method: "POST" }, token);
+}
+
+export function abandonPracticeSession(token: string, sessionId: string) {
+  return api(`/api/practice-sessions/${sessionId}/abandon`, { method: "POST" }, token);
+}
+
 export function pct(value, total) {
   if (!total) return 0;
   return Math.round((value / total) * 100);
