@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   api,
@@ -8,14 +9,27 @@ import {
   readExamCache,
 } from "../lib/study";
 import { persistExamProgress, preloadExamAssets, questionsForRunSection } from "../lib/appHelpers";
+import { useAuthStore } from "../stores/auth";
 import { useExamSessionStore } from "../stores/examSession";
+import { usePreferencesStore } from "../stores/preferences";
+import { useQuizSessionStore } from "../stores/quizSession";
+import { useExams } from "./useLibraryData";
 
 /** Exam run lifecycle: loading, answering (with queued server saves), section transitions, submit and review.
- *  T-022 刀一：会话与保存状态存于 useExamSessionStore，本 hook 退化为 actions 层（签名不变）。
+ *  T-022 刀一：会话与保存状态存于 useExamSessionStore，本 hook 退化为 actions 层。
+ *  T-023 S3：零入参——自取 navigate / store 状态 / exams Query 缓存，ExamListView 与路由守卫各自调用
+ *  （队列 ref 属挂载实例，同一时刻单路由挂载，语义不变）。
  *  模考域拉取（exam detail / questions / run / runs 列表）经 Query 缓存（fetchQuery，去重 + 短 staleTime）；
  *  进行中 run 的恢复依据改为服务端（GET /api/exam-runs），localStorage 考试缓存降级为 index/answers 加速缓存。 */
-export function useExamFlow({ navigate, authToken, currentUser, exams, level, refreshStudyData, onExamRunAbandoned, setError, onLeave }) {
+export function useExamFlow() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const authToken = useAuthStore((state) => state.token);
+  const currentUser = useAuthStore((state) => state.currentUser);
+  const level = usePreferencesStore((state) => state.level);
+  const setError = usePreferencesStore((state) => state.setError);
+  const examsQuery = useExams(level, authToken, currentUser?.id);
+  const exams = examsQuery.data || [];
   const examSession = useExamSessionStore((state) => state.examSession);
   const examStarting = useExamSessionStore((state) => state.examStarting);
   const examSectionStarting = useExamSessionStore((state) => state.examSectionStarting);
@@ -29,6 +43,22 @@ export function useExamFlow({ navigate, authToken, currentUser, exams, level, re
   const examSaveQueue = useRef(Promise.resolve());
   const examSaveFailures = useRef(new Set());
   const examSaveVersion = useRef(0);
+
+  function invalidateStudyData() {
+    return queryClient.invalidateQueries({ queryKey: ["study-data", currentUser?.id, level] });
+  }
+
+  async function refreshStudyData() {
+    await invalidateStudyData();
+  }
+
+  /** 退出到试卷列表：清空全部活动会话（原 App resetTo("/exams") 行为，quiz 会话一并清空）。 */
+  function resetToExamList() {
+    useQuizSessionStore.getState().setSelectedBook(null);
+    useQuizSessionStore.getState().setQuizSession(null);
+    setExamSession(null);
+    navigate("/exams");
+  }
 
   async function fetchExamDetail(examId) {
     return queryClient.fetchQuery({
@@ -124,7 +154,7 @@ export function useExamFlow({ navigate, authToken, currentUser, exams, level, re
     await api(`/api/exam-runs/${run.id}/abandon`, { method: "POST" }, authToken);
     clearExamCache(currentUser.id, exam.id);
     queryClient.invalidateQueries({ queryKey: ["exam-runs"] });
-    onExamRunAbandoned?.();
+    invalidateStudyData();
   }
 
   async function loadExamIntro(examId) {
@@ -271,7 +301,7 @@ export function useExamFlow({ navigate, authToken, currentUser, exams, level, re
         }),
       }, authToken),
     );
-    await refreshStudyData(level, authToken);
+    await refreshStudyData();
     clearExamCache(currentUser.id, current.exam.id);
     setExamSession((session) => ({ ...session, finishedAttempt: saved, reviewAttemptId: saved.id }));
     navigate(`/exams/${current.exam.id}/review/${saved.id}`);
@@ -292,7 +322,7 @@ export function useExamFlow({ navigate, authToken, currentUser, exams, level, re
       const run = await api(`/api/exam-runs/${examSession.run.id}/section/complete`, { method: "POST" }, authToken);
       if (run.status === "completed") {
         clearExamCache(currentUser.id, examSession.exam.id);
-        await refreshStudyData(level, authToken);
+        await refreshStudyData();
         await loadExamReview(examSession.exam.id, run.attempt_id);
         navigate(`/exams/${examSession.exam.id}/review/${run.attempt_id}`);
         return;
@@ -323,13 +353,13 @@ export function useExamFlow({ navigate, authToken, currentUser, exams, level, re
       const confirmed = window.confirm("离开后考试不会暂停，倒计时仍会继续。确定返回试卷列表吗？");
       if (!confirmed) return;
     }
-    onLeave();
+    resetToExamList();
   }
 
 
   return {
     examSession, setExamSession, examStarting, examSectionStarting, examSubmitting, examSaveState,
     loadExam, startExam, resumeExam, abandonExam, loadExamIntro, beginExam, reviewExamAttempt, loadExamReview,
-    chooseExamOption, retryExamSave, moveExamQuestion, submitExam, startNextExamSection, leaveActiveExam,
+    chooseExamOption, retryExamSave, moveExamQuestion, submitExam, startNextExamSection, leaveActiveExam, resetToExamList,
   };
 }

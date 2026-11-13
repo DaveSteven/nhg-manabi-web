@@ -6,11 +6,14 @@ import { create } from "zustand";
 
 interface QuizSessionState {
   quizSession: any;
+  /** 开练来源（book/mixed 等的 source 对象），生命周期与 quizSession 绑定（T-023 S1 从 App useState 迁入） */
+  selectedBook: any;
   grammarPractice: any;
   practiceSubmitting: boolean;
   quizSaveState: string;
   quizRestoring: boolean;
   setQuizSession: (updater: any) => void;
+  setSelectedBook: (value: any) => void;
   setGrammarPractice: (updater: any) => void;
   setPracticeSubmitting: (value: boolean) => void;
   setQuizSaveState: (value: string) => void;
@@ -19,6 +22,7 @@ interface QuizSessionState {
 
 export const useQuizSessionStore = create<QuizSessionState>((set) => ({
   quizSession: null,
+  selectedBook: null,
   grammarPractice: null,
   practiceSubmitting: false,
   quizSaveState: "idle",
@@ -28,6 +32,7 @@ export const useQuizSessionStore = create<QuizSessionState>((set) => ({
     set((state) => ({
       quizSession: typeof updater === "function" ? updater(state.quizSession) : updater,
     })),
+  setSelectedBook: (value) => set({ selectedBook: value }),
   setGrammarPractice: (updater) =>
     set((state) => ({
       grammarPractice: typeof updater === "function" ? updater(state.grammarPractice) : updater,

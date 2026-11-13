@@ -2,6 +2,8 @@ import React, { useMemo, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { assetSrc, isReadingQuestion, pct } from "../lib/study";
 import { useAuthStore } from "../stores/auth";
+import { useQuizSessionStore } from "../stores/quizSession";
+import { useQuizFlow } from "../hooks/useQuizFlow";
 import { practiceQuestionGroups } from "../lib/appHelpers";
 import { useQuestionPersonal } from "../lib/questionStats";
 import { BilingualTranscript, HtmlContent, cleanHtml } from "../components/Html";
@@ -29,7 +31,16 @@ import { ZoomImage } from "../components/ZoomImage";
 
 const isSharedType = (type) => type === 23 || (type >= 31 && type <= 36);
 
-export function PracticeResultView({ attempt, questions, category = "grammar", onRepeat, onReviewWrong = null, onLibrary }) {
+export function PracticeResultView() {
+  // T-023 S3：自取专项练习结果（grammarPractice.finishedAttempt）与动作；路由侧保证已完成态才渲染
+  const grammarPractice = useQuizSessionStore((state) => state.grammarPractice);
+  const setGrammarPractice = useQuizSessionStore((state) => state.setGrammarPractice);
+  const { resetToLibrary: onLibrary, startPracticeWrongReview } = useQuizFlow();
+  const attempt = grammarPractice.finishedAttempt;
+  const questions = grammarPractice.questions;
+  const category = grammarPractice.config.category || "grammar";
+  const onRepeat = () => setGrammarPractice(null);
+  const onReviewWrong = () => startPracticeWrongReview(category);
   const [filter, setFilter] = useState<ResultFilter>("all");
   // 个人维度（T-011）：专项练习结果按 exam_question 口径批量拉取，作答过的题才显示
   const authToken = useAuthStore((state) => state.token);

@@ -18,6 +18,15 @@ import {
 } from "../lib/study";
 import { useQuestionPersonal } from "../lib/questionStats";
 import { useAuthStore } from "../stores/auth";
+import { useExamSessionStore } from "../stores/examSession";
+import { usePreferencesStore } from "../stores/preferences";
+import { useQuizSessionStore } from "../stores/quizSession";
+import useFavorites from "../hooks/useFavorites";
+import { useExamFlow } from "../hooks/useExamFlow";
+import { useQuizFlow } from "../hooks/useQuizFlow";
+
+import { useStudyDerived } from "../hooks/useStudyDerived";
+import { useExams } from "../hooks/useLibraryData";
 import { practiceQuestionGroups } from "../lib/appHelpers";
 import { HtmlContent, hasVisibleHtml } from "../components/Html";
 import {
@@ -56,7 +65,18 @@ function PracticeExitModal({ onStay, onLeave }) {
   );
 }
 
-export function UnifiedPracticeSessionView({ session, onBack, onChoose, onMove, onCheck, onSubmit, submitting = false, favorites }) {
+export function UnifiedPracticeSessionView() {
+  // T-023 S3：自取会话与动作（Route element 零业务 props）
+  const session = useQuizSessionStore((state) => state.grammarPractice);
+  const submitting = useQuizSessionStore((state) => state.practiceSubmitting);
+  const favorites = useFavorites(useAuthStore((state) => state.token));
+  const {
+    exitGrammarPractice: onBack,
+    chooseGrammarOption: onChoose,
+    moveGrammarQuestion: onMove,
+    checkGrammarQuestions: onCheck,
+    submitGrammarPractice: onSubmit,
+  } = useQuizFlow();
   const groups = practiceQuestionGroups(session.questions);
   // 个人维度（T-011）：真题专项练习按 exam_question 口径批量拉取，作答过的题才显示
   const authToken = useAuthStore((state) => state.token);
@@ -246,7 +266,20 @@ function ActiveRunCard({ exam, run, onResumeExam, onAbandonExam }) {
   );
 }
 
-export function ExamListView({ exams, level, examAttempts, examRuns = [], onBack, onStartExam, onResumeExam, onAbandonExam, onReviewAttempt }) {
+export function ExamListView() {
+  // T-023 S3：自取数据与动作
+  const authToken = useAuthStore((state) => state.token);
+  const currentUser = useAuthStore((state) => state.currentUser);
+  const level = usePreferencesStore((state) => state.level);
+  const examsQuery = useExams(level, authToken, currentUser?.id);
+  const exams = examsQuery.data || [];
+  const { examAttempts, examRuns } = useStudyDerived();
+  const {
+    startExam: onStartExam, resumeExam: onResumeExam, abandonExam: onAbandonExam,
+    reviewExamAttempt: onReviewAttempt,
+  } = useExamFlow();
+  // 返回首页沿用 resetToLibrary（清空活动会话，与原 App onBack 行为一致）
+  const { resetToLibrary: onBack } = useQuizFlow();
   const [expandedExamId, setExpandedExamId] = useState<number | null>(null);
   const examStats = latestExamAttemptByExam(examAttempts);
   const activeRuns = new Map<number, any>(examRuns.map((run) => [run.exam_id, run]));
@@ -629,10 +662,12 @@ function EstimatedScore({ est }) {
   );
 }
 
-export function ExamResultView({ exam, attempt, questions, onRepeat, onLibrary, favorites }) {
+export function ExamResultView({ exam, attempt, questions, onRepeat, onLibrary }) {
   const answerByQuestion = new Map<number, any>(attempt.answers.map((answer) => [answer.questionId, answer]));
   // 模考完成后的回顾页展示个人维度（T-011）；进行中的 ExamSessionView 不接入（D9）
   const authToken = useAuthStore((state) => state.token);
+  // T-023 S3：收藏态自取（原 favorites prop 由 ExamReviewRoute 下发）
+  const favorites = useFavorites(authToken);
   const personalStats = useQuestionPersonal(
     "exam_question",
     questions.map((question) => question.id),

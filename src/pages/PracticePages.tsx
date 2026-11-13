@@ -1,8 +1,13 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ArrowRight, Check, ClipboardList, Eye, Focus, Target } from "lucide-react";
 import UiSelect from "../components/UiSelect";
 import { PageHeader, TitleBlock } from "../components/CommonUi";
 import { readPracticeMode, writePracticeMode } from "../lib/appHelpers";
+import { useAuthStore } from "../stores/auth";
+import { usePreferencesStore } from "../stores/preferences";
+import { useQuizFlow } from "../hooks/useQuizFlow";
+import { useExams } from "../hooks/useLibraryData";
 
 const T = (id, label, description) => ({ id, label, description });
 
@@ -61,7 +66,14 @@ export function ChoiceCard({ type, checked, onChange, icon, title, description, 
   );
 }
 
-export function GrammarPracticeSetupView({ exams, level, category = "grammar", onBack, onStart }) {
+export function GrammarPracticeSetupView({ category = "grammar" }) {
+  // T-023 S3：自取 exams/level 与开练动作（category 为路由参数）
+  const authToken = useAuthStore((state) => state.token);
+  const currentUser = useAuthStore((state) => state.currentUser);
+  const level = usePreferencesStore((state) => state.level);
+  const examsQuery = useExams(level, authToken, currentUser?.id);
+  const exams = examsQuery.data || [];
+  const { resetToLibrary: onBack, startGrammarPractice: onStart } = useQuizFlow();
   const practiceCategory = PRACTICE_CATEGORIES[category] || PRACTICE_CATEGORIES.grammar;
   const countUnit = category === "reading" ? "篇" : "题";
   const [mode, setMode] = useState("random");
@@ -152,8 +164,17 @@ export function GrammarPracticeSetupView({ exams, level, category = "grammar", o
   );
 }
 
-export function BasicPracticeSetupView({ source, questionCount, initialMode, onBack, onStart }) {
-  const [feedbackMode, setFeedbackMode] = useState(initialMode || readPracticeMode());
+export function BasicPracticeSetupView() {
+  // T-023 S3：自取待开练习（pendingPractice）与开练动作；路由侧保证 pendingPractice 存在才渲染
+  const navigate = useNavigate();
+  const pendingPractice = usePreferencesStore((state) => state.pendingPractice);
+  const setPendingPractice = usePreferencesStore((state) => state.setPendingPractice);
+  const practiceMode = usePreferencesStore((state) => state.practiceMode);
+  const { startPreparedPractice: onStart } = useQuizFlow();
+  const source = pendingPractice.source;
+  const questionCount = pendingPractice.quiz.questions.length;
+  const onBack = () => { setPendingPractice(null); navigate(-1); };
+  const [feedbackMode, setFeedbackMode] = useState(practiceMode || readPracticeMode());
   const start = () => { writePracticeMode(feedbackMode); onStart(feedbackMode); };
   return (
     <section className="grammar-practice-setup basic-practice-setup">

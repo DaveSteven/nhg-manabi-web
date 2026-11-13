@@ -4,6 +4,9 @@ import { CheckCircle2, ClipboardList, Play, RotateCcw } from "lucide-react";
 import { api, assetSrc, mapPracticeAttempt, pct } from "../lib/study";
 import { LISTENING_TYPES, listeningGroupLabel, plain, segments } from "../lib/listening";
 import { useListeningStore } from "../stores/listening";
+import { useAuthStore } from "../stores/auth";
+import { usePreferencesStore } from "../stores/preferences";
+import useFavorites from "../hooks/useFavorites";
 import UiSelect from "../components/UiSelect";
 import ListeningTrainer from "../components/ListeningTrainer";
 import { ModalOverlay, PageHeader, TitleBlock } from "../components/CommonUi";
@@ -158,9 +161,14 @@ function ExamQuestionGroups({ groups, detail, questions, progress, onOpen }) {
   );
 }
 
-export default function Listening({ userId, token, globalLevel: level, favorites = null }) {
+export default function Listening() {
   const { examId, questionId } = useParams();
   const navigate = useNavigate();
+  // T-023 S3：自取用户态、等级与收藏态（Route element 零业务 props）
+  const token = useAuthStore((state) => state.token);
+  const userId = useAuthStore((state) => state.currentUser)?.id;
+  const level = usePreferencesStore((state) => state.level);
+  const favorites = useFavorites(token);
   // T-022 刀三：听力进度在 zustand persist store（旧 localStorage 键已收编迁移）
   const progressByUser = useListeningStore((state) => state.progressByUser);
   const saveProgressStore = useListeningStore((state) => state.saveProgress);
@@ -317,14 +325,14 @@ export default function Listening({ userId, token, globalLevel: level, favorites
     ? { onBack: () => setPracticeSession(null), label: "返回设置" }
     : practiceSession
     ? { onBack: () => setShowExit(true), label: "返回设置" }
-    : { to: questionId ? `/listening/${examId}` : examId ? "/listening" : "/" };
+    : { to: questionId ? `/listening/${examId}` : examId ? "/listening" : "/home" };
 
   let body;
   if (practiceSession?.finishedAttempt) {
     body = <PracticeResult attempt={practiceSession.finishedAttempt} questions={practiceSession.questions} onReviewWrong={() => {
       const wrongIds = new Set(practiceSession.finishedAttempt.answers.filter((answer) => !answer.isCorrect).map((answer) => answer.questionId));
       setPracticeSession((current) => ({ ...current, questions: current.questions.filter((question) => wrongIds.has(question.id)), index: 0, answers: {}, saving: false, finishedAttempt: null }));
-    }} onReset={() => setPracticeSession(null)} onHome={() => navigate("/")} />;
+    }} onReset={() => setPracticeSession(null)} onHome={() => navigate("/home")} />;
   } else if (practiceQuestion) {
     body = <ListeningTrainer key={`practice:${practiceQuestion.id}`} question={practiceQuestion} examId={practiceQuestion.sourceExamId} token={token} saved={{}} feedbackMode={practiceSession.feedbackMode} onSave={savePractice} onNext={advancePractice} favorites={favorites} />;
   } else if (loading) {

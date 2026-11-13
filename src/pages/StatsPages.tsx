@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
@@ -14,6 +15,10 @@ import {
 } from "lucide-react";
 import { Tooltip } from "../components/Tooltip";
 import { EmptyState, PageHeader, ThemeToggle } from "../components/CommonUi";
+import { useAuthStore } from "../stores/auth";
+import { usePreferencesStore } from "../stores/preferences";
+import { useExamFlow } from "../hooks/useExamFlow";
+import { useQuizFlow } from "../hooks/useQuizFlow";
 import { fetchStatsExams, fetchStatsOverview, fetchStatsTrend } from "../lib/study";
 import {
   compareRecentActivity,
@@ -202,7 +207,15 @@ function ExamScoreChart({ points, onReviewAttempt }) {
   );
 }
 
-export function StatsView({ level, token, onBack, onAction, onExams, onReviewAttempt }) {
+export function StatsView() {
+  // T-023 S3：自取等级/token 与动作（Route element 零业务 props）
+  const level = usePreferencesStore((state) => state.level);
+  const token = useAuthStore((state) => state.token);
+  const navigate = useNavigate();
+  const { resetToLibrary: onBack } = useQuizFlow();
+  const { reviewExamAttempt: onReviewAttempt } = useExamFlow();
+  const onAction = (category) => navigate(category === "listening" ? "/listening" : `/${category}-practice`);
+  const onExams = () => navigate("/exams");
   // T-022 刀三：统计拉取迁 Query（overview/trend/exam-score 三域独立缓存）
   const [days, setDays] = useState(90);
   const overviewQuery = useQuery({

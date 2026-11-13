@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ArrowRight,
@@ -22,13 +24,21 @@ import {
   Flame,
   X,
 } from "lucide-react";
-import { LEVELS, SUBJECTS, api, fetchStatsOverview, formatDate, pct, subjectLabel } from "../lib/study";
+import { LEVELS, SUBJECTS, api, fetchStatsOverview, formatDate, normalizeLevel, pct, readUserLevelCache, subjectLabel, writeUserLevelCache } from "../lib/study";
 import { fetchFavorites, mapFavorite } from "../lib/appHelpers";
+import { useAuthStore } from "../stores/auth";
+import { usePreferencesStore } from "../stores/preferences";
+import { useQuizSessionStore } from "../stores/quizSession";
 import UiSelect from "../components/UiSelect";
 import { Tooltip } from "../components/Tooltip";
 import { HtmlInline } from "../components/Html";
 import { DailyRing, EmptyState, FieldInput, KeyboardToast, ModalOverlay, OptionButton, PageHeader, Progress, BrandMark, ShortcutHelp, ThemeToggle, TitleBlock } from "../components/CommonUi";
 import { markKeyboardHintSeen, useKeyboardAnswer } from "../hooks/useKeyboardAnswer";
+import useFavorites from "../hooks/useFavorites";
+import { useExamFlow } from "../hooks/useExamFlow";
+import { useQuizFlow } from "../hooks/useQuizFlow";
+import { useStudyDerived } from "../hooks/useStudyDerived";
+import { useBooks, useExams } from "../hooks/useLibraryData";
 import FavoriteButton from "../components/FavoriteButton";
 import { ResultFilter, ResultGroupCard, ResultPage, ResultQuestion, ResultReview, ResultSummary, answerStatus, countStatuses, scoreTone, singleNavChunk } from "../components/ResultParts";
 
@@ -60,35 +70,62 @@ export function Shell({ children }) {
   );
 }
 
-export function LibraryView({
-  books,
-  exams,
-  booksLoading,
-  level,
-  subject,
-  attempts,
-  examAttempts,
-  wrongItems,
-  bookStats,
-  currentUser,
-  continueSuggestions = [],
-  todayCount = 0,
-  dailyGoal = 20,
-  onDailyGoal,
-  onResume,
-  onReviewWrong,
-  onLevel,
-  onSubject,
-  onStart,
-  onOpenGrammarPractice,
-  onOpenVocabularyPractice,
-  onOpenReadingPractice,
-  onOpenExamList,
-  onOpenListening,
-  onOpenWrongBook,
-  onOpenUser,
-  onSearch,
-}) {
+export function LibraryView() {
+  // T-023 S3：自取数据与动作（Route element 零业务 props）
+  const navigate = useNavigate();
+  const authToken = useAuthStore((state) => state.token);
+  const currentUser = useAuthStore((state) => state.currentUser);
+  const setAuthUser = useAuthStore((state) => state.setUser);
+  const level = usePreferencesStore((state) => state.level);
+  const setLevel = usePreferencesStore((state) => state.setLevel);
+  const subject = usePreferencesStore((state) => state.subject);
+  const setSubject = usePreferencesStore((state) => state.setSubject);
+  const dailyGoal = usePreferencesStore((state) => state.dailyGoal);
+  const setDailyGoal = usePreferencesStore((state) => state.setDailyGoal);
+  const booksQuery = useBooks(level, subject, authToken, currentUser?.id);
+  const examsQuery = useExams(level, authToken, currentUser?.id);
+  const books = booksQuery.data || [];
+  const exams = examsQuery.data || [];
+  const booksLoading = booksQuery.isFetching && !booksQuery.data;
+  const {
+    attempts, wrongItems, examAttempts, bookStats, allWrongItems, continueSuggestions, todayCount,
+  } = useStudyDerived(books);
+  const { startBook: onStart, startWrongReview, openPractice } = useQuizFlow();
+  const onDailyGoal = setDailyGoal;
+  const onResume = () => navigate("/quiz");
+  const onReviewWrong = () => (wrongItems.length ? startWrongReview() : navigate("/wrong"));
+  const onOpenGrammarPractice = () => openPractice("grammar");
+  const onOpenVocabularyPractice = () => openPractice("vocabulary");
+  const onOpenReadingPractice = () => openPractice("reading");
+  const onOpenExamList = () => navigate("/exams");
+  const onOpenListening = () => navigate("/listening");
+  const onOpenWrongBook = () => navigate("/wrong");
+  const onOpenUser = () => navigate("/user");
+  const onSearch = (query) => navigate(`/search?q=${encodeURIComponent(query)}`);
+
+  // B2: 等级切换——本地缓存 + 服务端保存（best-effort，失败退回本地缓存）
+  async function chooseLevel(nextLevel) {
+    const normalized = normalizeLevel(nextLevel);
+    setLevel(normalized);
+    if (currentUser) {
+      writeUserLevelCache(currentUser.id, normalized);
+      setAuthUser((user) => user ? { ...user, current_level: normalized } : user);
+    }
+    if (!authToken || !currentUser || currentUser.current_level === normalized) return;
+
+    try {
+      const updatedUser = await api("/api/me/level", {
+        method: "POST",
+        body: JSON.stringify({ current_level: normalized }),
+      }, authToken);
+      setAuthUser(updatedUser);
+      writeUserLevelCache(updatedUser.id, updatedUser.current_level);
+    } catch (err) {
+      console.warn("Could not save current level to the API; using local cache.", err);
+    }
+  }
+  const onLevel = chooseLevel;
+  const onSubject = setSubject;
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const safeIndex = Math.min(suggestionIndex, Math.max(0, continueSuggestions.length - 1));
@@ -340,7 +377,12 @@ function HighlightedText({ text, query }) {
   return <>{value.slice(0, index)}<mark>{value.slice(index, index + normalizedQuery.length)}</mark>{value.slice(index + normalizedQuery.length)}</>;
 }
 
-export function SearchView({ token, currentLevel, onBack }) {
+export function SearchView() {
+  // T-023 S3：token/等级自取；等级仅作搜索初始筛选，页内可改（维持原 props 行为）
+  const token = useAuthStore((state) => state.token);
+  const currentLevel = usePreferencesStore((state) => state.level);
+  const navigate = useNavigate();
+  const onBack = () => navigate("/home");
   const initialQuery = new URLSearchParams(window.location.search).get("q") || "";
   const [query, setQuery] = useState(initialQuery);
   const [submittedQuery, setSubmittedQuery] = useState(initialQuery);
@@ -445,7 +487,11 @@ export function SearchView({ token, currentLevel, onBack }) {
   );
 }
 
-export function WrongBookView({ level, items, onBack, onReview }) {
+export function WrongBookView() {
+  // T-023 S3：自取错题数据与复习动作
+  const level = usePreferencesStore((state) => state.level);
+  const { allWrongItems: items } = useStudyDerived();
+  const { resetToLibrary: onBack, startWrongReview: onReview } = useQuizFlow();
   const [page, setPage] = useState(1);
   const sortedItems = useMemo(
     () => [...items].sort((left, right) => new Date(right.lastWrongAt).getTime() - new Date(left.lastWrongAt).getTime()),
@@ -568,7 +614,30 @@ export function LoginView({ onLogin }) {
   );
 }
 
-export function UserView({ currentUser, level, token, onBack, onOpenStats, onOpenFavorites, onLogout }) {
+export function UserView() {
+  // T-023 S3：自取用户态与导航；退出登录内聚（清 auth/会话/Query 缓存后回首页）
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const currentUser = useAuthStore((state) => state.currentUser);
+  const level = usePreferencesStore((state) => state.level);
+  const token = useAuthStore((state) => state.token);
+  const clearAuth = useAuthStore((state) => state.clear);
+  const setQuizSession = useQuizSessionStore((state) => state.setQuizSession);
+  const setGrammarPractice = useQuizSessionStore((state) => state.setGrammarPractice);
+  const { resetToLibrary: onBack } = useQuizFlow();
+  const onOpenStats = () => navigate("/stats");
+  const onOpenFavorites = () => navigate("/favorites");
+  async function onLogout() {
+    if (token) {
+      await api("/api/auth/logout", { method: "POST" }, token).catch(() => null);
+    }
+    clearAuth();
+    setQuizSession(null);
+    setGrammarPractice(null);
+    // 清空 Query 缓存，避免跨账号读到上一账号的 books/exams/学习数据
+    queryClient.clear();
+    navigate("/");
+  }
   // 连续学习数据复用统计页 overview 接口；加载失败静默降级，不影响用户页其余内容
   const [streak, setStreak] = useState(null);
   useEffect(() => {
@@ -655,7 +724,14 @@ function ExitConfirmOverlay({ onStay, onLeave }) {
   );
 }
 
-export function QuizView({ session, onBack, onDiscard, onChoose, onCheck, onNext, onMove, onComplete, favorites }) {
+export function QuizView() {
+  // T-023 S3：自取会话与动作
+  const session = useQuizSessionStore((state) => state.quizSession);
+  const favorites = useFavorites(useAuthStore((state) => state.token));
+  const {
+    resetToLibrary: onBack, discardQuizSession: onDiscard, chooseOption: onChoose, checkAnswer: onCheck,
+    nextQuestion: onNext, moveQuizQuestion: onMove, completeImmersiveQuiz: onComplete,
+  } = useQuizFlow();
   const question = session.questions[session.index];
   const { checked, checkResult } = session;
   const isCorrect = Boolean(checkResult?.is_correct);
@@ -780,7 +856,27 @@ export function QuizView({ session, onBack, onDiscard, onChoose, onCheck, onNext
   );
 }
 
-export function ResultView({ attempt, questions = [], todayCount = 0, dailyGoal = 0, onRepeat, onLibrary, onReviewWrong }) {
+export function ResultView() {
+  // T-023 S3：自取会话、派生数据与动作
+  const session = useQuizSessionStore((state) => state.quizSession);
+  const selectedBook = useQuizSessionStore((state) => state.selectedBook);
+  const dailyGoal = usePreferencesStore((state) => state.dailyGoal);
+  const { todayCount } = useStudyDerived();
+  const {
+    resetToLibrary: onLibrary, reviewAttemptWrong: onReviewWrong, startMixedTest, startWrongReview,
+    startFavoriteTextbookQuestion, startBook,
+  } = useQuizFlow();
+  const attempt = session.finishedAttempt;
+  const questions = session.questions;
+  const onRepeat = () => (
+    session.mode === "mixed"
+      ? startMixedTest()
+      : session.mode === "wrong_review"
+        ? startWrongReview()
+        : session.mode === "favorite_review"
+          ? startFavoriteTextbookQuestion(session.questions[0]?.id)
+          : startBook(session.book || selectedBook)
+  );
   // 练习时选项是打乱过的，复盘按练习时看到的顺序排，题号才对得上。
   const shownOrder = new Map<any, any[]>(questions.map((question) => [question.id, (question.options || []).map((option) => option.id)]));
   const orderedOptions = (answer) => {
@@ -839,7 +935,10 @@ export function ResultView({ attempt, questions = [], todayCount = 0, dailyGoal 
   );
 }
 
-export function FavoritesView({ token, onBack, onOpen }) {
+export function FavoritesView() {
+  // T-023 S3：自取 token 与打开动作
+  const token = useAuthStore((state) => state.token);
+  const { resetToLibrary: onBack, openFavorite: onOpen } = useQuizFlow();
   const [items, setItems] = useState<any[] | null>(null);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);

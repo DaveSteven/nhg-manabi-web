@@ -4,9 +4,12 @@ import React from "react";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Listening from "./Listening";
 import { SESSION_TOKEN_KEY } from "../lib/study";
 import { useListeningStore } from "../stores/listening";
+import { useAuthStore } from "../stores/auth";
+import { usePreferencesStore } from "../stores/preferences";
 
 const userId = 1;
 const progressKey = `listening:${userId}`;
@@ -64,11 +67,26 @@ async function startExamPractice() {
   await screen.findByText(/听完音频后选择答案/);
 }
 
+// T-023 S3 适配：Listening 自取 token/userId/level/收藏态，测试改为 seed store + provider 包裹
+function renderListening() {
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter initialEntries={["/listening"]}>
+        <Routes>
+          <Route path="/listening/:examId?/:questionId?" element={<Listening />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+}
+
 beforeEach(() => {
   localStorage.clear();
   // 练习会话在 persist store：跨用例重置，避免上一用例的 practiceSession 恢复
   useListeningStore.setState({ progressByUser: {}, practiceSession: null });
   localStorage.setItem(SESSION_TOKEN_KEY, "test-token");
+  useAuthStore.setState({ token: "test-token", currentUser: { id: userId, username: "tester", current_level: "N5" } });
+  usePreferencesStore.setState({ level: "N5" });
   vi.stubGlobal("fetch", vi.fn(fakeFetch));
 });
 
@@ -85,13 +103,7 @@ describe("听力专项退出后答案重置", () => {
       [question.id]: { examId: exam.id, started: true, choice: 1002, result: savedResult },
     }));
 
-    render(
-      <MemoryRouter initialEntries={["/listening"]}>
-        <Routes>
-          <Route path="/listening/:examId?/:questionId?" element={<Listening userId={userId} token="test-token" globalLevel="N5" />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    renderListening();
 
     await startExamPractice();
 
@@ -102,13 +114,7 @@ describe("听力专项退出后答案重置", () => {
   });
 
   it("本次练习中选择的答案仍应正常标记选中", async () => {
-    render(
-      <MemoryRouter initialEntries={["/listening"]}>
-        <Routes>
-          <Route path="/listening/:examId?/:questionId?" element={<Listening userId={userId} token="test-token" globalLevel="N5" />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    renderListening();
 
     await startExamPractice();
     const option = await screen.findByRole("button", { name: /选项二/ });
