@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -609,6 +609,11 @@ export function LoginView({ onLogin }) {
           <FieldInput value={password} onChange={setPassword} placeholder="请输入密码" type="password" />
           {message ? <p className="form-error">{message}</p> : null}
           <button className="primary-button" type="submit" disabled={!username.trim() || !password}>登录</button>
+          {/* T-028：自助注册与忘记密码入口 */}
+          <div className="login-links">
+            <Link to="/register">注册新账号</Link>
+            <Link to="/forgot-password">忘记密码？</Link>
+          </div>
         </form>
       </div>
     </section>

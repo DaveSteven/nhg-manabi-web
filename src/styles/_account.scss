@@ -403,3 +403,99 @@
 .center-state.error {
   color: var(--error-dark);
 }
+
+/* ---- T-028 自助注册：/register /verify-email /forgot-password /reset-password ---- */
+
+.auth-title {
+  margin-top: 4px;
+  color: var(--ink);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+}
+
+.auth-subtitle {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.auth-field {
+  display: grid;
+  gap: 4px;
+}
+
+.auth-hint {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  line-height: 1.6;
+}
+
+.auth-card .primary-button,
+.auth-card .secondary-button {
+  width: 100%;
+  justify-content: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-done-panel {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  padding: 8px 0 0;
+  color: var(--muted);
+  font-weight: var(--fw-medium);
+  line-height: 1.7;
+  text-align: center;
+}
+
+.auth-done-panel svg {
+  color: var(--primary);
+}
+
+.auth-done-panel .primary-button,
+.auth-done-panel .secondary-button {
+  width: 100%;
+}
+
+.auth-card a.secondary-button,
+.auth-card a.primary-button {
+  text-decoration: none;
+}
+
+/* 失败面板内嵌的重发表单：占满卡片宽度，标签左对齐 */
+.auth-done-panel .new-user-form {
+  width: 100%;
+  margin-top: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+}
+
+/* 登录/注册卡片底部的入口链接行 */
+.login-links {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.login-links a {
+  color: var(--primary-dark);
+  text-decoration: none;
+}
+
+.login-links a:hover {
+  text-decoration: underline;
+}
+
+.login-links a:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+  border-radius: 4px;
+}

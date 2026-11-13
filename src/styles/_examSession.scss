@@ -46,7 +46,9 @@
 
 .login-brand {
   display: grid;
+  justify-items: center;
   gap: 8px;
+  text-align: center;
 }
 
 .login-brand div {

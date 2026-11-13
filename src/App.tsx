@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuthStore } from "./stores/auth";
 import { RequireAuth } from "./routes/RequireAuth";
 import { LoginRoute } from "./routes/LoginRoute";
+import { ForgotPasswordRoute, RegisterRoute, ResetPasswordRoute, VerifyEmailRoute } from "./routes/AuthRoutes";
 import { ExamIntroRoute, ExamReviewRoute, ExamRoute } from "./routes/ExamRoutes";
 import { PracticeCategoryRoute, PracticeSetupRoute, QuizRoute } from "./routes/PracticeRoutes";
 import {
@@ -31,6 +32,10 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginRoute />} />
+      <Route path="/register" element={<RegisterRoute />} />
+      <Route path="/verify-email" element={<VerifyEmailRoute />} />
+      <Route path="/forgot-password" element={<ForgotPasswordRoute />} />
+      <Route path="/reset-password" element={<ResetPasswordRoute />} />
       <Route path="/" element={<RootRedirect />} />
       <Route element={<RequireAuth />}>
         <Route path="/home" element={<LibraryView />} />
