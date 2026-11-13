@@ -37,6 +37,32 @@ export function formatStatDate(value) {
   return new Intl.DateTimeFormat("zh-CN", { month: "short", day: "numeric" }).format(date);
 }
 
+/** T-030 连续周卡：本周（周一→周日）逐日点阵数据。future 日为空位；answered 以 /api/stats/overview 逐日 activity 为准。 */
+export interface WeekDot {
+  date: string;
+  answered: number;
+  future: boolean;
+}
+
+export function weekDots(activity: { date: string; answered: number }[], today = new Date()): WeekDot[] {
+  const answeredByDate = new Map<string, number>(activity.map((item) => [item.date, item.answered]));
+  const todayIso = (() => {
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const date = String(today.getDate()).padStart(2, "0");
+    return `${today.getFullYear()}-${month}-${date}`;
+  })();
+  const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+  return Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(monday);
+    day.setDate(monday.getDate() + index);
+    const month = String(day.getMonth() + 1).padStart(2, "0");
+    const date = String(day.getDate()).padStart(2, "0");
+    const iso = `${day.getFullYear()}-${month}-${date}`;
+    return { date: iso, answered: answeredByDate.get(iso) ?? 0, future: iso > todayIso };
+  });
+}
+
 /** T-013 真题成绩：`/api/stats/exams` 的 snake_case 契约 → 视图模型。 */
 export function examPerformanceView(data) {
   return {

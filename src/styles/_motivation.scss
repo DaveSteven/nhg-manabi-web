@@ -8,6 +8,119 @@
   align-items: stretch;
 }
 
+// T-030 首页动机两卡（D22）：倒计时 + 连续周卡，1fr+1fr 并排的窄横卡，
+// 位于继续学习卡上方；继续学习卡保持首屏视觉主体（此行不加大字与按钮）。
+.home-motivation-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.motivation-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  border: 2px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--card);
+  box-shadow: var(--shadow-soft); /* 静态容器：弥散浅影，不用按压实投影 */
+}
+
+.motivation-info {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.motivation-info small {
+  color: var(--muted);
+  font-weight: var(--fw-medium);
+}
+
+.motivation-info strong {
+  /* 倒计时/连续天数：大字用主题色（用户要求 2026-11-13），单位后缀保持 muted 弱化 */
+  font-size: 1.75rem;
+  line-height: 1.15;
+  color: var(--primary);
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+}
+
+.motivation-info strong em {
+  font-size: var(--fs-sm);
+  font-style: normal;
+  font-weight: var(--fw-medium);
+  color: var(--muted);
+  margin-left: 2px;
+}
+
+.motivation-placeholder {
+  color: var(--muted);
+  letter-spacing: 2px;
+}
+
+.motivation-exam-select {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.streak-week {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  margin-left: auto;
+}
+
+.streak-week small {
+  color: var(--muted);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+}
+
+.streak-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.streak-dots span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background: transparent;
+}
+
+/* 点亮的当天：松绿填充（D22：多邻国式红降饱和为松绿/樱点缀） */
+.streak-dots span.active {
+  border-color: var(--correct);
+  background: var(--correct);
+}
+
+/* streak=0 引导态：纯文案，樱色 Flame 点缀 */
+.home-streak-card.guidance {
+  gap: 10px;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.home-streak-card.guidance svg {
+  color: var(--sakura-dark);
+  flex-shrink: 0;
+}
+
+@media (max-width: $bpMd) {
+  .home-motivation-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 周卡隐藏（接口失败）时倒计时卡占满整行，不留空半格 */
+.home-motivation-row:has(> .motivation-card:only-child) {
+  grid-template-columns: 1fr;
+}
+
 .home-daily-card {
   display: flex;
   align-items: center;

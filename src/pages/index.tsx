@@ -40,6 +40,7 @@ import { useQuizFlow } from "../hooks/useQuizFlow";
 import { useStudyDerived } from "../hooks/useStudyDerived";
 import { useBooks, useExams } from "../hooks/useLibraryData";
 import FavoriteButton from "../components/FavoriteButton";
+import HomeMotivationCards from "../components/HomeMotivationCards";
 import { ResultFilter, ResultGroupCard, ResultPage, ResultQuestion, ResultReview, ResultSummary, answerStatus, countStatuses, scoreTone, singleNavChunk } from "../components/ResultParts";
 
 export * from "./ExamPages";
@@ -188,7 +189,6 @@ export function LibraryView() {
           </form>
           <UiSelect
             className="home-level-select"
-            label="等级"
             ariaLabel="JLPT 等级"
             compact
             value={level}
@@ -217,6 +217,7 @@ export function LibraryView() {
         </div>
       </header>
 
+      <HomeMotivationCards token={authToken} />
       <div className="home-top-row">
         {suggestion ? (
           <section className="home-continue-card" aria-label="继续学习推荐">

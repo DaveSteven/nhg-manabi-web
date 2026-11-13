@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compareRecentActivity, efficiencyView, examPerformanceView, examScoreDelta, formatDuration, heatLevel, sessionDurationSeconds } from "./stats";
+import { compareRecentActivity, efficiencyView, examPerformanceView, examScoreDelta, formatDuration, heatLevel, sessionDurationSeconds, weekDots } from "./stats";
 
 describe("statistics calculations", () => {
   it("compares recent question volume and weighted accuracy", () => {
@@ -181,5 +181,38 @@ describe("formatDuration (T-014)", () => {
     expect(formatDuration(200)).toBe("3 分 20 秒");
     expect(formatDuration(4800)).toBe("1 小时 20 分");
     expect(formatDuration(3600)).toBe("1 小时");
+  });
+});
+
+describe("weekDots (T-030 连续周卡)", () => {
+  const activity = [
+    { date: "2026-11-09", answered: 10 },
+    { date: "2026-11-11", answered: 5 },
+    { date: "2026-11-12", answered: 0 },
+  ];
+
+  it("maps Monday→Sunday with answered>0 and future days as placeholders", () => {
+    // 2026-11-13 是周五：周一~周五已发生，周六/周日为未来空位
+    const dots = weekDots(activity, new Date(2026, 10, 13));
+    expect(dots.map((dot) => dot.date)).toEqual([
+      "2026-11-09", "2026-11-10", "2026-11-11", "2026-11-12", "2026-11-13", "2026-11-14", "2026-11-15",
+    ]);
+    expect(dots.map((dot) => dot.answered)).toEqual([10, 0, 5, 0, 0, 0, 0]);
+    expect(dots.map((dot) => dot.future)).toEqual([false, false, false, false, false, true, true]);
+  });
+
+  it("treats today itself as past (not a future placeholder)", () => {
+    // 2026-11-09 是周一：当天 answered 数据应点亮周一
+    const dots = weekDots([{ date: "2026-11-09", answered: 3 }], new Date(2026, 10, 9, 8));
+    expect(dots[0]).toEqual({ date: "2026-11-09", answered: 3, future: false });
+    expect(dots.slice(1).every((dot) => dot.future)).toBe(true);
+  });
+
+  it("starts the week on Monday even mid-week and handles Sunday", () => {
+    // 2026-11-15 是周日：周一仍是 11-09
+    const dots = weekDots([], new Date(2026, 10, 15));
+    expect(dots[0].date).toBe("2026-11-09");
+    expect(dots[6].date).toBe("2026-11-15");
+    expect(dots[6].future).toBe(false);
   });
 });

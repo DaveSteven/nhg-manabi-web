@@ -43,6 +43,17 @@ export function writeDailyGoal(goal) {
   localStorage.setItem(DAILY_GOAL_KEY, String(goal));
 }
 
+/** T-030 首页考试倒计时：目标考试记忆（ISO 日期）；是否仍有效（未过期）由调用方按 upcoming 列表校验。 */
+export const EXAM_TARGET_KEY = "manabi_exam_target";
+
+export function readExamTarget() {
+  return localStorage.getItem(EXAM_TARGET_KEY) || "";
+}
+
+export function writeExamTarget(dateIso: string) {
+  localStorage.setItem(EXAM_TARGET_KEY, dateIso);
+}
+
 /** Sum of questions answered today across quiz + practice attempts (local timezone). */
 export function countTodayQuestions(attempts, now = new Date()) {
   const today = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
