@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ArrowRight, ChevronDown, ChevronRight, ClipboardList, Clock3, Headphones, Keyboard, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronRight, CircleCheck, CircleX, ClipboardList, Clock3, Headphones, Keyboard, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import {
   assetSrc,
   buildExamProblemSections,
@@ -196,7 +196,7 @@ export function UnifiedPracticeSessionView() {
                       return <OptionButton key={option.id} index={optionIndex} option={option} className={state} disabled={locked || submitting} onClick={() => onChoose(question.id, option.id)} />;
                     })}
                   </section>
-                  {feedback ? <section className={`practice-inline-feedback ${feedback.is_correct ? "correct" : "wrong"}`}><strong>{feedback.is_correct ? "回答正确" : "回答有误"}</strong><p>正确答案：<HtmlContent inline html={feedback.answer_text} /></p>{feedback.analysis ? <div className="analysis-block"><HtmlContent inline html={feedback.analysis} /></div> : null}</section> : null}
+                  {feedback ? <section className="practice-inline-feedback"><div className={`practice-feedback-head ${feedback.is_correct ? "correct" : "wrong"}`}>{feedback.is_correct ? <CircleCheck size={20} /> : <CircleX size={20} />}<strong>{feedback.is_correct ? "回答正确" : "回答有误"}</strong></div><p>正确答案：<HtmlContent inline html={feedback.answer_text} /></p>{feedback.analysis ? <div className="analysis-block"><HtmlContent inline html={feedback.analysis} /></div> : null}</section> : null}
                 </section>
               );
             })}

@@ -50,7 +50,8 @@
 .heat-blank { visibility: hidden; }
 .heat-legend { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 10px; color: var(--muted); font-size: var(--fs-xs); }
 .heat-legend .heat-cell { flex: 0 0 12px; }
-.stats-line-chart { width: 100%; }
+/* D20 修订后面板结论提示已移除，图表块与后续内容（三大块行/面板底）需自带底距。 */
+.stats-line-chart { width: 100%; margin-bottom: 16px; }
 .stats-line-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
 .chart-grid-line { stroke: var(--line); stroke-width: 1; }
 .stats-line-chart text { fill: var(--muted); font-size: 11px; }
@@ -59,8 +60,8 @@
 .chart-node:focus { outline: none; fill: var(--primary-soft); stroke-width: 5; }
 .chart-node--action { cursor: pointer; }
 .chart-axis-labels { display: flex; justify-content: space-between; padding-left: 34px; color: var(--muted); font-size: var(--fs-xs); }
-/* D19：洞察结论壳迁 _base.scss .callout-insight，此处只留场景间距与局部按钮。 */
-.stats-panel .callout-insight { margin-top: 18px; }
+/* D20 修订（验收前）：stats 面板结论提示整体移除——数据自明，行动入口集中在「学习概况」卡片；
+   .callout-insight 中性壳保留给插叙场景（听力提示、设备检测等）。 */
 .stats-insights article button { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; border: 0; color: var(--primary-dark); background: transparent; font-size: var(--fs-sm); font-weight: var(--fw-bold); }
 .stats-subject-list { display: grid; gap: 10px; }
 .stats-subject-list > .tooltip { display: block; }
@@ -105,7 +106,7 @@
 @media (max-width: $bpSm) {
   .stats-metric-grid { grid-template-columns: 1fr; }
   .stats-panel { padding: 17px; }
-  .stats-panel-heading, .stats-panel .callout-insight { align-items: flex-start; flex-direction: column; }
+  .stats-panel-heading { align-items: flex-start; flex-direction: column; }
   .trend-heading .stats-range-tabs { width: 100%; }
   .stats-range-tabs button { flex: 1; }
   .stats-subject-row { grid-template-columns: 86px minmax(60px, 1fr) 48px 16px; gap: 7px; padding: 11px 9px; }

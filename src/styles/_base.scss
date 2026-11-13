@@ -316,23 +316,31 @@ button:disabled {
   box-shadow: none;
 }
 
-/* D19 提示块语义三分（规格见 design-system.md「提示块语义」）。
-   insight：洞察/行动建议（primary 壳，可带 CTA 文字链）；error：错误/故障（error 壳，
-   必须带 lucide 20px 图标，禁止无图标复用）；analysis-block：教材内容解析（surface 内衬
-   + ::before「解析」小标签 + 衬线内容，无彩色左条）。负面洞察一律 insight 壳，不变红。 */
-.callout-insight,
+/* D19 提示块语义三分（规格见 design-system.md「提示块语义」；D20 修订 insight 壳）。
+   insight：洞察/行动建议（中性壳：--surface 底 + --line 全边框，3px primary 左条为唯一
+   品牌锚点，可带 CTA 文字链）；error：错误/故障（error 壳，必须带 lucide 20px 图标，
+   禁止无图标复用）；analysis-block：教材内容解析（surface 内衬 + ::before「解析」小标签
+   + 衬线内容，无彩色左条）。负面洞察一律 insight 壳，不变红。 */
+.callout-insight {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  justify-content: space-between;
+}
+
 .callout-error {
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 14px 16px;
-  border-left: 3px solid var(--primary);
+  border-left: 3px solid var(--error);
   border-radius: 0 var(--r-sm) var(--r-sm) 0;
-  background: var(--primary-soft);
-}
-
-.callout-insight {
-  justify-content: space-between;
+  background: var(--error-soft);
 }
 
 .callout-insight p {
@@ -365,11 +373,6 @@ button:disabled {
   flex: 1;
   gap: 4px;
   text-align: left;
-}
-
-.callout-error {
-  border-left-color: var(--error);
-  background: var(--error-soft);
 }
 
 .callout-error > svg {
