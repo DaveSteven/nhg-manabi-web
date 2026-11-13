@@ -34,6 +34,18 @@ export async function api(path: string, options: RequestInit = {}, token: string
     ...options,
   });
   if (!response.ok) {
+    if (response.status === 401) {
+      // token 失效：清会话并回登录页（对齐管理端 utils/http.ts handleUnauthorized）
+      try {
+        localStorage.removeItem("auth-storage");
+      } catch {
+        // noop
+      }
+      if (!window.location.pathname.startsWith("/login")) {
+        window.location.assign("/login");
+      }
+      throw new Error("登录已过期，请重新登录。");
+    }
     if (response.status === 429) {
       throw new Error("操作太频繁，请稍后再试。");
     }
