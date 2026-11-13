@@ -246,11 +246,6 @@
   margin-bottom: 118px;
 }
 
-/* D18：quiz 选项按钮不随外壳拉满 1180，收进阅读列同宽，短选项不致横贯整行。 */
-.quiz-view .options-grid {
-  max-width: 40em;
-}
-
 .exam-layout {
   display: grid;
   grid-template-columns: 1fr;
