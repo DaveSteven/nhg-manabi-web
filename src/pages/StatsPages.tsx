@@ -288,31 +288,31 @@ export function StatsView() {
               <section className="stats-panel">
                 <div className="stats-panel-heading"><div><span><CalendarDays size={20} /> 学习热力图</span><h2>近一年学习记录</h2></div><strong>连续 {overview.streak.current} 天</strong></div>
                 <ActivityHeatmap activity={overview.activity} />
-                <div className="stats-conclusion"><p>{comparison.recent.answered ? `最近 30 天完成 ${comparison.recent.answered} 题。` : "最近 30 天暂无学习记录。"}</p><button type="button" onClick={() => onAction(weakest?.subject || "vocabulary")}>开始练习 <ArrowRight size={16} /></button></div>
+                <div className="callout-insight"><p>{comparison.recent.answered ? `最近 30 天完成 ${comparison.recent.answered} 题。` : "最近 30 天暂无学习记录。"}</p><button type="button" onClick={() => onAction(weakest?.subject || "vocabulary")}>开始练习 <ArrowRight size={16} /></button></div>
               </section>
 
               <section className="stats-panel">
                 <div className="stats-panel-heading trend-heading"><div><span><TrendingUp size={20} /> 正确率趋势</span><h2>正确率变化</h2></div><div className="stats-range-tabs">{[[90, "90 天"], [180, "半年"], [365, "一年"]].map(([value, label]) => <button className={days === Number(value) ? "active" : ""} onClick={() => setDays(Number(value))} type="button" key={value}>{label}</button>)}</div></div>
                 <AccuracyLineChart points={trend} />
-                <div className="stats-conclusion"><p>{comparison.accuracyChange === null ? "暂无对比数据。" : comparison.accuracyChange === 0 ? "最近 30 天正确率与上个 30 天持平。" : comparison.accuracyChange > 0 ? `最近 30 天正确率上升 ${comparison.accuracyChange} 个百分点。` : `最近 30 天正确率下降 ${Math.abs(comparison.accuracyChange)} 个百分点。`}</p><button type="button" onClick={() => onAction(weakest?.subject || "grammar")}>专项练习 <ArrowRight size={16} /></button></div>
+                <div className="callout-insight"><p>{comparison.accuracyChange === null ? "暂无对比数据。" : comparison.accuracyChange === 0 ? "最近 30 天正确率与上个 30 天持平。" : comparison.accuracyChange > 0 ? `最近 30 天正确率上升 ${comparison.accuracyChange} 个百分点。` : `最近 30 天正确率下降 ${Math.abs(comparison.accuracyChange)} 个百分点。`}</p><button type="button" onClick={() => onAction(weakest?.subject || "grammar")}>专项练习 <ArrowRight size={16} /></button></div>
               </section>
 
               <section className="stats-panel">
                 <div className="stats-panel-heading"><div><span><BarChart3 size={20} /> 科目统计</span><h2>各科正确率</h2></div></div>
                 <SubjectBars subjects={overview.breakdown_by_subject} onAction={onAction} />
-                <div className="stats-conclusion"><p>{weakest ? `${weakest.label}正确率最低（${weakest.accuracy}%）。` : "暂无科目数据。"}</p><button type="button" onClick={() => onAction(weakest?.subject || "reading")}>开始{weakest?.label || "科目"}专项 <ArrowRight size={16} /></button></div>
+                <div className="callout-insight"><p>{weakest ? `${weakest.label}正确率最低（${weakest.accuracy}%）。` : "暂无科目数据。"}</p><button type="button" onClick={() => onAction(weakest?.subject || "reading")}>开始{weakest?.label || "科目"}专项 <ArrowRight size={16} /></button></div>
               </section>
 
               {examPoints.length ? (
                 <section className="stats-panel">
                   <div className="stats-panel-heading"><div><span><LineChart size={20} /> 真题成绩</span><h2>分数走势与三大块</h2></div><span className="stats-goal-badge">目标分未设置</span></div>
                   <ExamScoreChart points={examPoints} onReviewAttempt={onReviewAttempt} />
-                  <div className="stats-conclusion">
+                  <div className="callout-insight">
                     <p>{latestExamPoint ? `最近一次 ${latestExamPoint.title} ${latestExamPoint.score}%${examDelta === null ? "" : examDelta === 0 ? "，与上次持平" : `，较上次${examDelta > 0 ? " ↑" : " ↓"}${Math.abs(examDelta)}`}` : "暂无真题成绩。"}</p>
                     {latestExamPoint ? <button type="button" onClick={() => onReviewAttempt({ examId: latestExamPoint.examId, id: latestExamPoint.attemptId })}>查看最近解析 <ArrowRight size={16} /></button> : null}
                   </div>
                   <ExamSectionBars sections={examPerformance.sections} onAction={onAction} />
-                  <div className="stats-conclusion"><p>{weakestExamSection ? `${weakestExamSection.label}正确率最低（${weakestExamSection.accuracy}%）。` : "暂无三大块数据。"}</p><button type="button" onClick={() => onAction(weakestExamSection ? examSectionActionSubject(weakestExamSection) : "grammar")}>{weakestExamSection ? `${weakestExamSection.label}专项练习` : "开始练习"} <ArrowRight size={16} /></button></div>
+                  <div className="callout-insight"><p>{weakestExamSection ? `${weakestExamSection.label}正确率最低（${weakestExamSection.accuracy}%）。` : "暂无三大块数据。"}</p><button type="button" onClick={() => onAction(weakestExamSection ? examSectionActionSubject(weakestExamSection) : "grammar")}>{weakestExamSection ? `${weakestExamSection.label}专项练习` : "开始练习"} <ArrowRight size={16} /></button></div>
                 </section>
               ) : null}
             </main>

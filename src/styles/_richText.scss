@@ -58,7 +58,7 @@
 }
 
 /* 解析与译文以中文为主，使用简体中文本地化字形。 */
-.analysis-text,
+.analysis-block,
 .translation-block,
 .listening-translation {
   font-family: var(--font-serif-zh);
@@ -80,7 +80,7 @@
    例外：练习模式共通文章（.practice-shared-passage）按用户要求随容器全宽、不限高。 */
 .exam-passage:not(.practice-shared-passage) .html-content,
 .review-shared-passage,
-.analysis-text .html-content,
+.analysis-block .html-content,
 .bilingual-line > .html-content,
 .question-area h2 {
   max-width: 40em;

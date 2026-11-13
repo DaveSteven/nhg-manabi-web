@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { ZoomImage } from "./ZoomImage";
-import { Headphones } from "lucide-react";
+import { AlertTriangle, Headphones } from "lucide-react";
 import {
   assetSrc,
   examQuestionDisplayNumber,
@@ -80,8 +80,8 @@ export function AnswerSheet({ exam, problemSections, currentProblem, answers, qu
 export function ListeningExamPlayer({ audioRef, audioUrl, audioError, started, ended = false, onStart, onEnded, onError }) {
   const failed = Boolean(audioError || !audioUrl);
   return (
-    <section className={`listening-exam-player ${failed ? "error" : ""}`}>
-      <Headphones size={28} />
+    <section className={failed ? "callout-error" : "callout-insight"}>
+      {failed ? <AlertTriangle size={20} /> : <Headphones size={20} />}
       <div>
         <strong>{failed ? "听力音频加载失败" : ended ? "本组音频播放结束" : started ? "听力音频播放中" : "准备播放听力音频"}</strong>
         <p>{audioError || (!audioUrl ? "当前题组缺少音频，请重试或稍后继续考试。" : "每组音频只能播放一次，播完后请作答并手动切换到下一组。")}</p>
@@ -126,7 +126,7 @@ function ReviewItem({ question, answer, displayNumber, index, hasGroupPassage, i
             label={`${index + 1}番の選択肢`}
           />
         ) : null}
-        {answer.analysis ? <section className="analysis-text"><HtmlContent inline html={answer.analysis} /></section> : null}
+        {answer.analysis ? <section className="analysis-block"><HtmlContent inline html={answer.analysis} /></section> : null}
         {ownPassage && plain && question?.translation
           ? <section className="translation-block"><HtmlContent html={question.translation} /></section> : null}
       </div>

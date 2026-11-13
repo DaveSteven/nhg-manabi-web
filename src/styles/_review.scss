@@ -2,9 +2,8 @@
 
 .listening-transcript,
 .reading-transcript,
-.listening-translation,
-/* U7.1-C: soft 底无边框，左侧主色竖条 */
-.review-shared-passage {
+.listening-translation {
+  /* U7.1-C: soft 底无边框，左侧主色竖条 */
   margin-top: 12px;
   padding: 12px;
   border-left: 3px solid var(--primary);
@@ -12,8 +11,14 @@
   background: var(--primary-soft);
 }
 
+/* D19：共通文章中性化——文章是"读的内容"不是"消息"，去彩底改 --line 左条。 */
 .review-shared-passage {
+  margin-top: 12px;
   margin-bottom: 12px;
+  padding: 12px;
+  border-left: 3px solid var(--line);
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+  background: transparent;
 }
 
 .review-passage-group.has-shared-passage {

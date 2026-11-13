@@ -59,9 +59,9 @@
 .chart-node:focus { outline: none; fill: var(--primary-soft); stroke-width: 5; }
 .chart-node--action { cursor: pointer; }
 .chart-axis-labels { display: flex; justify-content: space-between; padding-left: 34px; color: var(--muted); font-size: var(--fs-xs); }
-.stats-conclusion { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 18px; padding: 14px 16px; border-left: 3px solid var(--primary); border-radius: 0 var(--r-sm) var(--r-sm) 0; background: var(--primary-soft); }
-.stats-conclusion p { margin: 0; color: var(--ink); font-size: var(--fs-md); }
-.stats-conclusion button, .stats-insights article button { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; border: 0; color: var(--primary-dark); background: transparent; font-size: var(--fs-sm); font-weight: var(--fw-bold); }
+/* D19：洞察结论壳迁 _base.scss .callout-insight，此处只留场景间距与局部按钮。 */
+.stats-panel .callout-insight { margin-top: 18px; }
+.stats-insights article button { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; border: 0; color: var(--primary-dark); background: transparent; font-size: var(--fs-sm); font-weight: var(--fw-bold); }
 .stats-subject-list { display: grid; gap: 10px; }
 .stats-subject-list > .tooltip { display: block; }
 .stats-subject-row { display: grid; grid-template-columns: 110px minmax(80px, 1fr) 58px 18px; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-md); color: var(--ink); background: var(--surface); text-align: left; }
@@ -105,7 +105,7 @@
 @media (max-width: $bpSm) {
   .stats-metric-grid { grid-template-columns: 1fr; }
   .stats-panel { padding: 17px; }
-  .stats-panel-heading, .stats-conclusion { align-items: flex-start; flex-direction: column; }
+  .stats-panel-heading, .stats-panel .callout-insight { align-items: flex-start; flex-direction: column; }
   .trend-heading .stats-range-tabs { width: 100%; }
   .stats-range-tabs button { flex: 1; }
   .stats-subject-row { grid-template-columns: 86px minmax(60px, 1fr) 48px 16px; gap: 7px; padding: 11px 9px; }

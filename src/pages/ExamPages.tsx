@@ -196,7 +196,7 @@ export function UnifiedPracticeSessionView() {
                       return <OptionButton key={option.id} index={optionIndex} option={option} className={state} disabled={locked || submitting} onClick={() => onChoose(question.id, option.id)} />;
                     })}
                   </section>
-                  {feedback ? <section className={`practice-inline-feedback ${feedback.is_correct ? "correct" : "wrong"}`}><strong>{feedback.is_correct ? "回答正确" : "回答有误"}</strong><p>正确答案：<HtmlContent inline html={feedback.answer_text} /></p>{feedback.analysis ? <div className="analysis-text"><HtmlContent inline html={feedback.analysis} /></div> : null}</section> : null}
+                  {feedback ? <section className={`practice-inline-feedback ${feedback.is_correct ? "correct" : "wrong"}`}><strong>{feedback.is_correct ? "回答正确" : "回答有误"}</strong><p>正确答案：<HtmlContent inline html={feedback.answer_text} /></p>{feedback.analysis ? <div className="analysis-block"><HtmlContent inline html={feedback.analysis} /></div> : null}</section> : null}
                 </section>
               );
             })}
@@ -419,8 +419,8 @@ export function ExamSectionBreakView({ session, onStartNext, starting = false })
         <h1>准备开始：{section.label}</h1>
         <p>本部分考试时间为 {section.duration_minutes} 分钟。点击后立即开始计时，之后不能返回上一科。</p>
         {section.key === "listening" ? (
-          <section className="listening-device-check">
-            <Headphones size={28} />
+          <section className="callout-error">
+            <Headphones size={20} />
             <div><strong>听力设备检查</strong><span>请佩戴耳机并确认能听到测试音。</span></div>
             <button className="secondary-button" onClick={playTestTone} disabled={starting} type="button">播放测试音</button>
           </section>

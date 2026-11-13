@@ -225,15 +225,10 @@
 .exam-save-state.error { color: var(--error-dark); background: var(--error-soft); cursor: pointer; }
 .exam-time-notice { grid-column: 1 / -1; display: flex; align-items: center; gap: 9px; padding: 12px 16px; border-radius: var(--r-md); color: var(--warn-dark); background: var(--warn-soft); font-weight: var(--fw-bold); }
 .exam-time-notice button { display: grid; place-items: center; margin-left: auto; border: 0; color: inherit; background: transparent; cursor: pointer; }
-.listening-device-check { display: flex; align-items: center; gap: 14px; max-width: 600px; margin: 24px auto; padding: 18px; border-left: 3px solid var(--primary); border-radius: 0 var(--r-md) var(--r-md) 0; background: var(--primary-soft); text-align: left; }
-.listening-device-check > div { display: grid; flex: 1; gap: 4px; }
-.listening-device-check span { color: var(--muted); font-size: var(--fs-md); }
-.listening-exam-player { display: flex; align-items: center; gap: 16px; margin: 18px 0; padding: 18px; border-left: 3px solid var(--primary); border-radius: 0 var(--r-md) var(--r-md) 0; background: var(--primary-soft); }
-.listening-exam-player > div { display: grid; flex: 1; gap: 4px; }
-.listening-exam-player p { margin: 0; color: var(--muted); font-size: var(--fs-md); }
-.listening-exam-player > span { color: var(--primary-dark); font-weight: var(--fw-bold); }
-.listening-exam-player.error { border-left-color: var(--error); background: var(--error-soft); }
-.listening-exam-player.error > svg { color: var(--error-dark); }
+/* D19：设备检测/听力播放器壳迁 _base.scss .callout-error/.callout-insight；此处只留场景定位。 */
+.exam-break-card .callout-error { max-width: 600px; margin: 24px auto; }
+.exam-layout .callout-insight,
+.exam-layout .callout-error { margin: 18px 0; }
 @media (max-width: $bpMd2) { .exam-intro-card { padding: 22px 18px; } .exam-section-schedule > div > div { display: grid; } .exam-timer { order: -1; width: 100%; } }
 .exam-list-view .exam-list {
   max-height: none;

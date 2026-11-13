@@ -316,6 +316,116 @@ button:disabled {
   box-shadow: none;
 }
 
+/* D19 提示块语义三分（规格见 design-system.md「提示块语义」）。
+   insight：洞察/行动建议（primary 壳，可带 CTA 文字链）；error：错误/故障（error 壳，
+   必须带 lucide 20px 图标，禁止无图标复用）；analysis-block：教材内容解析（surface 内衬
+   + ::before「解析」小标签 + 衬线内容，无彩色左条）。负面洞察一律 insight 壳，不变红。 */
+.callout-insight,
+.callout-error {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--primary);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  background: var(--primary-soft);
+}
+
+.callout-insight {
+  justify-content: space-between;
+}
+
+.callout-insight p {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-md);
+}
+
+.callout-insight > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  border: 0;
+  color: var(--primary-dark);
+  background: transparent;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+}
+
+.callout-insight > span {
+  flex: 0 0 auto;
+  color: var(--primary-dark);
+  font-weight: var(--fw-bold);
+}
+
+.callout-insight > div,
+.callout-error > div {
+  display: grid;
+  flex: 1;
+  gap: 4px;
+  text-align: left;
+}
+
+.callout-error {
+  border-left-color: var(--error);
+  background: var(--error-soft);
+}
+
+.callout-error > svg {
+  flex: 0 0 auto;
+  color: var(--error-dark);
+}
+
+.callout-error p,
+.callout-error span {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-md);
+}
+
+.analysis-block {
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--muted);
+  font-family: var(--font-serif-zh);
+  letter-spacing: 0.02em;
+  line-height: 1.72;
+}
+
+.analysis-block::before {
+  content: "解析";
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  font-family: var(--font-ui);
+  letter-spacing: 0;
+}
+
+.analysis-block .html-content,
+.analysis-block > p {
+  color: inherit;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-normal);
+  line-height: 1.72;
+}
+
+.analysis-block .html-content p,
+.analysis-block > p {
+  margin: 0 0 0.6em;
+}
+
+.analysis-block > p:last-child {
+  margin-bottom: 0;
+}
+
+.analysis-block .html-content u {
+  text-underline-offset: 4px;
+}
+
 .app-shell {
   min-height: 100vh;
   background:

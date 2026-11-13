@@ -285,17 +285,7 @@
 .practice-result-options li.wrong .practice-result-option-index { color: var(--on-accent); background: var(--error); }
 .practice-result-options li.wrong em { color: var(--error); }
 
-.practice-result-analysis {
-  display: grid;
-  gap: 6px;
-  padding: 14px 16px;
-  border-radius: var(--r-md);
-  background: var(--surface);
-  line-height: 1.85;
-  white-space: pre-wrap;
-}
-
-.practice-result-analysis strong { color: var(--muted); font-size: var(--fs-sm); white-space: normal; }
+/* D19：解析块迁 _base.scss .analysis-block（原 .practice-result-analysis 删除）。 */
 
 @media (max-width: $bpLg) {
   .practice-result-summary { grid-template-columns: 1fr; gap: 20px; padding: 22px; }

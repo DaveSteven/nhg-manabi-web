@@ -125,7 +125,7 @@ function AnswerFeedback({ result, question, choice, onFocusMode }: any) {
         {!ok && <div><span>你的答案</span><p lang="ja">{plain(result.chosen_text) || plain(question.options.find((o) => o.id === choice)?.text)}</p></div>}
         <div className="listening-correct-answer"><span>正确答案</span><p lang="ja">{plain(result.answer_text)}</p></div>
       </div>
-      {plain(result.analysis) && <div className="listening-explanation"><h4>答案解析</h4>{analysisParagraphs(result.analysis).map((p, i) => <p key={i}>{p}</p>)}</div>}
+      {plain(result.analysis) && <div className="analysis-block">{analysisParagraphs(result.analysis).map((p, i) => <p key={i}>{p}</p>)}</div>}
       <div className="listening-feedback-actions">
         <button className="secondary-button" onClick={onFocusMode}><Play size={17} />进入逐段精听</button>
       </div>

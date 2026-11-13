@@ -740,29 +740,9 @@ body.lightbox-open {
   font-weight: var(--fw-medium);
 }
 
-.analysis-text {
-  margin-top: 12px;
-  padding: 12px;
-  border-left: 4px solid var(--primary);
-  border-radius: 0 var(--r-md) var(--r-md) 0;
-  color: var(--muted);
-  background: var(--primary-soft);
-  line-height: 1.72;
-}
-
-.analysis-text .html-content {
-  color: inherit;
-  font-size: var(--fs-base);
-  font-weight: var(--fw-normal);
-  line-height: 1.72;
-}
-
-.analysis-text .html-content p {
-  margin: 0 0 0.6em;
-}
-
-.analysis-text .html-content u {
-  text-underline-offset: 4px;
+/* D19：解析壳迁 _base.scss .analysis-block；此处只留模考内联反馈内的嵌套间距。 */
+.practice-inline-feedback .analysis-block {
+  margin-top: 4px;
 }
 
 .review-block-label {

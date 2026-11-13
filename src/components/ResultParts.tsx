@@ -204,7 +204,7 @@ export function ResultQuestion({ id, number, status, meta = null, stem, media = 
         </dl>
       )}
       {hasVisibleHtml(analysis)
-        ? <div className="practice-result-analysis"><strong>解析</strong><HtmlContent inline html={analysis} /></div>
+        ? <div className="analysis-block"><HtmlContent inline html={analysis} /></div>
         : null}
       {children}
     </section>
