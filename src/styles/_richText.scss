@@ -77,11 +77,11 @@
 
 /* D18 阅读列：长文本行宽统一收进 40em，宽屏下保持可读行长；
    只限宽文字流容器，不碰图片/表格等媒体与短文本（.exam-image 的 860px 是媒体上限，另行保留）。
-   例外：练习模式共通文章（.practice-shared-passage）按用户要求随容器全宽、不限高。 */
+   例外：练习模式共通文章（.practice-shared-passage）按用户要求随容器全宽、不限高。
+   2026-11-13 修订（用户要求）：回顾页内容（.review-shared-passage、.analysis-block、
+   .bilingual-line 转写行）随容器全宽、不限 40em——回顾卡内容不满行就换行显得局促；
+   40em 只保留在考试作答中的文章与题干。 */
 .exam-passage:not(.practice-shared-passage) .html-content,
-.review-shared-passage,
-.analysis-block .html-content,
-.bilingual-line > .html-content,
 .question-area h2 {
   max-width: 40em;
 }

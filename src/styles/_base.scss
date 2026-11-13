@@ -349,7 +349,9 @@ button:disabled {
   font-size: var(--fs-md);
 }
 
-.callout-insight > button {
+/* 文字链 CTA 只作用于无 class 的裸按钮；带按钮 class（如听力播放器的 .primary-button）
+   保持自身实心样式，避免 transparent 背景把实心按钮「融进」提示壳（0,1,1 > 0,1,0 曾覆盖）。 */
+.callout-insight > button:not([class]) {
   display: inline-flex;
   align-items: center;
   gap: 4px;

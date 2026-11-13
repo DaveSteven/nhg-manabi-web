@@ -22,7 +22,8 @@
   font-weight: var(--fw-medium);
   white-space: nowrap;
   opacity: 0;
-  transform: translateX(-50%) translateY(2px);
+  /* --tip-shift 供溢出裁剪场景（如答题卡边列）改为内对齐：0 = 左对齐锚点、-100% = 右对齐 */
+  transform: translateX(var(--tip-shift, -50%)) translateY(2px);
   pointer-events: none;
   transition: opacity 0.14s ease 0s, transform 0.14s ease 0s;
 }
@@ -47,7 +48,7 @@
 .tooltip:hover::after,
 .tooltip:focus-within::after {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translateX(var(--tip-shift, -50%)) translateY(0);
   transition-delay: 0.3s;
 }
 
@@ -64,4 +65,17 @@
 
 .review-jump-grid .tooltip > button {
   width: 100%;
+}
+
+/* 答题卡面板（.review-jump-panel）为 overflow:auto 滚动容器，气泡超出内边距盒会被裁剪
+   （用户反馈 2026-11-13）：左右边列（5 列网格的第 1/5 列）改为向面板内对齐；
+   箭头 ::before 仍居中对准圆点，无需跟随。 */
+.review-jump-grid .tooltip:nth-child(5n + 1)::after {
+  left: 0;
+  --tip-shift: 0;
+}
+
+.review-jump-grid .tooltip:nth-child(5n)::after {
+  left: 100%;
+  --tip-shift: -100%;
 }

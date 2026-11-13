@@ -55,8 +55,9 @@
   margin-left: auto;
 }
 
-// 模考回顾：問題标题行（信息检索整层组星挂这行）与共享文章组头（右侧预留星标列，
-// 避免压住双语工具条的「显示中文译文」按钮和文章正文）
+// 模考回顾：問題标题行（信息检索整层组星挂这行）与共享文章组头。
+// 组星不再绝对定位占右侧 44px 留白（用户要求 2026-11-13），改为转写块下方单独占一行、
+// 右对齐——也避免压住双语工具条的「显示中文译文」按钮和文章正文。
 .review-problem-heading-row {
   display: flex;
   align-items: center;
@@ -65,14 +66,13 @@
 }
 
 .review-passage-group-head {
-  position: relative;
-  padding-right: 44px;
+  display: grid;
+  gap: 8px;
 }
 
 .review-passage-group-head .favorite-group-button {
-  position: absolute;
-  top: 2px;
-  right: 0;
+  position: static;
+  justify-self: end;
 }
 
 // 模考回顾：题号 + 题干 + 个人维度徽章 + 收藏按钮四列（无徽章时第四列空置）

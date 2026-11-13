@@ -706,8 +706,10 @@ body.lightbox-open {
   scroll-margin-top: 18px;
 }
 
+/* 间距统一由 .review-title-row 的 margin-bottom 控制；此处原 8px 与行距叠加导致
+   标题下方间距翻倍、题号/收藏行视觉不对齐（用户反馈 2026-11-13）。 */
 .review-title {
-  margin-bottom: 8px;
+  min-width: 0;
 }
 
 .review-title-row {
@@ -755,6 +757,11 @@ body.lightbox-open {
 /* D19：解析壳迁 _base.scss .analysis-block；此处只留模考内联反馈内的嵌套间距。 */
 .practice-inline-feedback .analysis-block {
   margin-top: 4px;
+}
+
+/* 试卷回顾：review-item 内层无行间距，解析块与上方选项/转写留出间距。 */
+.exam-review-item .analysis-block {
+  margin-top: 12px;
 }
 
 .review-block-label {
