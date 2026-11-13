@@ -15,6 +15,7 @@ import { HtmlContent, hasVisibleHtml } from "../components/Html";
 import { ZoomImage } from "../components/ZoomImage";
 import { ChoiceCard, ConfigSection } from "./PracticePages";
 import { isQuizSessionExpired, readPracticeMode, writePracticeMode } from "../lib/appHelpers";
+import { sessionDurationSeconds } from "../lib/stats";
 
 const COUNT_OPTIONS = [5, 10, 20, 30];
 const isListeningType = (type: number) => type >= 41 && type <= 46;
@@ -292,7 +293,7 @@ export default function Listening() {
     try {
       const saved = mapPracticeAttempt(await api("/api/practice-attempts", {
         method: "POST",
-        body: JSON.stringify({ level, category: "listening", mode: "practice", title: `${level} 听力专项练习`, answers: practiceSession.questions.map((question) => ({ question_id: question.id, chosen_option_id: answers[question.id] || null })) }),
+        body: JSON.stringify({ level, category: "listening", mode: "practice", title: `${level} 听力专项练习`, answers: practiceSession.questions.map((question) => ({ question_id: question.id, chosen_option_id: answers[question.id] || null })), duration_seconds: sessionDurationSeconds(practiceSession.startedAt) }),
       }, token));
       setPracticeSession((current) => ({ ...current, saving: false, finishedAttempt: saved }));
     } catch (e) {

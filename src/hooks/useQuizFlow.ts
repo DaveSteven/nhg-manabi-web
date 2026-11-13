@@ -18,6 +18,7 @@ import {
   practiceLayers,
   readPracticeMode,
 } from "../lib/appHelpers";
+import { sessionDurationSeconds } from "../lib/stats";
 import { useAuthStore } from "../stores/auth";
 import { useExamSessionStore } from "../stores/examSession";
 import { usePreferencesStore } from "../stores/preferences";
@@ -275,6 +276,7 @@ export function useQuizFlow() {
           mode: grammarPractice.config.wrongReview ? "wrong_review" : "practice",
           title: `${level} ${categoryLabel}${grammarPractice.config.wrongReview ? "错题复习" : "专项练习"}`,
           answers: grammarPractice.questions.map((question) => ({ question_id: question.id, chosen_option_id: grammarPractice.answers[question.id] || null })),
+          duration_seconds: sessionDurationSeconds(grammarPractice.startedAt),
         }),
       }, authToken));
       setGrammarPractice((current) => ({ ...current, finishedAttempt: savedAttempt }));
@@ -510,6 +512,7 @@ export function useQuizFlow() {
         question_id: answer.questionId,
         chosen_option_id: answer.chosenOptionId,
       })),
+      duration_seconds: sessionDurationSeconds(session.startedAt),
     };
     try {
       const saved = mapAttempt(await api("/api/attempts", { method: "POST", body: JSON.stringify(payload) }, authToken));
@@ -611,6 +614,8 @@ export function useQuizSessionRestore() {
             answers,
             checked,
             feedback,
+            // T-014：刷新恢复不重置计时，沿用服务端会话起点
+            startedAt,
           });
         } else if (active.meta?.flow === "quiz") {
           const quiz = await api(`/api/questions/quiz?ids=${active.question_ids.join(",")}`, {}, authToken);

@@ -77,6 +77,9 @@
 .subject-track--stacked i:first-child { border-radius: 999px 0 0 999px; }
 .subject-track--stacked i:last-child { border-radius: 0 999px 999px 0; }
 .subject-track--stacked i:only-child { border-radius: inherit; }
+/* T-014 学习效率 panel：结论句 + 时间分配堆叠条（单条三段，占比一眼可读） */
+.stats-efficiency-conclusion { margin: 0 0 14px; color: var(--muted); font-size: var(--fs-md); }
+.time-track { height: 14px; margin-bottom: 14px; background: var(--line); }
 /* T-013 目标分占位 badge（全站统一中性款） */
 .stats-goal-badge { flex: 0 0 auto; padding: 6px 10px; border-radius: 999px; color: var(--muted); background: var(--surface); font-size: var(--fs-sm); }
 .stats-subject-row > strong { text-align: right; font-variant-numeric: tabular-nums; }

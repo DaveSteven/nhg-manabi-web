@@ -9,6 +9,7 @@ import {
   readExamCache,
 } from "../lib/study";
 import { persistExamProgress, preloadExamAssets, questionsForRunSection } from "../lib/appHelpers";
+import { sessionDurationSeconds } from "../lib/stats";
 import { useAuthStore } from "../stores/auth";
 import { useExamSessionStore } from "../stores/examSession";
 import { usePreferencesStore } from "../stores/preferences";
@@ -128,6 +129,8 @@ export function useExamFlow() {
       index: Math.max(0, Math.min(questions.length - 1, cachedIndex)),
       answers: { ...(cached.answers || {}), ...(run.answers || {}) },
       finishedAttempt: null,
+      // T-014：计时起点（run 路径时长由服务端计算，此值只兜底无 run 会话）
+      startedAt: cached.updatedAt || new Date().toISOString(),
     };
     if (run.status === "completed") {
       clearExamCache(currentUser.id, numericExamId);
@@ -298,6 +301,8 @@ export function useExamFlow() {
             question_id: question.id,
             chosen_option_id: current.answers[question.id] || null,
           })),
+          // T-014：无 run 兜底路径用客户端时长；run 路径时长由服务端起止差决定，不带客户端值
+          duration_seconds: sessionDurationSeconds(current.startedAt),
         }),
       }, authToken),
     );

@@ -64,6 +64,16 @@ export function fetchStatsExams(level: string, token: string) {
   return api(`/api/stats/exams?${params}`, {}, token);
 }
 
+// T-014 学习效率（统计三期）：granularity 由调用方按 days 计算（≤90 day / >90 week），与 trend 一致
+export function fetchStatsEfficiency(
+  { granularity = "day", days = 90, level }:
+  { granularity?: "day" | "week" | "month"; days?: number; level: string },
+  token: string,
+) {
+  const params = new URLSearchParams({ granularity, days: String(days), level });
+  return api(`/api/stats/efficiency?${params}`, {}, token);
+}
+
 // ---- T-022 刀二：practice_sessions（专项练习/quiz 会话服务端化） ----
 
 export function createPracticeSession(token: string, body: { source: string; label?: string; question_ids: number[]; meta?: object }) {

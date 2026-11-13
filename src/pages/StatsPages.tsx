@@ -10,6 +10,7 @@ import {
   LineChart,
   Sparkles,
   Target,
+  Timer,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
@@ -19,10 +20,12 @@ import { useAuthStore } from "../stores/auth";
 import { usePreferencesStore } from "../stores/preferences";
 import { useExamFlow } from "../hooks/useExamFlow";
 import { useQuizFlow } from "../hooks/useQuizFlow";
-import { fetchStatsExams, fetchStatsOverview, fetchStatsTrend } from "../lib/study";
+import { fetchStatsEfficiency, fetchStatsExams, fetchStatsOverview, fetchStatsTrend } from "../lib/study";
 import {
   compareRecentActivity,
+  efficiencyView,
   examPerformanceView,
+  formatDuration,
   formatStatDate,
   heatLevel,
 } from "../lib/stats";
@@ -206,6 +209,69 @@ function ExamScoreChart({ points, onReviewAttempt }) {
   );
 }
 
+/** T-014：答题速度折线（y 轴为秒/题，同一 AccuracyLineChart 的手写 SVG 模式）。 */
+function SpeedLineChart({ points }) {
+  const chartPoints = points.filter((point) => point.avgSeconds !== null);
+  if (!chartPoints.length) return <EmptyState title="暂无速度数据" />;
+  const width = 720;
+  const height = 220;
+  const padX = 34;
+  const padY = 24;
+  const yMax = Math.max(10, Math.ceil(Math.max(...chartPoints.map((point) => point.avgSeconds)) / 10) * 10);
+  const x = (index) => chartPoints.length === 1 ? width / 2 : padX + index / (chartPoints.length - 1) * (width - padX * 2);
+  const y = (seconds) => padY + (yMax - seconds) / yMax * (height - padY * 2);
+  const path = chartPoints.map((point, index) => `${x(index)},${y(point.avgSeconds)}`).join(" ");
+  return (
+    <div className="stats-line-chart">
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="答题速度趋势折线图">
+        {[0, yMax / 2, yMax].map((value) => (
+          <g key={value}>
+            <line x1={padX} x2={width - padX} y1={y(value)} y2={y(value)} className="chart-grid-line" />
+            <text x="2" y={y(value) + 4}>{value}秒</text>
+          </g>
+        ))}
+        {chartPoints.length > 1 ? <polyline points={path} className="chart-line" /> : null}
+        {chartPoints.map((point, index) => (
+          <circle key={`${point.period}-${index}`} cx={x(index)} cy={y(point.avgSeconds)} r="5" className="chart-node" tabIndex={0}>
+            <title>{`${formatStatDate(point.period)} · 平均 ${point.avgSeconds} 秒/题 · ${point.answered} 题`}</title>
+          </circle>
+        ))}
+      </svg>
+      <div className="chart-axis-labels"><span>{formatStatDate(chartPoints[0].period)}</span><span>{formatStatDate(chartPoints.at(-1).period)}</span></div>
+    </div>
+  );
+}
+
+/** T-014：时间分配——三段堆叠条一眼看占比，行动作行入口（practice→专项 / exam→模考 / listening→精听）。 */
+const EFFICIENCY_COLORS = {
+  practice: "var(--chart-grammar)",
+  exam: "var(--primary)",
+  listening: "var(--chart-listening)",
+};
+
+function TimeDistribution({ items, onAction }) {
+  if (!items.length) return null;
+  return (
+    <div className="stats-time-distribution">
+      <span className="subject-track subject-track--stacked time-track" role="img" aria-label="学习时间分配">
+        {items.map((item) => <i key={item.kind} style={{ width: `${item.pct}%`, background: EFFICIENCY_COLORS[item.kind] }} />)}
+      </span>
+      <div className="stats-subject-list">
+        {items.map((item) => (
+          <Tooltip key={item.kind} tip={`${item.label} · ${formatDuration(item.seconds)} · 占 ${item.pct}%`}>
+            <button type="button" className="stats-subject-row" onClick={() => onAction(item.kind)}>
+              <span className="subject-name"><i style={{ background: EFFICIENCY_COLORS[item.kind] }} />{item.label}</span>
+              <span className="subject-track"><i style={{ width: `${item.pct}%`, background: EFFICIENCY_COLORS[item.kind] }} /></span>
+              <strong>{item.pct}%</strong>
+              <ArrowRight size={17} />
+            </button>
+          </Tooltip>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function StatsView() {
   // T-023 S3：自取等级/token 与动作（Route element 零业务 props）
   const level = usePreferencesStore((state) => state.level);
@@ -235,6 +301,13 @@ export function StatsView() {
     enabled: Boolean(token),
     staleTime: 60_000,
   });
+  // T-014 学习效率：粒度切换与正确率趋势一致（≤90 天 / >90 天周）
+  const efficiencyQuery = useQuery({
+    queryKey: ["stats-efficiency", level, days],
+    queryFn: () => fetchStatsEfficiency({ level, days, granularity: days <= 90 ? "day" : "week" }, token),
+    enabled: Boolean(token),
+    staleTime: 60_000,
+  });
 
   const overview = overviewQuery.data ?? null;
   const trend = trendQuery.data?.points ?? [];
@@ -247,6 +320,9 @@ export function StatsView() {
   }, [overview]);
   const examPerformance = useMemo(() => examPerformanceView(examStats), [examStats]);
   const examPoints = examPerformance.points;
+  const efficiency = useMemo(() => efficiencyView(efficiencyQuery.data), [efficiencyQuery.data]);
+  // 时间分配行动作：专项练习 → 文法专项；模拟考试 → 试卷列表；听力精听 → 听力
+  const onEfficiencyAction = (kind) => kind === "exam" ? onExams() : onAction(kind === "listening" ? "listening" : "grammar");
 
   const loadError = overviewQuery.error || trendQuery.error || examStatsQuery.error;
   if (overviewQuery.isPending) return <div className="center-state">加载中…</div>;
@@ -291,6 +367,19 @@ export function StatsView() {
               <section className="stats-panel">
                 <div className="stats-panel-heading"><div><span><BarChart3 size={20} /> 科目统计</span><h2>各科正确率</h2></div></div>
                 <SubjectBars subjects={overview.breakdown_by_subject} onAction={onAction} />
+              </section>
+
+              <section className="stats-panel">
+                <div className="stats-panel-heading"><div><span><Timer size={20} /> 学习效率</span><h2>答题用时与时间分配</h2></div>{efficiency.ready ? <strong>{Math.round(efficiency.avgSeconds)} 秒/题</strong> : null}</div>
+                {efficiency.ready ? (
+                  <>
+                    <p className="stats-efficiency-conclusion">{efficiency.conclusion}</p>
+                    <SpeedLineChart points={efficiency.trend} />
+                    <TimeDistribution items={efficiency.distribution} onAction={onEfficiencyAction} />
+                  </>
+                ) : (
+                  <EmptyState title="效率数据积累中" />
+                )}
               </section>
 
               {examPoints.length ? (

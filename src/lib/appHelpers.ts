@@ -186,6 +186,8 @@ export function makePracticeSession({ config, level, title, layers, questions })
     checked: {},
     feedback: {},
     finishedAttempt: null,
+    // T-014：attempt 级时长计时起点（提交时换算 duration_seconds；恢复路径须覆写为服务端起点）
+    startedAt: new Date().toISOString(),
   };
 }
 

@@ -76,3 +76,75 @@ export function examScoreDelta(points) {
   if (latest.score === null || previous.score === null) return null;
   return Math.round((latest.score - previous.score) * 10) / 10;
 }
+
+/** T-014：attempt 级会话时长（秒）。起点为会话开始/恢复点；无效或 ≤0 返回 undefined（服务端仍钳制）。 */
+export function sessionDurationSeconds(startedAt?: string): number | undefined {
+  const start = new Date(startedAt || 0).getTime();
+  if (!Number.isFinite(start) || start <= 0) return undefined;
+  const seconds = Math.round((Date.now() - start) / 1000);
+  return seconds > 0 ? seconds : undefined;
+}
+
+/** T-014：秒 → 紧凑时长文案（「45 秒」「3 分 20 秒」「1 小时 20 分」）。 */
+export function formatDuration(seconds: number): string {
+  const total = Math.round(seconds);
+  if (total < 60) return `${total} 秒`;
+  const minutes = Math.floor(total / 60);
+  const rest = total % 60;
+  if (minutes < 60) return rest ? `${minutes} 分 ${rest} 秒` : `${minutes} 分`;
+  const hours = Math.floor(minutes / 60);
+  const restMinutes = minutes % 60;
+  return restMinutes ? `${hours} 小时 ${restMinutes} 分` : `${hours} 小时`;
+}
+
+/** T-014 学习效率：`/api/stats/efficiency` 契约 → 视图模型。
+    coverage.ratio < 0.5 或无数据时 ready=false，panel 显示「积累中」占位（采集刚上线存量无时长）。 */
+export function efficiencyView(data: any) {
+  const trend = (data?.speed_trend || []).map((point: any) => ({
+    period: point.period,
+    avgSeconds: point.avg_seconds,
+    answered: point.answered,
+  }));
+  const distribution = (data?.time_distribution || []).map((item: any) => ({
+    kind: item.kind,
+    label: item.label,
+    seconds: item.seconds,
+    pct: item.pct,
+  }));
+  const coverage = {
+    eligible: data?.coverage?.eligible_attempts ?? 0,
+    withDuration: data?.coverage?.with_duration ?? 0,
+    ratio: data?.coverage?.ratio ?? null,
+  };
+  const avgSeconds = data?.avg_seconds_per_question ?? null;
+  const ready = coverage.withDuration > 0 && avgSeconds !== null && (coverage.ratio === null || coverage.ratio >= 0.5);
+
+  // 速度变化：趋势点对半分，各按 answered 加权平均后比较（正 = 变慢）
+  let deltaSeconds: number | null = null;
+  const half = Math.floor(trend.length / 2);
+  if (trend.length >= 2 && half > 0) {
+    const weighted = (rows: any[]) => {
+      const total = rows.reduce((sum, row) => sum + (row.answered || 0), 0);
+      if (!total) return null;
+      const measured = rows.filter((row) => row.avgSeconds !== null && row.avgSeconds !== undefined);
+      if (!measured.length) return null;
+      const sum = measured.reduce((acc, row) => acc + row.avgSeconds * row.answered, 0);
+      return sum / measured.reduce((acc, row) => acc + row.answered, 0);
+    };
+    const older = weighted(trend.slice(0, half));
+    const recent = weighted(trend.slice(half));
+    if (older !== null && recent !== null) {
+      deltaSeconds = Math.round(recent - older) + 0; // 归一 -0
+    }
+  }
+  const conclusion =
+    deltaSeconds === null
+      ? "暂无足够的速度对比数据"
+      : deltaSeconds <= -1
+        ? `比前半期快 ${Math.abs(deltaSeconds)} 秒/题`
+        : deltaSeconds >= 1
+          ? `比前半期慢 ${deltaSeconds} 秒/题`
+          : "答题速度保持稳定";
+
+  return { avgSeconds, trend, distribution, coverage, ready, deltaSeconds, conclusion };
+}

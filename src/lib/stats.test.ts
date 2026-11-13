@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compareRecentActivity, examPerformanceView, examScoreDelta, heatLevel } from "./stats";
+import { compareRecentActivity, efficiencyView, examPerformanceView, examScoreDelta, formatDuration, heatLevel, sessionDurationSeconds } from "./stats";
 
 describe("statistics calculations", () => {
   it("compares recent question volume and weighted accuracy", () => {
@@ -95,5 +95,91 @@ describe("statistics calculations", () => {
     expect(examScoreDelta([{ score: 72.0 }])).toBe(null);
     expect(examScoreDelta([])).toBe(null);
     expect(examScoreDelta([{ score: 50.0 }, { score: null }])).toBe(null);
+  });
+});
+
+describe("efficiency view model (T-014)", () => {
+  it("maps efficiency snake_case contract and computes weighted speed delta", () => {
+    const view = efficiencyView({
+      coverage: { eligible_attempts: 12, with_duration: 10, ratio: 0.83 },
+      avg_seconds_per_question: 28.4,
+      speed_trend: [
+        { period: "2026-11-01", avg_seconds: 40, answered: 10 },
+        { period: "2026-11-02", avg_seconds: 40, answered: 10 },
+        { period: "2026-11-03", avg_seconds: 20, answered: 10 },
+        { period: "2026-11-04", avg_seconds: 20, answered: 10 },
+      ],
+      time_distribution: [
+        { kind: "practice", label: "专项练习", seconds: 3600, pct: 55.0 },
+        { kind: "exam", label: "模拟考试", seconds: 2400, pct: 30.0 },
+        { kind: "listening", label: "听力精听", seconds: 1200, pct: 15.0 },
+      ],
+    });
+    expect(view.avgSeconds).toBe(28.4);
+    expect(view.coverage).toEqual({ eligible: 12, withDuration: 10, ratio: 0.83 });
+    expect(view.trend).toHaveLength(4);
+    expect(view.distribution.map((item) => item.kind)).toEqual(["practice", "exam", "listening"]);
+    expect(view.ready).toBe(true);
+    // 前半加权 40、后半加权 20 → 快 20 秒/题
+    expect(view.deltaSeconds).toBe(-20);
+    expect(view.conclusion).toBe("比前半期快 20 秒/题");
+  });
+
+  it("marks low coverage and empty data as not ready", () => {
+    const lowCoverage = efficiencyView({
+      coverage: { eligible_attempts: 10, with_duration: 3, ratio: 0.3 },
+      avg_seconds_per_question: 30,
+      speed_trend: [{ period: "2026-11-01", avg_seconds: 30, answered: 9 }],
+      time_distribution: [{ kind: "practice", label: "专项练习", seconds: 270, pct: 100.0 }],
+    });
+    expect(lowCoverage.ready).toBe(false);
+
+    const empty = efficiencyView(null);
+    expect(empty).toMatchObject({
+      avgSeconds: null,
+      ready: false,
+      deltaSeconds: null,
+      conclusion: "暂无足够的速度对比数据",
+    });
+    expect(empty.trend).toEqual([]);
+    expect(empty.distribution).toEqual([]);
+  });
+
+  it("reports stable speed when halves differ within 1 second", () => {
+    const view = efficiencyView({
+      coverage: { eligible_attempts: 2, with_duration: 2, ratio: 1 },
+      avg_seconds_per_question: 30.0,
+      speed_trend: [
+        { period: "2026-11-01", avg_seconds: 30.4, answered: 10 },
+        { period: "2026-11-02", avg_seconds: 30.0, answered: 10 },
+      ],
+    });
+    expect(view.deltaSeconds).toBe(0);
+    expect(view.conclusion).toBe("答题速度保持稳定");
+  });
+});
+
+describe("session duration seconds (T-014)", () => {
+  it("computes positive seconds from a valid start", () => {
+    const startedAt = new Date(Date.now() - 65_000).toISOString();
+    expect(sessionDurationSeconds(startedAt)).toBeGreaterThanOrEqual(64);
+    expect(sessionDurationSeconds(startedAt)).toBeLessThanOrEqual(66);
+  });
+
+  it("returns undefined for missing, invalid or future starts", () => {
+    expect(sessionDurationSeconds(undefined)).toBeUndefined();
+    expect(sessionDurationSeconds("")).toBeUndefined();
+    expect(sessionDurationSeconds("not-a-date")).toBeUndefined();
+    expect(sessionDurationSeconds(new Date(Date.now() + 60_000).toISOString())).toBeUndefined();
+  });
+});
+
+describe("formatDuration (T-014)", () => {
+  it("formats seconds, minutes and hours compactly", () => {
+    expect(formatDuration(45)).toBe("45 秒");
+    expect(formatDuration(60)).toBe("1 分");
+    expect(formatDuration(200)).toBe("3 分 20 秒");
+    expect(formatDuration(4800)).toBe("1 小时 20 分");
+    expect(formatDuration(3600)).toBe("1 小时");
   });
 });
