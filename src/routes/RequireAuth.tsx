@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   SUBJECTS,
@@ -34,6 +34,8 @@ export function RequireAuth() {
   const { studyQuery } = useStudyDerived();
   // quiz 会话服务端恢复 effect——此处顶层挂载一次（多视图重复挂载会覆盖进行中会话）
   useQuizSessionRestore();
+  // D18 路由过渡：keyed fade，pathname 变化时 remount 触发 150ms 入场动画
+  const { pathname } = useLocation();
 
   // auth 恢复（/api/me）：token 有效则带出 currentUser 并同步等级偏好
   useEffect(() => {
@@ -87,5 +89,11 @@ export function RequireAuth() {
   if (!authToken || !currentUser) return <Navigate to="/login" replace />;
   if (error) return <Shell><div className="center-state error">{error}</div></Shell>;
   // Shell（.app-shell > .app-frame 容器）必须包裹业务路由——原 App 整体在 Shell 内，容器丢失会失去顶部间距与页宽
-  return <Shell><Outlet /></Shell>;
+  return (
+    <Shell>
+      <div key={pathname} className="route-fade">
+        <Outlet />
+      </div>
+    </Shell>
+  );
 }

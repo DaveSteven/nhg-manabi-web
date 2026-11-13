@@ -5,6 +5,12 @@
     padding: 16px;
   }
 
+  /* D18：窄窗下 transcript 双栏退回上下堆叠。 */
+  .with-translation .bilingual-line {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+
   .topbar {
     align-items: stretch;
     flex-direction: column;

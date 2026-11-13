@@ -4,8 +4,6 @@
 .practice-result {
   display: grid;
   gap: var(--sp-6);
-  max-width: 1180px;
-  margin: 0 auto;
 }
 
 .practice-result .quiz-header { margin-bottom: 0; }
@@ -331,9 +329,7 @@
 .practice-result-transcript p { margin: 10px 0 0; line-height: 1.9; white-space: pre-wrap; }
 .practice-result-transcript p + p { color: var(--muted); }
 
-/* 听力结果页：外层页头与结果内容同宽对齐。 */
-.listening.listening-result { max-width: 1180px; margin-left: auto; margin-right: auto; }
-.listening.listening-result .practice-result { max-width: none; }
+/* 听力结果页：外层页头与结果内容同宽，随外壳对齐（单一外壳后无需再覆写宽度）。 */
 
 /* 题目个人维度（T-011）：「已练习 N 次 · 我的正确率 M%」一行元信息，练习页与回顾页共用。 */
 /* 个人统计徽章：文字保持退墨灰，只给数字上色（次数/正确率樱墨强调），

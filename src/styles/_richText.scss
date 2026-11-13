@@ -74,3 +74,14 @@
 .rich-text {
   line-height: 1.8;
 }
+
+/* D18 阅读列：长文本行宽统一收进 40em，宽屏下保持可读行长；
+   只限宽文字流容器，不碰图片/表格等媒体与短文本（.exam-image 的 860px 是媒体上限，另行保留）。
+   例外：练习模式共通文章（.practice-shared-passage）按用户要求随容器全宽、不限高。 */
+.exam-passage:not(.practice-shared-passage) .html-content,
+.review-shared-passage,
+.analysis-text .html-content,
+.bilingual-line > .html-content,
+.question-area h2 {
+  max-width: 40em;
+}

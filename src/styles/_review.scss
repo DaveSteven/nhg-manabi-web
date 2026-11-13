@@ -81,6 +81,12 @@
   border-bottom: 0;
 }
 
+/* D18：显示译文时原文（左）与译文（右）并排双栏；无译文仍单列堆叠，窄窗回退见 _responsive.scss。 */
+.with-translation .bilingual-line {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 4px 18px;
+}
+
 .bilingual-line > .html-content {
   color: var(--ink);
   font-size: var(--fs-base);
@@ -308,13 +314,7 @@
 }
 
 .result-view {
-  max-width: 900px;
-  margin: 0 auto;
   padding-bottom: 40px;
-}
-
-.result-view.exam-result-view {
-  max-width: 1520px;
 }
 
 .result-score {
