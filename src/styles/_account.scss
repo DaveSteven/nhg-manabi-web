@@ -81,27 +81,167 @@
   font-size: var(--fs-3xl, 2rem);
 }
 
+/* T-036 扩展：编辑资料入口（身份卡头像/昵称统一在弹层修改，头像本体不再可点击） */
+.profile-edit-button {
+  padding: 6px 16px;
+  cursor: pointer;
+  border: 0;
+  border-radius: var(--r-sm);
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.profile-edit-button:hover {
+  background: var(--primary);
+  color: var(--on-accent);
+}
+
+.profile-edit-button:focus-visible {
+  outline: 3px solid var(--primary-soft);
+}
+
+.edit-profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* T-036 二级弹窗版：编辑弹层内的当前头像行（点击「更换头像」呼出选择弹窗） */
+.edit-profile-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.edit-profile-preview {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.edit-profile-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.edit-profile-avatar-meta {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+}
+
+/* T-036：编辑资料弹层表单——输入框对齐全站标准（同 .new-user-form input：
+   2px line 边 + r-sm + 48px 高，聚焦 primary 边 + 淡樱环） */
+.edit-profile-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-weight: var(--fw-bold);
+  /* 弹层挂在身份卡内，继承其 text-align: center；label 需与输入框左对齐 */
+  text-align: left;
+}
+
+.edit-profile-form input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 2px solid var(--line);
+  border-radius: var(--r-sm);
+  color: var(--ink);
+  background: var(--card);
+  font: inherit;
+  font-size: var(--fs-base);
+}
+
+.edit-profile-form input:focus {
+  outline: 0;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+/* T-036 头像选择器：4 列网格，13 项（默认 + 12 款） */
+.avatar-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.avatar-pick {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: var(--r-md);
+  background: none;
+}
+
+.avatar-pick:focus-visible {
+  outline: 3px solid var(--primary-soft);
+}
+
+.avatar-pick:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.avatar-pick img,
+.avatar-pick-letter {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar-pick-letter {
+  display: grid;
+  place-items: center;
+  color: var(--on-accent);
+  background: var(--primary);
+  font-family: var(--font-serif);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  user-select: none;
+}
+
+.avatar-pick.is-current {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
 .form-success {
   color: var(--correct-dark);
   font-weight: var(--fw-medium);
 }
 
-/* U3: profile avatar as a seal impression — user's first character in the print. */
-/* T-034 修订：应用户要求改圆形 */
+/* U3: profile avatar — user's first character in the print. */
+/* T-034 修订：改圆形；T-036 修订：去投影、去实心底，改 2px line 描边定圆
+   （字色改 primary-dark 保证可读，夜间同 avatar-button 回提亮樱色） */
 .profile-avatar {
   display: grid;
   place-items: center;
   width: 64px;
   height: 64px;
   flex-shrink: 0;
+  border: 2px solid var(--line);
   border-radius: 50%;
-  color: var(--on-accent);
-  background: var(--primary);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4), var(--shadow-rest);
+  overflow: hidden;
+  color: var(--primary-dark);
   font-family: var(--font-serif);
   font-size: var(--fs-2xl);
   font-weight: var(--fw-bold);
   user-select: none;
+}
+
+html[data-theme="dark"] .profile-avatar {
+  color: var(--primary);
 }
 
 .profile-identity {
@@ -372,31 +512,7 @@
   gap: 10px;
 }
 
-.wrong-scope-note {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 4px 12px;
-  margin-bottom: 22px;
-  padding: 14px 16px;
-  border-radius: var(--r-lg);
-  color: var(--ink);
-  background: var(--surface);
-}
 
-.wrong-scope-note strong {
-  color: var(--primary-dark);
-}
-
-.wrong-scope-note span {
-  font-weight: var(--fw-bold);
-}
-
-.wrong-scope-note p {
-  grid-column: 1 / -1;
-  color: var(--muted);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-medium);
-}
 
 .wrong-list-heading {
   display: flex;

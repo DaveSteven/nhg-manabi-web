@@ -108,17 +108,34 @@ export function ResultActions({ onRepeat, repeatLabel, onLibrary, libraryLabel }
 }
 
 /** Light modal layer used for the shortcut cheat sheet and exit confirmation. */
-export function ModalOverlay({ title, onClose, children }: { title: string; onClose?: () => void; children: React.ReactNode }) {
+// stacked：二级弹窗（叠在已有 modal-overlay 之上，z-index 更高一层）
+// Esc 关闭用模块级栈保证只关最上层（否则多层同监听 window keydown，一次 Esc 全关）。
+// 栈元素是挂载时稳定的 token（onClose 可能每渲染换引用），token→回调经 ref 解引用。
+const overlayStack: Array<Record<string, unknown>> = [];
+
+export function ModalOverlay({ title, onClose, stacked, children }: { title: string; onClose?: () => void; stacked?: boolean; children: React.ReactNode }) {
+  const token = React.useRef<Record<string, unknown>>({}).current;
+  const onCloseRef = React.useRef(onClose);
+  onCloseRef.current = onClose;
   React.useEffect(() => {
-    if (!onClose) return undefined;
+    overlayStack.push(token);
     const handler = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { event.preventDefault(); onClose(); }
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      if (overlayStack[overlayStack.length - 1] === token) {
+        overlayStack.pop();
+        onCloseRef.current?.();
+      }
     };
     window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [onClose]);
+    return () => {
+      const index = overlayStack.indexOf(token);
+      if (index >= 0) overlayStack.splice(index, 1);
+      window.removeEventListener("keydown", handler);
+    };
+  }, [token]);
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className={stacked ? "modal-overlay is-stacked" : "modal-overlay"} onClick={onClose}>
       <div className="modal-card" role="dialog" aria-modal="true" aria-label={title} onClick={(event) => event.stopPropagation()}>
         <h2>{title}</h2>
         {children}

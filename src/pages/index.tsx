@@ -33,6 +33,8 @@ import { useAuthStore } from "../stores/auth";
 import { usePreferencesStore } from "../stores/preferences";
 import { useQuizSessionStore } from "../stores/quizSession";
 import UiSelect from "../components/UiSelect";
+import EditProfile from "../components/EditProfile";
+import UserAvatar from "../components/UserAvatar";
 import { Tooltip } from "../components/Tooltip";
 import { HtmlInline } from "../components/Html";
 import { DailyRing, EmptyState, FieldInput, KeyboardToast, ModalOverlay, OptionButton, PageHeader, Progress, BrandMark, ShortcutHelp, ThemeToggle, TitleBlock } from "../components/CommonUi";
@@ -185,18 +187,14 @@ export function LibraryView() {
             aria-label="错题本"
           >
             <NotebookPen size={23} />
-            {wrongItems.length ? (
-              <span className="wrong-badge">{wrongItems.length}</span>
+            {allWrongItems.length ? (
+              <span className="wrong-badge">{allWrongItems.length}</span>
             ) : null}
           </button>
-          <button
-            className="avatar-button"
-            onClick={onOpenUser}
-            type="button"
-            aria-label="用户资料"
-          >
-            <span>{currentUser?.display_name?.slice(0, 1) || "D"}</span>
-          </button>
+          {/* 不用 button：UA 按钮内边距会把 54px 圆内 img 挤成 42px 宽 */}
+          <span className="avatar-button" onClick={onOpenUser}>
+            <UserAvatar user={currentUser} />
+          </span>
         </div>
       </header>
 
@@ -481,8 +479,6 @@ export function WrongBookView() {
     () => [...items].sort((left, right) => new Date(right.lastWrongAt).getTime() - new Date(left.lastWrongAt).getTime()),
     [items],
   );
-  const libraryItems = sortedItems.filter((item) => item.source === "library");
-  const practiceItems = sortedItems.filter((item) => item.source === "practice");
   const totalPages = Math.max(1, Math.ceil(sortedItems.length / WRONG_BOOK_PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const pageStart = (currentPage - 1) * WRONG_BOOK_PAGE_SIZE;
@@ -517,12 +513,6 @@ export function WrongBookView() {
               <button className="primary-button" onClick={onReview} type="button">复习</button>
             </div>
           </section>
-
-          <aside className="wrong-scope-note" aria-label="错题收录范围">
-            <strong>收录范围</strong>
-            <span>基础练习 {libraryItems.length} 题 · 专项练习 {practiceItems.length} 题</span>
-            <p>专项练习包括文字词汇、文法和读解；整套真题与听力训练暂未收录。</p>
-          </aside>
 
           <div className="wrong-list-heading">
             <h2>全部错题</h2>
@@ -665,6 +655,8 @@ export function UserView() {
     writeExamTarget(value);
     setStoredExam(value);
   };
+  // T-036 扩展：编辑资料弹层（头像 + 昵称）
+  const [editOpen, setEditOpen] = useState(false);
 
   return (
     <section className="user-page">
@@ -673,11 +665,16 @@ export function UserView() {
       </PageHeader>
 
       <aside className="profile-card">
-        <div className="profile-avatar"><span>{currentUser?.display_name?.slice(0, 1) || "D"}</span></div>
+        {/* T-036：头像统一渲染（设置图案或首字印章回退），经「编辑资料」弹层修改 */}
+        <div className="profile-avatar"><UserAvatar user={currentUser} /></div>
         <div className="profile-identity">
           <h2>{currentUser?.display_name || "David"}</h2>
           <p>@{currentUser?.username || "david"}</p>
         </div>
+        <button className="profile-edit-button" onClick={() => setEditOpen(true)} type="button">
+          编辑资料
+        </button>
+        {editOpen ? <EditProfile onClose={() => setEditOpen(false)} /> : null}
         {streak ? (
           <div className={badgeEarned ? "profile-streak earned" : "profile-streak"} aria-label="连续学习">
             {badgeEarned ? <Cherry size={18} aria-hidden="true" /> : <Flame size={18} aria-hidden="true" />}

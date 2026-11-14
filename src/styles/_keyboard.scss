@@ -65,6 +65,11 @@ kbd,
   background: var(--overlay);
 }
 
+/* T-036：二级弹窗（如编辑资料 → 选择头像），盖在一级弹层之上 */
+.modal-overlay.is-stacked {
+  z-index: 70;
+}
+
 .modal-card {
   display: grid;
   gap: 14px;
