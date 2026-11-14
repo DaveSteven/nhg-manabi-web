@@ -249,7 +249,8 @@
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 12px;
-  min-height: 92px;
+  /* 等级已上收页面标题（item 只留试卷日期），卡片压矮：92 → 64 */
+  min-height: 64px;
   padding: 12px 14px;
   border: 2px solid var(--line);
   border-radius: var(--r-lg);
@@ -376,7 +377,7 @@
 }
 
 .exam-card h3 {
-  margin: 8px 0 4px;
+  margin: 0 0 4px;
   font-size: var(--fs-lg);
 }
 

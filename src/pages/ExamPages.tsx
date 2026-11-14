@@ -308,7 +308,6 @@ export function ExamListView() {
     return (
       <article className={`exam-card ${last ? "done" : ""}`.trim()} key={exam.id}>
         <div>
-          <div className="book-badge">{exam.level}</div>
           <h3>{exam.title}</h3>
           {last ? <p>最近成绩 {pct(last.correct, last.total)}% · {last.correct}/{last.total}</p> : null}
         </div>
@@ -344,7 +343,7 @@ export function ExamListView() {
 
   return (
     <section className="exam-list-view">
-      <PageHeader onBack={onBack}><TitleBlock eyebrow="考试题库" title="模拟考试" /></PageHeader>
+      <PageHeader onBack={onBack}><TitleBlock eyebrow="考试题库" title={`${level} 模拟考试`} /></PageHeader>
       {exams.length ? (
         <>
           {activeExams.length ? <div className="exam-list">{activeExams.map(renderCard)}</div> : null}
