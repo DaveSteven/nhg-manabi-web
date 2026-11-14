@@ -4,7 +4,7 @@ import { HtmlContent, HtmlInline, hasVisibleHtml } from "./Html";
 import { PageHeader, PetalFall } from "./CommonUi";
 
 /**
- * 练习结果页的通用骨架（专项练习 / 基础题库 / 听力专项共用）。
+ * 练习结果页的通用骨架（专项练习 / 基础练习 / 听力专项共用）。
  * 样式见 styles/_practiceResult.scss。模拟考试结果页不走这里。
  */
 

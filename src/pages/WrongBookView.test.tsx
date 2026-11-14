@@ -73,7 +73,7 @@ describe("WrongBookView", () => {
   it("makes the included and excluded sources explicit", () => {
     renderWithStudyData([makeItem(1), makeItem(2, "practice")]);
 
-    expect(screen.getByText("基础题库 1 题 · 专项练习 1 题")).toBeTruthy();
+    expect(screen.getByText("基础练习 1 题 · 专项练习 1 题")).toBeTruthy();
     expect(screen.getByText("专项练习包括文字词汇、文法和读解；整套真题与听力训练暂未收录。")).toBeTruthy();
   });
 });

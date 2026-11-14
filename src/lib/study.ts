@@ -198,7 +198,7 @@ export function normalizeJapaneseUiText(value) {
 
 const LESSON_NAME_PATTERN = /第\s*(\d+)\s*[课課]/;
 
-// 基础题库每组只是 10 道题，没有讲解内容，界面统一叫"练习 N"（序号不补零）
+// 基础练习每组只是 10 道题，没有讲解内容，界面统一叫"练习 N"（序号不补零）
 export function bookDisplayNumber(value) {
   const normalized = normalizeJapaneseUiText(value);
   const lessonNumber = normalized.match(LESSON_NAME_PATTERN);
