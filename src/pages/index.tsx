@@ -589,10 +589,14 @@ export function LoginView({ onLogin }) {
     try {
       await onLogin({ username: username.trim(), password });
     } catch (error) {
+      const text = String(error?.message || "");
       setMessage(
-        String(error?.message || "").includes("Administrators cannot sign in")
+        text.includes("Administrators cannot sign in")
           ? "管理员账号不能登录学习端，请使用后台登录。"
-          : "登录失败，请检查用户名和密码。",
+          : // T-031：停用账号直显后端提示；其余（未激活/错密码）仍通用口径（A18 不泄露）
+            text.includes("账号已被停用")
+            ? "账号已被停用"
+            : "登录失败，请检查用户名和密码。",
       );
     }
   }

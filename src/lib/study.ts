@@ -35,7 +35,17 @@ export async function api(path: string, options: RequestInit = {}, token: string
   });
   if (!response.ok) {
     if (response.status === 401) {
-      // token 失效：清会话并回登录页（对齐管理端 utils/http.ts handleUnauthorized）
+      // T-031：登录接口的 401 透传后端 detail（停用账号显示「账号已被停用」）；
+      // 其余 401 = token 失效：清会话并回登录页（对齐管理端 utils/http.ts handleUnauthorized）
+      if (path === "/api/auth/login") {
+        let detail = "";
+        try {
+          detail = (await response.json())?.detail || "";
+        } catch {
+          // noop
+        }
+        throw new Error(detail || "登录失败，请检查用户名和密码。");
+      }
       try {
         localStorage.removeItem("auth-storage");
       } catch {
