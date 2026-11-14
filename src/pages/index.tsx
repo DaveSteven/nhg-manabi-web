@@ -20,12 +20,15 @@ import {
   Search,
   Star,
   Target,
+  UserRound,
+  CalendarDays,
   Cherry,
   Flame,
   X,
 } from "lucide-react";
-import { LEVELS, SUBJECTS, api, fetchStatsOverview, formatDate, normalizeLevel, pct, readUserLevelCache, subjectLabel, writeUserLevelCache } from "../lib/study";
-import { fetchFavorites, mapFavorite } from "../lib/appHelpers";
+import { LEVELS, SUBJECTS, api, fetchStatsOverview, formatDate, pct, subjectLabel } from "../lib/study";
+import { fetchFavorites, mapFavorite, readExamTarget, writeExamTarget } from "../lib/appHelpers";
+import { examLabel, resolveSelectedExam, upcomingExams } from "../lib/examDates";
 import { useAuthStore } from "../stores/auth";
 import { usePreferencesStore } from "../stores/preferences";
 import { useQuizSessionStore } from "../stores/quizSession";
@@ -35,6 +38,7 @@ import { HtmlInline } from "../components/Html";
 import { DailyRing, EmptyState, FieldInput, KeyboardToast, ModalOverlay, OptionButton, PageHeader, Progress, BrandMark, ShortcutHelp, ThemeToggle, TitleBlock } from "../components/CommonUi";
 import { markKeyboardHintSeen, useKeyboardAnswer } from "../hooks/useKeyboardAnswer";
 import useFavorites from "../hooks/useFavorites";
+import useLevelChoice from "../hooks/useLevelChoice";
 import { useExamFlow } from "../hooks/useExamFlow";
 import { useQuizFlow } from "../hooks/useQuizFlow";
 import { useStudyDerived } from "../hooks/useStudyDerived";
@@ -76,9 +80,7 @@ export function LibraryView() {
   const navigate = useNavigate();
   const authToken = useAuthStore((state) => state.token);
   const currentUser = useAuthStore((state) => state.currentUser);
-  const setAuthUser = useAuthStore((state) => state.setUser);
   const level = usePreferencesStore((state) => state.level);
-  const setLevel = usePreferencesStore((state) => state.setLevel);
   const subject = usePreferencesStore((state) => state.subject);
   const setSubject = usePreferencesStore((state) => state.setSubject);
   const dailyGoal = usePreferencesStore((state) => state.dailyGoal);
@@ -92,6 +94,8 @@ export function LibraryView() {
     attempts, wrongItems, examAttempts, bookStats, allWrongItems, continueSuggestions, todayCount,
   } = useStudyDerived(books);
   const { startBook: onStart, startWrongReview, openPractice } = useQuizFlow();
+  // B2: 等级切换共享逻辑（T-034 抽出，用户页复用）
+  const chooseLevel = useLevelChoice();
   const onDailyGoal = setDailyGoal;
   const onResume = () => navigate("/quiz");
   const onReviewWrong = () => (wrongItems.length ? startWrongReview() : navigate("/wrong"));
@@ -104,27 +108,6 @@ export function LibraryView() {
   const onOpenUser = () => navigate("/user");
   const onSearch = (query) => navigate(`/search?q=${encodeURIComponent(query)}`);
 
-  // B2: 等级切换——本地缓存 + 服务端保存（best-effort，失败退回本地缓存）
-  async function chooseLevel(nextLevel) {
-    const normalized = normalizeLevel(nextLevel);
-    setLevel(normalized);
-    if (currentUser) {
-      writeUserLevelCache(currentUser.id, normalized);
-      setAuthUser((user) => user ? { ...user, current_level: normalized } : user);
-    }
-    if (!authToken || !currentUser || currentUser.current_level === normalized) return;
-
-    try {
-      const updatedUser = await api("/api/me/level", {
-        method: "POST",
-        body: JSON.stringify({ current_level: normalized }),
-      }, authToken);
-      setAuthUser(updatedUser);
-      writeUserLevelCache(updatedUser.id, updatedUser.current_level);
-    } catch (err) {
-      console.warn("Could not save current level to the API; using local cache.", err);
-    }
-  }
   const onLevel = chooseLevel;
   const onSubject = setSubject;
   const [searchQuery, setSearchQuery] = useState("");
@@ -285,7 +268,7 @@ export function LibraryView() {
       <section className="home-section">
         <div className="home-section-heading">
           <div>
-            <h2>基础题库</h2>
+            <h2>基础练习</h2>
             {!booksLoading && books.length ? <p>{librarySummary}</p> : null}
           </div>
         </div>
@@ -349,7 +332,7 @@ const SEARCH_CATEGORIES = [
 
 const SEARCH_SOURCES = [
   { value: "", label: "全部来源" },
-  { value: "library", label: "基础题库" },
+  { value: "library", label: "基础练习" },
   { value: "exam", label: "历年试卷" },
 ];
 
@@ -537,7 +520,7 @@ export function WrongBookView() {
 
           <aside className="wrong-scope-note" aria-label="错题收录范围">
             <strong>收录范围</strong>
-            <span>基础题库 {libraryItems.length} 题 · 专项练习 {practiceItems.length} 题</span>
+            <span>基础练习 {libraryItems.length} 题 · 专项练习 {practiceItems.length} 题</span>
             <p>专项练习包括文字词汇、文法和读解；整套真题与听力训练暂未收录。</p>
           </aside>
 
@@ -635,6 +618,8 @@ export function UserView() {
   const setQuizSession = useQuizSessionStore((state) => state.setQuizSession);
   const setGrammarPractice = useQuizSessionStore((state) => state.setGrammarPractice);
   const { resetToLibrary: onBack } = useQuizFlow();
+  // T-034：目标级别与首页书库共用同一套切换逻辑（含服务端 best-effort 保存）
+  const chooseLevel = useLevelChoice();
   const onOpenStats = () => navigate("/stats");
   const onOpenFavorites = () => navigate("/favorites");
   async function onLogout() {
@@ -671,6 +656,15 @@ export function UserView() {
     return () => { alive = false; };
   }, [token]);
   const badgeEarned = streak !== null && streak.current >= STREAK_BADGE_DAYS;
+  // T-034：目标考试与首页倒计时卡同源（manabi_exam_target + upcomingExams），
+  // 两处联动靠首页挂载时读取，本页不新增同步机制；过期记忆不回写（同 D22 AC③）。
+  const exams = useMemo(() => upcomingExams(new Date()), []);
+  const [storedExam, setStoredExam] = useState(readExamTarget);
+  const selectedExam = resolveSelectedExam(storedExam, exams);
+  const onExamTargetChange = (value: string) => {
+    writeExamTarget(value);
+    setStoredExam(value);
+  };
 
   return (
     <section className="user-page">
@@ -678,38 +672,79 @@ export function UserView() {
         <div className="wrong-page-title"><div className="book-pill">个人资料</div></div>
       </PageHeader>
 
-      <section className="profile-card">
+      <aside className="profile-card">
         <div className="profile-avatar"><span>{currentUser?.display_name?.slice(0, 1) || "D"}</span></div>
         <div className="profile-identity">
           <h2>{currentUser?.display_name || "David"}</h2>
           <p>@{currentUser?.username || "david"}</p>
         </div>
-        <button className="secondary-button logout-button" onClick={onLogout} type="button"><LogOut size={18} aria-hidden="true" />退出登录</button>
-      </section>
+        {streak ? (
+          <div className={badgeEarned ? "profile-streak earned" : "profile-streak"} aria-label="连续学习">
+            {badgeEarned ? <Cherry size={18} aria-hidden="true" /> : <Flame size={18} aria-hidden="true" />}
+            {badgeEarned ? (
+              <span><strong>7 日连续学习达成</strong> · 已连续 {streak.current} 天（最长 {streak.longest} 天）</span>
+            ) : (
+              <span>连续学习 {streak.current} 天，坚持 7 天点亮樱花徽章</span>
+            )}
+          </div>
+        ) : null}
+      </aside>
 
-      {streak ? (
-        <div className={badgeEarned ? "profile-streak earned" : "profile-streak"} aria-label="连续学习">
-          {badgeEarned ? <Cherry size={18} aria-hidden="true" /> : <Flame size={18} aria-hidden="true" />}
-          {badgeEarned ? (
-            <span><strong>7 日连续学习达成</strong> · 已连续 {streak.current} 天（最长 {streak.longest} 天）</span>
-          ) : (
-            <span>连续学习 {streak.current} 天，坚持 7 天点亮樱花徽章</span>
-          )}
-        </div>
-      ) : null}
+      <div className="user-groups">
+        <section className="user-group-card" aria-label="功能">
+          <h3 className="user-group-title">功能</h3>
+          <button className="profile-stats-card" onClick={onOpenStats} type="button">
+            <span><BarChart3 size={22} /></span>
+            <div><strong>查看学习数据</strong><small>正确率趋势、连续学习与科目掌握度</small></div>
+            <ChevronRight size={20} />
+          </button>
+          <button className="profile-stats-card" onClick={onOpenFavorites} type="button">
+            <span><Star size={22} /></span>
+            <div><strong>试题收藏</strong><small>{favoriteCount === null ? "收藏题目，随时回练" : `${favoriteCount} 道收藏题，点开即练`}</small></div>
+            <ChevronRight size={20} />
+          </button>
+        </section>
 
-      <button className="profile-stats-card" onClick={onOpenStats} type="button">
-        <span><BarChart3 size={22} /></span>
-        <div><strong>查看学习数据</strong><small>正确率趋势、连续学习与科目掌握度</small></div>
-        <ChevronRight size={20} />
-      </button>
+        <section className="user-group-card" aria-label="备考目标">
+          <h3 className="user-group-title">备考目标</h3>
+          <div className="user-option-row">
+            <span className="user-option-icon"><Target size={22} /></span>
+            <div className="user-option-text"><strong>目标级别</strong><small>书库与真题按此级别过滤</small></div>
+            <UiSelect
+              className="user-option-select"
+              ariaLabel="目标级别"
+              value={level}
+              options={LEVELS.map((item) => ({ value: item, label: item }))}
+              onChange={chooseLevel}
+            />
+          </div>
+          <div className="user-option-row">
+            <span className="user-option-icon"><CalendarDays size={22} /></span>
+            <div className="user-option-text"><strong>目标考试</strong><small>与首页倒计时卡同步</small></div>
+            <UiSelect
+              className="user-option-select"
+              ariaLabel="目标考试"
+              value={selectedExam}
+              options={exams.map((item) => ({ value: item.date, label: examLabel(item) }))}
+              onChange={onExamTargetChange}
+            />
+          </div>
+        </section>
 
-      <button className="profile-stats-card" onClick={onOpenFavorites} type="button">
-        <span><Star size={22} /></span>
-        <div><strong>试题收藏</strong><small>{favoriteCount === null ? "收藏题目，随时回练" : `${favoriteCount} 道收藏题，点开即练`}</small></div>
-        <ChevronRight size={20} />
-      </button>
-
+        <section className="user-group-card" aria-label="账号">
+          <h3 className="user-group-title">账号</h3>
+          <div className="user-option-row">
+            <span className="user-option-icon"><UserRound size={22} /></span>
+            {/* email 为空 = admin 代建老账号未绑定邮箱 */}
+            <div className="user-option-text"><strong>{currentUser?.username || "david"}</strong><small>注册邮箱：{currentUser?.email || "未绑定"}</small></div>
+          </div>
+          <div className="user-option-row">
+            <span className="user-option-icon"><LogOut size={22} /></span>
+            <div className="user-option-text"><strong>退出登录</strong><small>结束本次会话并返回首页</small></div>
+            <button className="secondary-button logout-button" onClick={onLogout} type="button">退出</button>
+          </div>
+        </section>
+      </div>
     </section>
   );
 }

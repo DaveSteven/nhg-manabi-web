@@ -191,11 +191,13 @@
     flex-direction: column;
   }
 
-  .profile-card {
-    align-items: flex-start;
+  /* T-034：窄屏回退单列，按现有块顺序堆叠（身份卡 → 功能组） */
+  .user-page {
+    grid-template-columns: 1fr;
   }
 
   .user-page > .profile-card,
+  .user-group-card,
   .profile-stats-card {
     padding: var(--sp-4);
   }

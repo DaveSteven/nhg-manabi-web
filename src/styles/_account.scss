@@ -28,15 +28,21 @@
   padding-bottom: 40px;
 }
 
+/* T-034 左右布局：左栏身份卡 + 右栏功能分组卡，随 .app-frame 1180px 外壳铺满 */
 .user-page {
   display: grid;
+  grid-template-columns: minmax(280px, 340px) 1fr;
   align-content: start;
+  align-items: start;
   gap: var(--sp-5);
   padding-bottom: 40px;
 }
 
+.user-page > .quiz-header {
+  grid-column: 1 / -1;
+}
+
 .logout-button {
-  margin-left: auto;
   flex-shrink: 0;
   align-self: center;
   color: var(--on-accent);
@@ -59,11 +65,20 @@
   margin-top: 0;
 }
 
+/* 左栏身份卡：印章头像 + 名字为视觉焦点，纵向排布 */
 .profile-card {
   padding: var(--sp-6);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: var(--sp-3);
+  text-align: center;
+}
+
+.user-page .profile-avatar {
+  width: 76px;
+  height: 76px;
+  font-size: var(--fs-3xl, 2rem);
 }
 
 .form-success {
@@ -72,13 +87,14 @@
 }
 
 /* U3: profile avatar as a seal impression — user's first character in the print. */
+/* T-034 修订：应用户要求改圆形 */
 .profile-avatar {
   display: grid;
   place-items: center;
   width: 64px;
   height: 64px;
   flex-shrink: 0;
-  border-radius: var(--r-md);
+  border-radius: 50%;
   color: var(--on-accent);
   background: var(--primary);
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4), var(--shadow-rest);
@@ -137,17 +153,21 @@
 .profile-stats-card > svg { flex-shrink: 0; }
 .profile-stats-card > svg { color: var(--primary); }
 
-/* B5：连续学习行 —— 达成 7 天后升级为樱花徽章 */
+/* B5：连续学习行 —— 达成 7 天后升级为樱花徽章。
+   T-034：改为身份卡内嵌行（B 规则 border-top 分隔），不再是独立淡色块。 */
 .profile-streak {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--sp-3);
-  padding: var(--sp-4) var(--sp-6);
-  border-radius: var(--r-lg);
+  width: 100%;
+  margin-top: var(--sp-2);
+  padding: var(--sp-4) 0 0;
+  border-top: 1px solid var(--line);
   color: var(--muted);
-  background: var(--surface);
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
+  text-align: left;
 }
 
 .profile-streak svg {
@@ -156,12 +176,105 @@
 
 .profile-streak.earned {
   color: var(--primary-dark);
-  background: var(--primary-soft);
-  border: 1px solid var(--primary);
+  border-top-color: var(--primary);
 }
 
 .profile-streak.earned strong {
   font-weight: var(--fw-bold);
+}
+
+/* T-034 右栏分组卡：组标题 + 行 + 右侧值/箭头。
+   与左栏身份卡及全站顶层卡同基线：2px --line 边框 + --r-xl + --shadow-soft（静态容器弥散浅影） */
+.user-groups {
+  display: grid;
+  gap: var(--sp-5);
+}
+
+.user-group-card {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-5) var(--sp-6);
+  border: 2px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--card);
+  box-shadow: var(--shadow-soft);
+}
+
+.user-group-title {
+  padding: var(--sp-2) var(--sp-2) 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.04em;
+}
+
+/* 组内功能行沿用 profile-stats-card 行模式，去掉独立卡片描边；
+   直角——避免 border-top 分割线随圆角弯曲 */
+.user-group-card .profile-stats-card {
+  padding: var(--sp-3) var(--sp-2);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.user-group-card .profile-stats-card:hover {
+  background: var(--surface);
+  border-color: transparent;
+}
+
+/* 行间分割线不因自身 hover 消失 */
+.user-group-card .profile-stats-card + .profile-stats-card:hover {
+  border-top-color: var(--line);
+}
+
+/* 组内多行时行间分割线，与 user-option-row 一致（B 规则：分隔用 1px --line） */
+.user-group-card .profile-stats-card + .profile-stats-card {
+  border-top: 1px solid var(--line);
+}
+
+.user-option-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-2);
+}
+
+.user-option-row + .user-option-row {
+  border-top: 1px solid var(--line);
+}
+
+.user-option-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.user-option-row .user-option-text {
+  display: grid;
+  gap: var(--sp-1);
+  flex: 1;
+  min-width: 0;
+}
+
+.user-option-row strong {
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+}
+
+.user-option-row small {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+}
+
+.user-option-select {
+  flex-shrink: 0;
 }
 
 .new-user-form {
