@@ -377,7 +377,7 @@
   padding-bottom: 40px;
 }
 
-/* 基础练习练习设置页：ConfigSection/start-bar 是容器直接子元素（无 form 包裹），
+/* 基础练习设置页：ConfigSection/start-bar 是容器直接子元素（无 form 包裹），
    容器自身补 grid 间距；PageHeader 的 topbar margin 一并收掉避免双倍间隔。 */
 .basic-practice-setup {
   display: grid;
