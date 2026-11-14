@@ -193,6 +193,8 @@ export function VerifyEmailRoute() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token") || "";
   const [state, setState] = useState<"loading" | "ok" | "failed">("loading");
+  // 重放已用链接：后端查激活状态幂等返回 already，展示「已激活」而非误导性「失效」
+  const [already, setAlready] = useState(false);
   const [message, setMessage] = useState("");
   const [resendEmail, setResendEmail] = useState("");
   const [resent, setResent] = useState(false);
@@ -200,8 +202,10 @@ export function VerifyEmailRoute() {
   useEffect(() => {
     let alive = true;
     api("/api/auth/verify-email", { method: "POST", body: JSON.stringify({ token }) })
-      .then(() => {
-        if (alive) setState("ok");
+      .then((result) => {
+        if (!alive) return;
+        if (result?.status === "already") setAlready(true);
+        setState("ok");
       })
       .catch((error) => {
         if (!alive) return;
@@ -232,7 +236,15 @@ export function VerifyEmailRoute() {
   return (
     <Shell>
       <AuthCard
-        title={state === "ok" ? "邮箱验证成功" : state === "loading" ? "正在验证…" : "链接无效或已过期"}
+        title={
+          state === "ok"
+            ? already
+              ? "该账号已激活"
+              : "邮箱验证成功"
+            : state === "loading"
+              ? "正在验证…"
+              : "链接无效或已过期"
+        }
         subtitle={state === "ok" ? "账号已激活，现在可以登录了" : undefined}
       >
         {state === "ok" ? (
