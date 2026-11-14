@@ -32,6 +32,14 @@
 .ui-select-field.compact .ui-select-menu { min-width: 100px; }
 .ui-select-field.compact:focus-within { border-color: var(--primary); box-shadow: 0 3px 0 var(--primary-dark), 0 0 0 3px var(--primary-soft); }
 .ui-select-field.compact:focus-within .ui-select-control { box-shadow: none; transform: none; }
+/* T-033（D26.3）安静 pill 变体：无边框无阴影，一层比卡底略深的淡色圆角底；
+   可交互性靠 ▾ + hover 加深 + focus 环表达（焦点可见性不省）。 */
+.ui-select-field.quiet { height: auto; padding: 5px 12px 5px 14px; border: 0; border-radius: 999px; background: var(--pill-quiet); box-shadow: none; font-size: var(--fs-sm); transition: background .15s ease; }
+.ui-select-field.quiet:hover { background: var(--line); }
+.ui-select-field.quiet:focus-within { box-shadow: 0 0 0 3px var(--primary-soft); }
+.ui-select-field.quiet .ui-select-control { min-width: 0; height: auto; border: 0; background: transparent; box-shadow: none; }
+.ui-select-field.quiet .ui-select-trigger { padding: 0; color: var(--ink); font-weight: var(--fw-bold); }
+.ui-select-field.quiet .ui-select-control > svg { position: static; margin-left: 5px; color: var(--muted); }
 .search-page { width: 100%; }
 .search-panel { padding: 22px; border: 2px solid var(--line); border-radius: var(--r-lg); background: var(--card); box-shadow: var(--shadow-soft); }
 .search-input-row { display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; border: 2px solid var(--line); border-radius: var(--r-md); background: var(--surface); }

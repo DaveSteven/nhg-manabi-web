@@ -13,6 +13,10 @@ type UiSelectProps = {
   label?: string;
   ariaLabel?: string;
   compact?: boolean;
+  /** T-033（D26.3）：安静 pill 变体——无边框无阴影，淡色圆角底，仅用于嵌在卡片内的轻量选择。 */
+  quiet?: boolean;
+  /** 覆盖触发器显示文案（菜单项仍用 option.label）；如倒计时 pill 的「JLPT 冬季统考 · 12月6日 周日」。 */
+  selectedLabel?: string;
   className?: string;
 };
 
@@ -23,6 +27,8 @@ export default function UiSelect({
   label,
   ariaLabel,
   compact = false,
+  quiet = false,
+  selectedLabel,
   className = "",
 }: UiSelectProps) {
   const [open, setOpen] = useState(false);
@@ -77,7 +83,7 @@ export default function UiSelect({
   return (
     <div
       ref={rootRef}
-      className={`ui-select-field${compact ? " compact" : ""}${open ? " is-open" : ""}${className ? ` ${className}` : ""}`}
+      className={`ui-select-field${compact ? " compact" : ""}${quiet ? " quiet" : ""}${open ? " is-open" : ""}${className ? ` ${className}` : ""}`}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false);
       }}
@@ -95,7 +101,7 @@ export default function UiSelect({
           onClick={() => setOpen((current) => !current)}
           onKeyDown={handleKeyDown}
         >
-          <span>{selectedOption?.label || ""}</span>
+          <span>{selectedLabel || selectedOption?.label || ""}</span>
         </button>
         <ChevronDown size={17} aria-hidden="true" />
         {open ? (

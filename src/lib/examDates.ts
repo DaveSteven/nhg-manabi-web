@@ -65,6 +65,16 @@ export function examLabel(exam: Pick<ExamDate, "date">): string {
   return `${exam.date.slice(0, 4)}年${Number(month)}月（${season}）`;
 }
 
+const WEEKDAY_ZH = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+
+/** T-033 pill 短标签（D26.3）：「JLPT 冬季统考 · 12月6日 周日」，含具体日期与星期。 */
+export function examPillLabel(exam: Pick<ExamDate, "date">): string {
+  const [, month, day] = exam.date.split("-");
+  const weekday = WEEKDAY_ZH[new Date(`${exam.date}T00:00:00`).getDay()];
+  const season = month === "12" ? "冬季" : "夏季";
+  return `JLPT ${season}统考 · ${Number(month)}月${Number(day)}日 ${weekday}`;
+}
+
 /** 距考试日整数天数（本地时区），考试当天为 0，过去为负数。 */
 export function daysUntilExam(examIso: string, today: Date): number {
   const exam = new Date(`${examIso}T00:00:00`).getTime();

@@ -34,6 +34,10 @@
   --correct: #2f7d4f;       // 松绿
   --correct-dark: #245f3d;
   --correct-soft: #e8f3ec;
+  // T-033（D26）：streak 降饱和绯/橘强调色（数字、今天描边、点亮点阵）；quiet pill 淡底（比白卡略深一档）
+  --warm-accent: #c2603f;
+  --warm-accent-soft: #f7e9e3;
+  --pill-quiet: #f0ede6;
   --error: #c73e3a;         // 绯红
   --error-dark: #9c2f2c;
   --error-soft: #fbeceb;
@@ -133,6 +137,9 @@ html[data-theme="dark"] {
   --correct: #6fbf8e;
   --correct-dark: #2f7d4f;
   --correct-soft: #243329;
+  --warm-accent: #e08d6a;
+  --warm-accent-soft: #3d2b23;
+  --pill-quiet: #34323a;
   --error: #e07a76;
   --error-dark: #c73e3a;
   --error-soft: #3d2827;

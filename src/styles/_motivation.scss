@@ -12,7 +12,8 @@
 // 位于继续学习卡上方；继续学习卡保持首屏视觉主体（此行不加大字与按钮）。
 .home-motivation-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  /* 倒计时卡占大头，周卡适度收紧（T-033 执行反馈） */
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
   gap: 14px;
   margin-bottom: 14px;
 }
@@ -40,10 +41,10 @@
 }
 
 .motivation-info strong {
-  /* 倒计时/连续天数：大字用主题色（用户要求 2026-11-13），单位后缀保持 muted 弱化 */
-  font-size: 1.75rem;
+  /* 倒计时大字：松绿（D26.2 倒计时仍松绿），「距考试/天」前后缀保持 muted 弱化 */
+  font-size: 2.5rem;
   line-height: 1.15;
-  color: var(--primary);
+  color: var(--correct);
   font-weight: var(--fw-bold);
   white-space: nowrap;
 }
@@ -53,7 +54,7 @@
   font-style: normal;
   font-weight: var(--fw-medium);
   color: var(--muted);
-  margin-left: 2px;
+  margin: 0 2px;
 }
 
 .motivation-placeholder {
@@ -61,53 +62,89 @@
   letter-spacing: 2px;
 }
 
-.motivation-exam-select {
-  margin-left: auto;
-  flex-shrink: 0;
+/* T-033（D26.3）：两卡改上下两行布局，容器描边/底色不动 */
+.home-countdown-card,
+.home-streak-card {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
 }
 
-.streak-week {
-  display: grid;
-  gap: 4px;
-  justify-items: center;
-  margin-left: auto;
+.motivation-exam-pill {
+  align-self: flex-start;
 }
 
-.streak-week small {
+/* 顶行：N 天连续（暖色大字）+ 右上 本周 N/7 */
+.streak-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.streak-head strong {
+  font-size: 1.75rem;
+  line-height: 1.15;
+  color: var(--warm-accent);
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+}
+
+.streak-head strong em {
+  font-size: var(--fs-sm);
+  font-style: normal;
+  font-weight: var(--fw-medium);
+  color: var(--muted);
+  margin-left: 2px;
+}
+
+.streak-head small {
   color: var(--muted);
   font-weight: var(--fw-medium);
   white-space: nowrap;
 }
 
-.streak-dots {
+/* 下行：星期标签（一~日）+ 点阵；两端与顶行「N 天连续 / 本周 N/7」对齐 */
+.streak-week {
   display: flex;
-  gap: 6px;
+  justify-content: space-between;
 }
 
-.streak-dots span {
-  width: 12px;
-  height: 12px;
+.streak-day {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+}
+
+.streak-day small {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+}
+
+.streak-day i {
+  display: block;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   border: 2px solid var(--line);
   background: transparent;
 }
 
-/* 点亮的当天：松绿填充（D22：多邻国式红降饱和为松绿/樱点缀） */
-.streak-dots span.active {
-  border-color: var(--correct);
-  background: var(--correct);
+/* 点亮：降饱和绯/橘填充（D26.2「火/连续」联想，替代 T-030 的松绿点阵） */
+.streak-day i.active {
+  border-color: var(--warm-accent);
+  background: var(--warm-accent);
 }
 
-/* streak=0 引导态：纯文案，樱色 Flame 点缀 */
-.home-streak-card.guidance {
-  gap: 10px;
-  font-size: var(--fs-sm);
-  color: var(--muted);
+/* 今天描边高亮（未点亮也有），淡色外环让点亮态仍能看出描边 */
+.streak-day i.today {
+  border-color: var(--warm-accent);
+  box-shadow: 0 0 0 2px var(--warm-accent-soft);
 }
 
-.home-streak-card.guidance svg {
-  color: var(--sakura-dark);
-  flex-shrink: 0;
+.streak-day i.future {
+  opacity: 0.5;
 }
 
 @media (max-width: $bpMd) {

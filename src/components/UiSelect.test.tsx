@@ -36,4 +36,23 @@ describe("UiSelect", () => {
 
     expect(onChange).toHaveBeenCalledWith("N4");
   });
+
+  it("renders the quiet variant with an overridden trigger label (T-033)", () => {
+    render(
+      <UiSelect
+        ariaLabel="目标考试"
+        quiet
+        value="N5"
+        options={options}
+        selectedLabel="JLPT 冬季统考 · 12月6日 周日"
+        onChange={() => {}}
+      />,
+    );
+    const field = document.querySelector(".ui-select-field");
+    expect(field?.classList.contains("quiet")).toBe(true);
+    // 触发器显示 selectedLabel 短文案，菜单项仍用 option.label
+    expect(screen.getByRole("button", { name: "目标考试" }).textContent).toBe("JLPT 冬季统考 · 12月6日 周日");
+    fireEvent.click(screen.getByRole("button", { name: "目标考试" }));
+    expect(screen.getByRole("option", { name: "N5" })).toBeTruthy();
+  });
 });

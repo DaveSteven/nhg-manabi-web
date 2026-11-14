@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { daysUntilExam, examLabel, firstSunday, localIsoDate, resolveSelectedExam, upcomingExams } from "./examDates";
+import { daysUntilExam, examLabel, examPillLabel, firstSunday, localIsoDate, resolveSelectedExam, upcomingExams } from "./examDates";
 
 describe("exam dates", () => {
   it("computes the first Sunday of a month (AC② 推算规则)", () => {
@@ -27,6 +27,12 @@ describe("exam dates", () => {
   it("labels exams as 夏季/冬季", () => {
     expect(examLabel({ date: "2026-12-06" })).toBe("2026年12月（冬季）");
     expect(examLabel({ date: "2027-07-04" })).toBe("2027年7月（夏季）");
+  });
+
+  it("formats the T-033 pill label with date and weekday", () => {
+    // 2026-12-06 是周日；2027-07-04 是周日
+    expect(examPillLabel({ date: "2026-12-06" })).toBe("JLPT 冬季统考 · 12月6日 周日");
+    expect(examPillLabel({ date: "2027-07-04" })).toBe("JLPT 夏季统考 · 7月4日 周日");
   });
 
   it("counts days until the exam, with zero on exam day", () => {

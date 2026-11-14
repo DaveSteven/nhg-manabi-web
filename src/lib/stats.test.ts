@@ -199,12 +199,14 @@ describe("weekDots (T-030 连续周卡)", () => {
     ]);
     expect(dots.map((dot) => dot.answered)).toEqual([10, 0, 5, 0, 0, 0, 0]);
     expect(dots.map((dot) => dot.future)).toEqual([false, false, false, false, false, true, true]);
+    // T-033：仅今天（周五 11-13）标记 isToday
+    expect(dots.map((dot) => dot.isToday)).toEqual([false, false, false, false, true, false, false]);
   });
 
   it("treats today itself as past (not a future placeholder)", () => {
     // 2026-11-09 是周一：当天 answered 数据应点亮周一
     const dots = weekDots([{ date: "2026-11-09", answered: 3 }], new Date(2026, 10, 9, 8));
-    expect(dots[0]).toEqual({ date: "2026-11-09", answered: 3, future: false });
+    expect(dots[0]).toEqual({ date: "2026-11-09", answered: 3, future: false, isToday: true });
     expect(dots.slice(1).every((dot) => dot.future)).toBe(true);
   });
 

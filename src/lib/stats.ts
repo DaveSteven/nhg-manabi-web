@@ -42,6 +42,8 @@ export interface WeekDot {
   date: string;
   answered: number;
   future: boolean;
+  /** T-033（D26.1）：今天圆点描边高亮标记 */
+  isToday: boolean;
 }
 
 export function weekDots(activity: { date: string; answered: number }[], today = new Date()): WeekDot[] {
@@ -59,7 +61,7 @@ export function weekDots(activity: { date: string; answered: number }[], today =
     const month = String(day.getMonth() + 1).padStart(2, "0");
     const date = String(day.getDate()).padStart(2, "0");
     const iso = `${day.getFullYear()}-${month}-${date}`;
-    return { date: iso, answered: answeredByDate.get(iso) ?? 0, future: iso > todayIso };
+    return { date: iso, answered: answeredByDate.get(iso) ?? 0, future: iso > todayIso, isToday: iso === todayIso };
   });
 }
 
